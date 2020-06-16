@@ -1,3 +1,8 @@
+-- Kors.debugger definition
+CREATE TABLE `debugger` (
+  `debug_comment` char(255) DEFAULT NULL
+) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Kors.dbo.HourlyOEEValues definition
 -- DROP TABLE Kors.dbo.HourlyOEEValues GO
 
