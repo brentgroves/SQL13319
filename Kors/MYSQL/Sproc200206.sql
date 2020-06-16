@@ -33,8 +33,8 @@ select * from t1
 
 -- set @startDate =STR_TO_DATE('12/31/2019 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 52
 -- set @startDate = STR_TO_DATE('02/09/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
--- set @startDate = STR_TO_DATE('02/15/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
- set @startDate = STR_TO_DATE('03/01/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
+set @startDate = STR_TO_DATE('06/07/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
+-- set @startDate = STR_TO_DATE('06/01/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
 -- set @startDate = STR_TO_DATE('03/29/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
 -- set @startDate = STR_TO_DATE('01/04/2020 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 0
 -- set @startDate = STR_TO_DATE('01/05/2020 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 1
@@ -46,15 +46,18 @@ select * from t1
 -- set @endDate = STR_TO_DATE('01/05/2020 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 1
 -- set @endDate = STR_TO_DATE('02/09/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
 -- set @endDate = STR_TO_DATE('02/15/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
--- set @endDate = STR_TO_DATE('03/14/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
+ set @endDate = STR_TO_DATE('06/07/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
 -- set @endDate = STR_TO_DATE('02/15/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
-set @endDate = STR_TO_DATE('04/04/2020 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 52
+-- set @endDate = STR_TO_DATE('06/16/2020 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 52
 -- set @endDate = STR_TO_DATE('06/06/2020 23:59:59','%m/%d/%Y %H:%i:%s'); -- week with no records test
 set @tableName = 'TempTable';
 set @DEBUG = true;
 -- TRUNCATE TABLE debugger; -- table debugger is full error?
-
+-- select * from HourlyOEEValues ho 
+-- where Date_time_stamp > '2020-06-06 00:00:00';
+-- limit 100 offset 0
 CALL Kors.Sproc200206(@startDate, @endDate, @tableName,@rec);
+-- truncate table debugger;
 -- SELECT * from debugger;
 SELECT @rec;
 select * from TempTable;
@@ -202,7 +205,7 @@ BEGIN
 	  actual_vrs_planned_percent varchar(10),
 	  scrap_count varchar(10),
 	  scrap_percent varchar(10),
-	  downtime_minutes varchar(10)
+	  downtime_minutes varchar(20)
 	);
 	insert into results (primary_key,year_week_fmt,start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
 	(
