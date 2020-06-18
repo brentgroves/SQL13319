@@ -27,438 +27,398 @@ CALL Kors.InsertHourlyOEEValues(:_Workcenter_Code,:_Job_number,:_Part_number,:_D
 call InsertHourlyOEEValues(' VSC_1', '1201', '4140', 7, 1, 1, 834,582, 0, 0,'2020-04-19 14:29')
 select * from HourlyOEEValues ho
 --drop procedure InsertHourlyOEEValues
-CREATE PROCEDURE InsertHourlyOEEValues
-	@Workcenter_Code varchar(50),
-	@Job_number varchar(20),
-	@Part_number varchar(60),
-	@Data_hour INT,
-	@Hourly_planned_production_count INT,
-	@Hourly_actual_production_count INT,
-	@Cumulative_planned_production_count INT,
-	@Cumulative_actual_production_count INT,
-	@scrap_count INT,
-	@Downtime_minutes float,
-	@Date_time_stamp DATETIME
-AS
+CREATE DEFINER=`brent`@`%` PROCEDURE `Kors`.`InsertHourlyOEEValues`(
+	_Workcenter_Code varchar(50),
+	_Job_number varchar(20),
+	_Part_number varchar(60),
+	_Data_hour INT,
+	_Hourly_planned_production_count INT,
+	_Hourly_actual_production_count INT,
+	_Cumulative_planned_production_count INT,
+	_Cumulative_actual_production_count INT,
+	_scrap_count INT,
+	_Downtime_minutes float,
+	_Date_time_stamp DATETIME
+	)
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
-    SET NOCOUNT ON;
-   
--- Table variable   
-DECLARE @MyTableVar table( ID int,
-                           Workcenter_Code varchar(50));
-   
-INSERT INTO Kors.dbo.HourlyOEEValues
+    -- interfering with SELECT statements. MSSQL
+    -- SET NOCOUNT ON; -- There is no MySQL equivalent to this.
+                     
+INSERT INTO HourlyOEEValues
 (Workcenter_Code, Job_number, Part_number, Data_hour, Hourly_planned_production_count, Hourly_actual_production_count, Cumulative_planned_production_count, Cumulative_actual_production_count, scrap_count, Downtime_minutes, Date_time_stamp)
-OUTPUT INSERTED.ID, INSERTED.Workcenter_Code
-into @MyTableVar
-VALUES(@Workcenter_Code, @Job_number, @Part_number, @Data_hour, @Hourly_planned_production_count, @Hourly_actual_production_count, @Cumulative_planned_production_count, @Cumulative_actual_production_count, @scrap_count, @Downtime_minutes, @Date_time_stamp);
---values (' VSC_5', '1210', '4140', 'Production', 10, 41, 38, 834,582, 0, 0,'2014-07-02 14:29', 0)
+VALUES(_Workcenter_Code, _Job_number, _Part_number, _Data_hour, _Hourly_planned_production_count, _Hourly_actual_production_count, _Cumulative_planned_production_count, _Cumulative_actual_production_count, _scrap_count, _Downtime_minutes, _Date_time_stamp);
 
---Display the result set of the table variable.
-SELECT ID, Workcenter_Code FROM @MyTableVar;
---Display the result set of the table.
---select * from HourlyOEEValues h
+-- Display the last inserted row.
+select ID, Workcenter_Code from HourlyOEEValues where ID=(SELECT LAST_INSERT_ID());
+
 
 END;
 
+-- drop procedure Kors.Sproc200206
 
 
-
-CREATE PROCEDURE Sproc200206
-	@start_date DATETIME,
-	@end_date DATETIME,
-	@table_name varchar(12),
-	@record_count INT OUTPUT
-AS
+CREATE DEFINER=`brent`@`%` PROCEDURE `Kors`.`Sproc200206`(
+	pStartDate DATETIME,
+	pEndDate DATETIME,
+	pTableName varchar(12),
+	OUT pRecordCount INT 
+)
 BEGIN
--- SET NOCOUNT ON added to prevent extra result sets from
--- interfering with SELECT statements.
-SET NOCOUNT ON;
-IF OBJECT_ID(@table_name) IS NOT NULL
-	EXEC ('DROP Table ' + @table_name)
+	DECLARE startDate,endDate,startWeekStartDate,endWeekEndDate DATETIME;
+	DECLARE tableName varchar(12);
+	DECLARE startWeek,endWeek INT;
 
-/* TESTING ONLY
-DECLARE @start_date DATETIME,
-	@end_date DATETIME,
-	@table_name varchar(12),
-	@record_count INT
-set @start_date ='2020-02-09T00:00:00';
-set @end_date ='2020-02-15T23:59:59';
-set @table_name = 'rpt0213test'
-*/ -- END TESTING ONLY
-	
-Declare @start_year char(4)
-Declare @start_week int
-Declare @end_year char(4)
-Declare @end_week int
-Declare @start_of_week_for_start_date datetime
-Declare @end_of_week_for_end_date datetime
+	SET tableName = pTableName;
+	set startDate =pStartDate;
+	set endDate =pEndDate;
+	SET tableName = pTableName;  
+-- /* 
+    -- https://www.w3resource.com/mysql/date-and-time-functions/mysql-week-function.php
+    -- Week 1 is the first week with a sunday; range: 0 - 53
+	-- 52 -- set @startDate ='2019-12-31 00:00:00';  
+	-- 0 -- set @startDate ='2020-01-01 00:00:00';  
+	-- 1 -- set @startDate ='2020-01-05 00:00:00';  
+	-- set @startDate ='2020-02-15 00:00:00';
+	-- set @endDate ='2020-02-09 23:59:59';	
+	-- SET @tableName = 'TempTable';  -- Debug 
+-- */
+	SET @sqlQuery = CONCAT('DROP TABLE IF EXISTS ',tableName);
+   	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+ 
+   	set startWeek = STD_WEEK(startDate);
+	set endWeek = STD_WEEK(endDate);
 
-set @start_year = DATEPART(YEAR,@Start_Date)
-set @start_week = DATEPART(WEEK,@Start_Date)
-set @end_year = DATEPART(YEAR,@End_Date)
-set @end_week = DATEPART(WEEK,@End_Date)
+	set startWeekStartDate = FIRST_DAY_OF_WEEK(startDate);
+	set endWeekEndDate = LAST_DAY_OF_WEEK(endDate);
+   -- IF @DEBUG then
+   --   	INSERT INTO debugger VALUES (CONCAT('[Sproc200206:startDate=',startDate,',endDate=',endDate,',startWeek=',startWeek,',endWeek=',endWeek,',startWeekStartDate=',startWeekStartDate,',endWeekEndDate=',endWeekEndDate,']'));
+	-- End If;
 
+	DROP TABLE IF EXISTS primary_key;
+	create temporary table primary_key 
+	(
+	  primary_key int,
+	  year_week int,
+  	  year_week_fmt varchar(10),
+      start_week datetime,
+	  end_week datetime,
+	  part_number varchar(60),
+	  workcenter_code varchar(50)
+	) ENGINE = MEMORY;
 
-set @start_of_week_for_start_date = DATEADD(wk, DATEDIFF(wk, 6, '1/1/' + @start_year) + (@start_week-1), 6)  --start of week
-set @end_of_week_for_end_date = DATEADD(wk, DATEDIFF(wk, 5, '1/1/' + @end_year) + (@end_week-1), 5)  --end of week
+	insert into primary_key(primary_key,year_week,year_week_fmt,start_week,end_week,part_number,workcenter_code)
+	(
+	  select 
+	  ROW_NUMBER() OVER (
+	    ORDER BY year * 100 + week,part_number,workcenter_code
+	  ) primary_key,
+	  year * 100 + week year_week,
+	  CASE 
+	  when week < 10 then CONCAT(year,'-0',week)
+	  else CONCAT(year,'-',week) 
+	  end year_week_fmt,
+	  start_week,
+	  end_week,
+	  part_number,
+	  workcenter_code
+	  from 
+	  (
+	    select
+	    YEAR(date_time_stamp) year,
+	    STD_WEEK(date_time_stamp) week,
+		FIRST_DAY_OF_WEEK(date_time_stamp) start_week,
+	  	LAST_DAY_OF_WEEK(date_time_stamp) end_week,
+	    part_number,
+	    workcenter_code
+	    from HourlyOEEValues 
+	    where date_time_stamp between startWeekStartDate and endWeekEndDate
+	  )s1 
+	  group by year,week,start_week,end_week,part_number,workcenter_code
+	);  
+	-- select * from primary_key;
+	DROP TABLE IF EXISTS set2group;
+	create temporary table set2group
+	(
+		primary_key int,
+		Hourly_planned_production_count int,
+		Hourly_actual_production_count int,
+		scrap_count int,
+		Downtime_minutes float
+	) ENGINE = MEMORY;
 
-set @end_of_week_for_end_date = DATEADD(day, 1, @end_of_week_for_end_date);
-set @end_of_week_for_end_date = DATEADD(second,-1,@end_of_week_for_end_date);
+	insert into set2group (primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
+	(
+	select
+	pk.primary_key, 
+	hv.Hourly_planned_production_count,
+	hv.Hourly_actual_production_count,
+	hv.scrap_count,
+	hv.Downtime_minutes
+	from primary_key pk
+	inner join
+	(
+	  select
+	    YEAR(date_time_stamp) * 100 + STD_WEEK(date_time_stamp) year_week,
+	    part_number,
+	    workcenter_code,
+		Hourly_planned_production_count,
+		Hourly_actual_production_count,
+		scrap_count,
+		Downtime_minutes
+	  from HourlyOEEValues 
+	  where date_time_stamp between startWeekStartDate and endWeekEndDate
+	) hv
+	on pk.year_week=hv.year_week
+	and pk.part_number=hv.Part_number 
+	and pk.workcenter_code=hv.Workcenter_Code 
+	);
+	-- select * from set2group limit 100;
 
-/* may be necessary if multiple calls are done on the same connection
-decdrop table #resultslare @sqlDropPK nvarchar(4000)
-declare @PKTable nvarchar(50)
-set @PKTable = quotename(@table_name + 'PK')
---select @PKTable
-set @sqlDropPK = N'DROP Table ' + @PKTable 
---select @sqlDropPK
-IF OBJECT_ID(@PKTable) IS NOT NULL
-EXEC sp_executesql @sqlDropPK
-*/
---drop table #primary_key
-create table #primary_key
-(
-  primary_key int,
-  year_week int,
-  start_week datetime,
-  end_week datetime,
-  part_number varchar(60),
-  workcenter_code varchar(50)
-)
-insert into #primary_key(primary_key,year_week,start_week,end_week,part_number,workcenter_code)
-(
-  select 
-  --top 10
-  ROW_NUMBER() OVER (
-    ORDER BY year * 100 + week,part_number,workcenter_code
-  ) primary_key,
-  year * 100 + week year_week,
-  DATEADD(wk, DATEDIFF(wk, 6, '1/1/' + CONVERT(varchar, year)) + (week-1), 6) start_week, 
-  DATEADD(wk, DATEDIFF(wk, 5, '1/1/' + CONVERT(varchar, year)) + (week-1), 5) end_week, 
-  part_number,
-  workcenter_code
-  from 
-  (
-    select
-    DATEPART(YEAR,date_time_stamp) year,
-    DATEPART(WEEK,date_time_stamp) week,
-    part_number,
-    workcenter_code
-    from HourlyOEEValues 
-    where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
-  )s1 
-  group by year,week,part_number,workcenter_code
-)  
-
---drop table #set2group
---select count(*) #primary_key from #primary_key  --16
---select top(100) * from #primary_key
---FORMAT ( @d, 'd', 'en-US' ) 
-create table #set2group
-(
-	primary_key int,
-	Hourly_planned_production_count int,
-	Hourly_actual_production_count int,
-	scrap_count int,
-	Downtime_minutes float
-)
-
-
-insert into #set2group (primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
-(
-select
-pk.primary_key, 
-hv.Hourly_planned_production_count,
-hv.Hourly_actual_production_count,
-hv.scrap_count,
-hv.Downtime_minutes
-from #primary_key pk
-inner join
-(
-  select
-  DATEPART(YEAR,date_time_stamp) * 100 + DATEPART(WEEK,date_time_stamp) year_week,
-    part_number,
-    workcenter_code,
-	Hourly_planned_production_count,
-	Hourly_actual_production_count,
-	scrap_count,
-	Downtime_minutes
-  from HourlyOEEValues 
-  where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
-) hv
-on pk.year_week=hv.year_week
-and pk.part_number=hv.Part_number 
-and pk.workcenter_code=hv.Workcenter_Code 
-)
---select top(100) * from #set2group 
---select count(*) #set2group from #set2group  --1404
---drop table #primary_key
---drop table #set2group
---drop table #results
-create table #results
-(
-  primary_key int,
-  start_week varchar(12),
-  end_week varchar(12),
-  part_number varchar(60),
-  workcenter_code varchar(50),
-  planned_production_count nvarchar(10),
-  actual_production_count nvarchar(10),
-  actual_vrs_planned_percent varchar(10),
-  scrap_count varchar(10),
-  scrap_percent varchar(10),
-  downtime_minutes varchar(10)
-)
-
-insert into #results (primary_key,start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
-(
+	DROP TABLE IF EXISTS results;
+	create temporary table results
+	(
+	  primary_key int,
+  	  year_week_fmt varchar(10),
+  	  start_week varchar(12),
+	  end_week varchar(12),
+	  part_number varchar(60),
+	  workcenter_code varchar(50),
+	  planned_production_count nvarchar(10),
+	  actual_production_count nvarchar(10),
+	  actual_vrs_planned_percent varchar(10),
+	  scrap_count varchar(10),
+	  scrap_percent varchar(10),
+	  downtime_minutes varchar(20)
+	) ENGINE = MEMORY;
+	insert into results (primary_key,year_week_fmt,start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
+	(
 		select
 		primary_key,
+		year_week_fmt,
 		start_week,
 		end_week,
-		--FORMAT ( pk.start_week, 'd', 'en-US' ) start_week, 
-		--FORMAT ( pk.end_week, 'd', 'en-US' ) end_week, 
 		part_number,
 		workcenter_code,
-		format(planned_production_count, 'N0'),
-		format(actual_production_count, 'N0'),
-		CONVERT(varchar(10),actual_vrs_planned_percent) + '%' as actual_vrs_planned_percent,  
-		format(scrap_count, 'N0'),
-		CONVERT(varchar(10),scrap_percent) + '%' as scrap_percent,  
-		format(downtime_minutes, 'N0') + ' mins'
+		format(planned_production_count, 0) as planned_production_count,  
+		format(actual_production_count, 0) as actual_production_count,
+		-- CONVERT(varchar(10),actual_vrs_planned_percent) + '%' as actual_vrs_planned_percent,  
+		concat(format(actual_vrs_planned_percent,2),'%') as actual_vrs_planned_percent, 
+		format(scrap_count,0) as scrap_count,
+		concat(format(scrap_percent,2),'%') as scrap_percent, 
+		concat(format(downtime_minutes, 0),' mins') as downtime_minutes
 		from
 		(
 			select
 			pk.primary_key,
-			CONVERT(VARCHAR, start_week ,101) start_week,
-			CONVERT(VARCHAR, end_week ,101) end_week,
-			--FORMAT ( pk.start_week, 'd', 'en-US' ) start_week, 
-			--FORMAT ( pk.end_week, 'd', 'en-US' ) end_week, 
+			pk.year_week_fmt,
+			DATE_FORMAT(start_week,'%m/%d/%Y') start_week,
+			DATE_FORMAT(end_week,'%m/%d/%Y') end_week,
 			pk.part_number,
 			pk.workcenter_code,
 			planned_production_count,
 			actual_production_count,
 			case
 			when planned_production_count = 0 then cast(0.00 as decimal(18,2))
-			else cast (actual_production_count*100./planned_production_count as decimal(18,2))
+			else cast(actual_production_count*100/planned_production_count as decimal(18,2))
 			end actual_vrs_planned_percent, 
 			scrap_count,
 			case
 			when actual_production_count = 0 then cast(0.00 as decimal(18,2))
-			else cast (scrap_count*100./actual_production_count as decimal(18,2))
+			else cast(scrap_count*100/actual_production_count as decimal(18,2))
 			end scrap_percent, 
 			downtime_minutes 
 			from
 			(
+
 				select
 				primary_key,
 				sum(Hourly_planned_production_count) planned_production_count,
 				sum(Hourly_actual_production_count) actual_production_count,
 				sum(scrap_count) scrap_count,
 				floor(sum(Downtime_minutes)) Downtime_minutes 
-				from #set2group 
+				from set2group 
 				group by primary_key
 			) sg
-			inner join #primary_key pk
+			inner join primary_key as pk
 			on sg.primary_key = pk.primary_key
-		)s1
-)
-	--select * from #results 
-	--DECLARE @table_name varchar(12),
-	--	@record_count INT
-	--set @table_name = 'rpt0213test'
-	--*/ -- END TESTING ONLY
-	--drop table rpt0213test
-	declare @sql nvarchar(4000)
-	select @sql = N'SELECT * into ' + quotename(@table_name) + N' from #results order by primary_key'
-	
-	--select @sql = N'SELECT start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,downtime_minutes into ' + quotename(@table_name) + N' from #results order by primary_key'
-	
-	EXEC sp_executesql @sql
-	    
-	SELECT @record_count = @@ROWCOUNT;
---select @record_count
-END;
+		) s2
+	);	
+	set @sqlQuery = CONCAT('create table ',tableName,' select * from results order by primary_key');
+	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
 
-CREATE PROCEDURE Sproc200221
-	@start_date DATETIME,
-	@end_date DATETIME,
-	@table_name varchar(12),
-	@record_count INT OUTPUT
-AS
+   	-- SELECT ROW_COUNT(); -- 0
+   	set pRecordCount = FOUND_ROWS();
+end;
+
+CREATE DEFINER=`brent`@`%` PROCEDURE `Kors`.`Sproc200221`(
+	pStartDate DATETIME,
+	pEndDate DATETIME,
+	pTableName varchar(12),
+	OUT pRecordCount INT 
+)
 BEGIN
--- SET NOCOUNT ON added to prevent extra result sets from
--- interfering with SELECT statements.
-SET NOCOUNT ON;
-IF OBJECT_ID(@table_name) IS NOT NULL
-	EXEC ('DROP Table ' + @table_name)
 
-/* TESTING ONLY
-DECLARE @start_date DATETIME,
-	@end_date DATETIME,
-	@table_name varchar(12),
-	@record_count INT
-set @start_date ='2020-02-09T00:00:00';
-set @end_date ='2020-02-15T23:59:59';
---drop table rpt0221test
-set @table_name = 'rpt0221test'
-*/-- END TESTING ONLY
+	DECLARE startDate,endDate,startWeekStartDate,endWeekEndDate DATETIME;
+	DECLARE tableName varchar(12);
+	DECLARE startWeek,endWeek,debugCount INT;
+
+	SET tableName = pTableName;
+	set startDate =pStartDate;
+	set endDate =pEndDate;
+	SET tableName = pTableName;  
+	SET @sqlQuery = CONCAT('DROP TABLE IF EXISTS ',tableName);
+   	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+ 
+   	set startWeek = STD_WEEK(startDate);
+	set endWeek = STD_WEEK(endDate);
+
+	set startWeekStartDate = FIRST_DAY_OF_WEEK(startDate);
+	set endWeekEndDate = LAST_DAY_OF_WEEK(endDate);
+    IF @DEBUG then
+      	INSERT INTO debugger VALUES (CONCAT('[Sproc200221:startDate=',startDate,',endDate=',endDate,',startWeek=',startWeek,',endWeek=',endWeek,',startWeekStartDate=',startWeekStartDate,',endWeekEndDate=',endWeekEndDate,']'));
+	End If;
 	
-Declare @start_year char(4)
-Declare @start_week int
-Declare @end_year char(4)
-Declare @end_week int
-Declare @start_of_week_for_start_date datetime
-Declare @end_of_week_for_end_date datetime
+	DROP TABLE IF EXISTS PrimaryKey;
+	create temporary table PrimaryKey
+	(
+	  primary_key int,
+	  part_number varchar(60)
+	);
+	
+	insert into PrimaryKey(primary_key,part_number)
+	(
+	  select 
+	  ROW_NUMBER() OVER (
+	    ORDER BY part_number
+	  ) primary_key,
+	  part_number
+	  from 
+	  (
+	    select
+	    part_number
+	    from HourlyOEEValues 
+	    where date_time_stamp between startWeekStartDate and endWeekEndDate
+	  )s1 
+	  group by part_number
+	);  
 
-set @start_year = DATEPART(YEAR,@Start_Date)
-set @start_week = DATEPART(WEEK,@Start_Date)
-set @end_year = DATEPART(YEAR,@End_Date)
-set @end_week = DATEPART(WEEK,@End_Date)
+    IF @DEBUG then
+    	select count(*) 
+    	into debugCount
+    	from PrimaryKey;  
+    	-- set debugCount = ROW_COUNT();
+      	INSERT INTO debugger VALUES (CONCAT('[Sproc200221:PrimaryKey.count()=',debugCount,']'));
+	End If;
+
+   	-- set pRecordCount = ROW_COUNT(); -- 0
+
+	DROP TABLE IF EXISTS Set2Group;
+	create table Set2Group
+	(
+		primary_key int,
+		Hourly_planned_production_count int,
+		Hourly_actual_production_count int,
+		scrap_count int,
+		Downtime_minutes float
+	);
+
+	insert into Set2Group(primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
+	(
+		select
+		pk.primary_key, 
+		hv.Hourly_planned_production_count,
+		hv.Hourly_actual_production_count,
+		hv.scrap_count,
+		hv.Downtime_minutes
+		from PrimaryKey pk
+		inner join
+		(
+		  select
+		    part_number,
+		    workcenter_code,
+			Hourly_planned_production_count,
+			Hourly_actual_production_count,
+			scrap_count,
+			Downtime_minutes
+		  from HourlyOEEValues 
+		  where date_time_stamp between startWeekStartDate and endWeekEndDate
+		) hv
+		on pk.part_number=hv.part_number 
+	);
+
+    IF @DEBUG then
+    	select count(*) 
+    	into debugCount
+    	from Set2Group;  
+    	-- set debugCount = ROW_COUNT();
+      	INSERT INTO debugger VALUES (CONCAT('[Sproc200221:Set2Group.count()=',debugCount,']'));
+	End If;
+
+	DROP TABLE IF EXISTS Results;
+
+	create table Results
+	(
+	  primary_key int,
+	  part_number varchar(60),
+	  actual_vrs_planned_percent decimal(18,2),
+	  scrap_count int,
+	  scrap_percent int,
+	  downtime_minutes int
+	);
+
+	insert into Results (primary_key,part_number,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
+	(
+		select
+		pk.primary_key,
+		pk.part_number,
+		case
+		when planned_production_count = 0 then cast(0.00 as decimal(18,2))
+		else cast(actual_production_count*100/planned_production_count as decimal(18,2))
+		end actual_vrs_planned_percent, 
+		scrap_count,
+		case
+		when actual_production_count = 0 then cast(0.00 as decimal(18,2))
+		else cast(scrap_count*100/actual_production_count as decimal(18,2))
+		end scrap_percent, 
+		downtime_minutes 
+		from
+		(
+			select
+			primary_key,
+			sum(Hourly_planned_production_count) planned_production_count,
+			sum(Hourly_actual_production_count) actual_production_count,
+			sum(scrap_count) scrap_count,
+			floor(sum(Downtime_minutes)) Downtime_minutes 
+			from Set2Group 
+			group by primary_key
+		) sg
+		inner join PrimaryKey pk
+		on sg.primary_key = pk.primary_key
+	);
 
 
-set @start_of_week_for_start_date = DATEADD(wk, DATEDIFF(wk, 6, '1/1/' + @start_year) + (@start_week-1), 6)  --start of week
-set @end_of_week_for_end_date = DATEADD(wk, DATEDIFF(wk, 5, '1/1/' + @end_year) + (@end_week-1), 5)  --end of week
+	IF @DEBUG then
+    	select count(*) 
+    	into debugCount
+    	from Results;  
+    	-- set debugCount = ROW_COUNT();
+      	INSERT INTO debugger VALUES (CONCAT('[Sproc200221:Results.count()=',debugCount,']'));
+	End If;
 
-set @end_of_week_for_end_date = DATEADD(day, 1, @end_of_week_for_end_date);
-set @end_of_week_for_end_date = DATEADD(second,-1,@end_of_week_for_end_date);
+	set @sqlQuery = CONCAT('create table ',tableName,' select * from Results order by primary_key');
+	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
 
-/* may be necessary if multiple calls are done on the same connection
-declare @sqlDropPK nvarchar(4000)
-declare @PKTable nvarchar(50)
-set @PKTable = quotename(@table_name + 'PK')
---select @PKTable
-set @sqlDropPK = N'DROP Table ' + @PKTable 
---select @sqlDropPK
-IF OBJECT_ID(@PKTable) IS NOT NULL
-EXEC sp_executesql @sqlDropPK
-*/
---drop table #primary_key
-create table #primary_key
-(
-  primary_key int,
-  part_number varchar(60)
-)
-insert into #primary_key(primary_key,part_number)
-(
-  select 
-  --top 10
-  ROW_NUMBER() OVER (
-    ORDER BY part_number
-  ) primary_key,
-  part_number
-  from 
-  (
-    select
-    part_number
-    from HourlyOEEValues 
-    where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
-  )s1 
-  group by part_number
-)  
-
---drop table #primary_key
---select count(*) #primary_key from #primary_key  --16
---select top(100) * from #primary_key
---FORMAT ( @d, 'd', 'en-US' ) 
-create table #set2group
-(
-	primary_key int,
-	Hourly_planned_production_count int,
-	Hourly_actual_production_count int,
-	scrap_count int,
-	Downtime_minutes float
-)
-
-insert into #set2group (primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
-(
-select
-pk.primary_key, 
-hv.Hourly_planned_production_count,
-hv.Hourly_actual_production_count,
-hv.scrap_count,
-hv.Downtime_minutes
-from #primary_key pk
-inner join
-(
-  select
-    part_number,
-    workcenter_code,
-	Hourly_planned_production_count,
-	Hourly_actual_production_count,
-	scrap_count,
-	Downtime_minutes
-  from HourlyOEEValues 
-  where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
-) hv
-on pk.part_number=hv.Part_number 
-)
---select top(100) * from #set2group 
---select count(*) #set2group from #set2group  --1404
---drop table #primary_key
---drop table #set2group
---drop table #results
-create table #results
-(
-  primary_key int,
-  part_number varchar(60),
-  actual_vrs_planned_percent decimal(18,2),
-  scrap_count int,
-  scrap_percent int,
-  downtime_minutes int
-)
-
-
-
-insert into #results (primary_key,part_number,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
-(
-select
-pk.primary_key,
-pk.part_number,
-case
-when planned_production_count = 0 then cast(0.00 as decimal(18,2))
-else cast (actual_production_count*100./planned_production_count as decimal(18,2))
-end actual_vrs_planned_percent, 
-scrap_count,
-case
-when actual_production_count = 0 then cast(0.00 as decimal(18,2))
-else cast (scrap_count*100./actual_production_count as decimal(18,2))
-end scrap_percent, 
-downtime_minutes 
-from
-(
-select
-primary_key,
-sum(Hourly_planned_production_count) planned_production_count,
-sum(Hourly_actual_production_count) actual_production_count,
-sum(scrap_count) scrap_count,
-floor(sum(Downtime_minutes)) Downtime_minutes 
-from #set2group 
-group by primary_key
-) sg
-inner join #primary_key pk
-on sg.primary_key = pk.primary_key
-)
---select * from #results 
---DECLARE @table_name varchar(12),
---	@record_count INT
---set @table_name = 'rpt0213test'
---*/ -- END TESTING ONLY
---drop table rpt0213test
-declare @sql nvarchar(4000)
-select @sql = N'SELECT * into ' + quotename(@table_name) + N' from #results order by primary_key'
-
---select @sql = N'SELECT start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,downtime_minutes into ' + quotename(@table_name) + N' from #results order by primary_key'
-
-EXEC sp_executesql @sql
-    
-SELECT @record_count = @@ROWCOUNT;
---select @record_count
-END;
-
+   	set pRecordCount = FOUND_ROWS();
+end;
 
 
 CREATE DEFINER=`brent`@`%` FUNCTION `Kors`.`STD_WEEK`(pDay DATETIME) RETURNS int

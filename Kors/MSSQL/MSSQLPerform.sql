@@ -1,14 +1,3 @@
-
-SELECT 
-Data_hour,Date_time_stamp 
-FROM HourlyOEEValues 
-group by Data_hour,Date_time_stamp 
-having Date_time_stamp BETWEEN @start_date and @end_date
-order by Data_hour 
-ORDER BY id 
-OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY;
-select * from HourlyOEEValues h
-
 DECLARE	@return_value int,
 @start_date DATETIME,
 @end_date DATETIME,
@@ -35,7 +24,7 @@ select * from rpt04010 order by primary_key
 select top(10) * from rpt04010 order by primary_key 
 select * from hourlyoeevalues
 --drop PROCEDURE  sproc200206
-CREATE PROCEDURE Sproc200206
+CREATE PROCEDURE Performance
 	@start_date DATETIME,
 	@end_date DATETIME,
 	@table_name varchar(12),
@@ -251,6 +240,3 @@ insert into #results (primary_key,start_week,end_week,part_number,workcenter_cod
 	SELECT @record_count = @@ROWCOUNT;
 --select @record_count
 END;
-
-select * from rpt0213test
-

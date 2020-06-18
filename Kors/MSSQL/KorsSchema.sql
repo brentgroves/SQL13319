@@ -1,3 +1,9 @@
+/*
+ * MSSQL 
+ * 
+ * 
+ */
+
 -- Drop table
 
 -- drop TABLE Kors.dbo.HourlyOEEValues
@@ -27,12 +33,7 @@ top(100) *
 --count(*) cnt --14808
 from hourlyoeevalues0213
 
-declare @dt datetime;
-set @dt = '2014-07-02 14:29';
-INSERT INTO Kors.dbo.HourlyOEEValues
-(Workcenter_Code, Job_number, Part_number, Workcenter_status, Data_hour, Hourly_planned_production_count, Hourly_actual_production_count, Cumulative_planned_production_count, Cumulative_actual_production_count, scrap_count, Downtime_minutes, Date_time_stamp, Transaction_number)
-VALUES(' VSC_4', '1210', '4140', 'Production', 10, 41, 38, 834,582, 0, 0,'2014-07-02 14:29', 0);
-drop procedure InsertHourlyOEEValues
+
 CREATE PROCEDURE InsertHourlyOEEValues
 	@Workcenter_Code varchar(50),
 	@Job_number varchar(20),
@@ -54,9 +55,7 @@ BEGIN
 -- Table variable   
 DECLARE @MyTableVar table( ID int,
                            Workcenter_Code varchar(50));
---https://www.sqlservercentral.com/articles/the-output-clause-for-insert-and-delete-statements
--- We use the OUTPUT INTO syntax to store the results in a table variable. With this approach, 
--- we have access to the set of rows that were inserted during the execution of the query that can be used later for the next steps with in the same execution.   
+   
 INSERT INTO Kors.dbo.HourlyOEEValues
 (Workcenter_Code, Job_number, Part_number, Data_hour, Hourly_planned_production_count, Hourly_actual_production_count, Cumulative_planned_production_count, Cumulative_actual_production_count, scrap_count, Downtime_minutes, Date_time_stamp)
 OUTPUT INSERTED.ID, INSERTED.Workcenter_Code
@@ -70,94 +69,399 @@ SELECT ID, Workcenter_Code FROM @MyTableVar;
 --select * from HourlyOEEValues h
 
 END;
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 7, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 7, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 7, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 7, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
 
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 8, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 8, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 8, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 8, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
+CREATE PROCEDURE Sproc200206
+	@start_date DATETIME,
+	@end_date DATETIME,
+	@table_name varchar(12),
+	@record_count INT OUTPUT
+AS
+BEGIN
+-- SET NOCOUNT ON added to prevent extra result sets from
+-- interfering with SELECT statements.
+SET NOCOUNT ON;
+IF OBJECT_ID(@table_name) IS NOT NULL
+	EXEC ('DROP Table ' + @table_name)
 
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 9, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 9, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 9, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 9, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
+/* TESTING ONLY
+DECLARE @start_date DATETIME,
+	@end_date DATETIME,
+	@table_name varchar(12),
+	@record_count INT
+set @start_date ='2020-02-09T00:00:00';
+set @end_date ='2020-02-15T23:59:59';
+set @table_name = 'rpt0213test'
+*/ -- END TESTING ONLY
+	
+Declare @start_year char(4)
+Declare @start_week int
+Declare @end_year char(4)
+Declare @end_week int
+Declare @start_of_week_for_start_date datetime
+Declare @end_of_week_for_end_date datetime
 
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 10, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 10, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 10, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 10, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 11, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 11, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 11, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 11, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 11, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 12, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 12, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 12, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 12, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 13, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 13, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 13, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 13, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-
-exec InsertHourlyOEEValues ' VSC_5', '1210', '4140', 14, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_6', '1211', '4141', 14, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_7', '1212', '4142', 14, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
-exec InsertHourlyOEEValues ' VSC_8', '1213', '4143', 14, 41, 38, 834,582, 0, 0,'2020-04-01 14:29'
+set @start_year = DATEPART(YEAR,@Start_Date)
+set @start_week = DATEPART(WEEK,@Start_Date)
+set @end_year = DATEPART(YEAR,@End_Date)
+set @end_week = DATEPART(WEEK,@End_Date)
 
 
-select * from HourlyOEEValues h
---1011
-delete from HourlyOEEValu
-select * from users
-select * from messages
---delete from messages
---drop table messages
---drop table users
+set @start_of_week_for_start_date = DATEADD(wk, DATEDIFF(wk, 6, '1/1/' + @start_year) + (@start_week-1), 6)  --start of week
+set @end_of_week_for_end_date = DATEADD(wk, DATEDIFF(wk, 5, '1/1/' + @end_year) + (@end_week-1), 5)  --end of week
+
+set @end_of_week_for_end_date = DATEADD(day, 1, @end_of_week_for_end_date);
+set @end_of_week_for_end_date = DATEADD(second,-1,@end_of_week_for_end_date);
+
+/* may be necessary if multiple calls are done on the same connection
+decdrop table #resultslare @sqlDropPK nvarchar(4000)
+declare @PKTable nvarchar(50)
+set @PKTable = quotename(@table_name + 'PK')
+--select @PKTable
+set @sqlDropPK = N'DROP Table ' + @PKTable 
+--select @sqlDropPK
+IF OBJECT_ID(@PKTable) IS NOT NULL
+EXEC sp_executesql @sqlDropPK
+*/
+--drop table #primary_key
+create table #primary_key
+(
+  primary_key int,
+  year_week int,
+  start_week datetime,
+  end_week datetime,
+  part_number varchar(60),
+  workcenter_code varchar(50)
+)
+insert into #primary_key(primary_key,year_week,start_week,end_week,part_number,workcenter_code)
+(
+  select 
+  --top 10
+  ROW_NUMBER() OVER (
+    ORDER BY year * 100 + week,part_number,workcenter_code
+  ) primary_key,
+  year * 100 + week year_week,
+  DATEADD(wk, DATEDIFF(wk, 6, '1/1/' + CONVERT(varchar, year)) + (week-1), 6) start_week, 
+  DATEADD(wk, DATEDIFF(wk, 5, '1/1/' + CONVERT(varchar, year)) + (week-1), 5) end_week, 
+  part_number,
+  workcenter_code
+  from 
+  (
+    select
+    DATEPART(YEAR,date_time_stamp) year,
+    DATEPART(WEEK,date_time_stamp) week,
+    part_number,
+    workcenter_code
+    from HourlyOEEValues 
+    where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
+  )s1 
+  group by year,week,part_number,workcenter_code
+)  
+
+--drop table #set2group
+--select count(*) #primary_key from #primary_key  --16
+--select top(100) * from #primary_key
+--FORMAT ( @d, 'd', 'en-US' ) 
+create table #set2group
+(
+	primary_key int,
+	Hourly_planned_production_count int,
+	Hourly_actual_production_count int,
+	scrap_count int,
+	Downtime_minutes float
+)
+
+
+insert into #set2group (primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
+(
+select
+pk.primary_key, 
+hv.Hourly_planned_production_count,
+hv.Hourly_actual_production_count,
+hv.scrap_count,
+hv.Downtime_minutes
+from #primary_key pk
+inner join
+(
+  select
+  DATEPART(YEAR,date_time_stamp) * 100 + DATEPART(WEEK,date_time_stamp) year_week,
+    part_number,
+    workcenter_code,
+	Hourly_planned_production_count,
+	Hourly_actual_production_count,
+	scrap_count,
+	Downtime_minutes
+  from HourlyOEEValues 
+  where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
+) hv
+on pk.year_week=hv.year_week
+and pk.part_number=hv.Part_number 
+and pk.workcenter_code=hv.Workcenter_Code 
+)
+--select top(100) * from #set2group 
+--select count(*) #set2group from #set2group  --1404
+--drop table #primary_key
+--drop table #set2group
+--drop table #results
+create table #results
+(
+  primary_key int,
+  start_week varchar(12),
+  end_week varchar(12),
+  part_number varchar(60),
+  workcenter_code varchar(50),
+  planned_production_count nvarchar(10),
+  actual_production_count nvarchar(10),
+  actual_vrs_planned_percent varchar(10),
+  scrap_count varchar(10),
+  scrap_percent varchar(10),
+  downtime_minutes varchar(20)
+)
+
+insert into #results (primary_key,start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
+(
+		select
+		primary_key,
+		start_week,
+		end_week,
+		--FORMAT ( pk.start_week, 'd', 'en-US' ) start_week, 
+		--FORMAT ( pk.end_week, 'd', 'en-US' ) end_week, 
+		part_number,
+		workcenter_code,
+		format(planned_production_count, 'N0'),
+		format(actual_production_count, 'N0'),
+		CONVERT(varchar(10),actual_vrs_planned_percent) + '%' as actual_vrs_planned_percent,  
+		format(scrap_count, 'N0'),
+		CONVERT(varchar(10),scrap_percent) + '%' as scrap_percent,  
+		format(downtime_minutes, 'N0') + ' mins'
+		from
+		(
+			select
+			pk.primary_key,
+			CONVERT(VARCHAR, start_week ,101) start_week,
+			CONVERT(VARCHAR, end_week ,101) end_week,
+			--FORMAT ( pk.start_week, 'd', 'en-US' ) start_week, 
+			--FORMAT ( pk.end_week, 'd', 'en-US' ) end_week, 
+			pk.part_number,
+			pk.workcenter_code,
+			planned_production_count,
+			actual_production_count,
+			case
+			when planned_production_count = 0 then cast(0.00 as decimal(18,2))
+			else cast (actual_production_count*100./planned_production_count as decimal(18,2))
+			end actual_vrs_planned_percent, 
+			scrap_count,
+			case
+			when actual_production_count = 0 then cast(0.00 as decimal(18,2))
+			else cast (scrap_count*100./actual_production_count as decimal(18,2))
+			end scrap_percent, 
+			downtime_minutes 
+			from
+			(
+				select
+				primary_key,
+				sum(Hourly_planned_production_count) planned_production_count,
+				sum(Hourly_actual_production_count) actual_production_count,
+				sum(scrap_count) scrap_count,
+				floor(sum(Downtime_minutes)) Downtime_minutes 
+				from #set2group 
+				group by primary_key
+			) sg
+			inner join #primary_key pk
+			on sg.primary_key = pk.primary_key
+		)s1
+)
+	--select * from #results 
+	--DECLARE @table_name varchar(12),
+	--	@record_count INT
+	--set @table_name = 'rpt0213test'
+	--*/ -- END TESTING ONLY
+	--drop table rpt0213test
+	declare @sql nvarchar(4000)
+	select @sql = N'SELECT * into ' + quotename(@table_name) + N' from #results order by primary_key'
+	
+	--select @sql = N'SELECT start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,downtime_minutes into ' + quotename(@table_name) + N' from #results order by primary_key'
+	
+	EXEC sp_executesql @sql
+	    
+	SELECT @record_count = @@ROWCOUNT;
+--select @record_count
+END;
+
+CREATE PROCEDURE Sproc200221
+	@start_date DATETIME,
+	@end_date DATETIME,
+	@table_name varchar(12),
+	@record_count INT OUTPUT
+AS
+BEGIN
+-- SET NOCOUNT ON added to prevent extra result sets from
+-- interfering with SELECT statements.
+SET NOCOUNT ON;
+IF OBJECT_ID(@table_name) IS NOT NULL
+	EXEC ('DROP Table ' + @table_name)
+
+/* TESTING ONLY
+DECLARE @start_date DATETIME,
+	@end_date DATETIME,
+	@table_name varchar(12),
+	@record_count INT
+set @start_date ='2020-02-09T00:00:00';
+set @end_date ='2020-02-15T23:59:59';
+--drop table rpt0221test
+set @table_name = 'rpt0221test'
+*/-- END TESTING ONLY
+	
+Declare @start_year char(4)
+Declare @start_week int
+Declare @end_year char(4)
+Declare @end_week int
+Declare @start_of_week_for_start_date datetime
+Declare @end_of_week_for_end_date datetime
+
+set @start_year = DATEPART(YEAR,@Start_Date)
+set @start_week = DATEPART(WEEK,@Start_Date)
+set @end_year = DATEPART(YEAR,@End_Date)
+set @end_week = DATEPART(WEEK,@End_Date)
+
+
+set @start_of_week_for_start_date = DATEADD(wk, DATEDIFF(wk, 6, '1/1/' + @start_year) + (@start_week-1), 6)  --start of week
+set @end_of_week_for_end_date = DATEADD(wk, DATEDIFF(wk, 5, '1/1/' + @end_year) + (@end_week-1), 5)  --end of week
+
+set @end_of_week_for_end_date = DATEADD(day, 1, @end_of_week_for_end_date);
+set @end_of_week_for_end_date = DATEADD(second,-1,@end_of_week_for_end_date);
+
+/* may be necessary if multiple calls are done on the same connection
+declare @sqlDropPK nvarchar(4000)
+declare @PKTable nvarchar(50)
+set @PKTable = quotename(@table_name + 'PK')
+--select @PKTable
+set @sqlDropPK = N'DROP Table ' + @PKTable 
+--select @sqlDropPK
+IF OBJECT_ID(@PKTable) IS NOT NULL
+EXEC sp_executesql @sqlDropPK
+*/
+--drop table #primary_key
+create table #primary_key
+(
+  primary_key int,
+  part_number varchar(60)
+)
+insert into #primary_key(primary_key,part_number)
+(
+  select 
+  --top 10
+  ROW_NUMBER() OVER (
+    ORDER BY part_number
+  ) primary_key,
+  part_number
+  from 
+  (
+    select
+    part_number
+    from HourlyOEEValues 
+    where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
+  )s1 
+  group by part_number
+)  
+
+--drop table #primary_key
+--select count(*) #primary_key from #primary_key  --16
+--select top(100) * from #primary_key
+--FORMAT ( @d, 'd', 'en-US' ) 
+create table #set2group
+(
+	primary_key int,
+	Hourly_planned_production_count int,
+	Hourly_actual_production_count int,
+	scrap_count int,
+	Downtime_minutes float
+)
+
+insert into #set2group (primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
+(
+select
+pk.primary_key, 
+hv.Hourly_planned_production_count,
+hv.Hourly_actual_production_count,
+hv.scrap_count,
+hv.Downtime_minutes
+from #primary_key pk
+inner join
+(
+  select
+    part_number,
+    workcenter_code,
+	Hourly_planned_production_count,
+	Hourly_actual_production_count,
+	scrap_count,
+	Downtime_minutes
+  from HourlyOEEValues 
+  where date_time_stamp between @start_of_week_for_start_date and @end_of_week_for_end_date
+) hv
+on pk.part_number=hv.Part_number 
+)
+--select top(100) * from #set2group 
+--select count(*) #set2group from #set2group  --1404
+--drop table #primary_key
+--drop table #set2group
+--drop table #results
+create table #results
+(
+  primary_key int,
+  part_number varchar(60),
+  actual_vrs_planned_percent decimal(18,2),
+  scrap_count int,
+  scrap_percent int,
+  downtime_minutes int
+)
 
 
 
--- Drop table
+insert into #results (primary_key,part_number,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
+(
+select
+pk.primary_key,
+pk.part_number,
+case
+when planned_production_count = 0 then cast(0.00 as decimal(18,2))
+else cast (actual_production_count*100./planned_production_count as decimal(18,2))
+end actual_vrs_planned_percent, 
+scrap_count,
+case
+when actual_production_count = 0 then cast(0.00 as decimal(18,2))
+else cast (scrap_count*100./actual_production_count as decimal(18,2))
+end scrap_percent, 
+downtime_minutes 
+from
+(
+select
+primary_key,
+sum(Hourly_planned_production_count) planned_production_count,
+sum(Hourly_actual_production_count) actual_production_count,
+sum(scrap_count) scrap_count,
+floor(sum(Downtime_minutes)) Downtime_minutes 
+from #set2group 
+group by primary_key
+) sg
+inner join #primary_key pk
+on sg.primary_key = pk.primary_key
+)
+--select * from #results 
+--DECLARE @table_name varchar(12),
+--	@record_count INT
+--set @table_name = 'rpt0213test'
+--*/ -- END TESTING ONLY
+--drop table rpt0213test
+declare @sql nvarchar(4000)
+select @sql = N'SELECT * into ' + quotename(@table_name) + N' from #results order by primary_key'
 
--- DROP TABLE Kors.dbo.messages GO
+--select @sql = N'SELECT start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,downtime_minutes into ' + quotename(@table_name) + N' from #results order by primary_key'
 
-/*
---Moved all Feathers services to mysql including authentication
--- Drop table
+EXEC sp_executesql @sql
+    
+SELECT @record_count = @@ROWCOUNT;
+--select @record_count
+END;
 
--- DROP TABLE Kors.dbo.users GO
-
-MySQL
-show variables like 'sql_mode' ; 
-The problem is because of sql_modes. Please check your current sql_modes by command:
-show variables like 'sql_mode' ; 
-And remove the sql_mode "NO_ZERO_IN_DATE,NO_ZERO_DATE" to make it work. This is the default sql_mode in mysql new versions.
-You can set sql_mode globally as root by command:
-set global sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
-
-
-CREATE TABLE `users` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `email` varchar(255) DEFAULT NULL,
-  `password` varchar(255) DEFAULT NULL,
-  `userName` varchar(255) DEFAULT NULL,
-  `firstName` varchar(255) DEFAULT NULL,
-  `lastName` varchar(255) DEFAULT NULL,
-  `isAdmin` tinyint(1) DEFAULT NULL,
-  `roles` json DEFAULT NULL,
-  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `updatedAt` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `users_email_unique` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-
-select * from users
- */
 
 

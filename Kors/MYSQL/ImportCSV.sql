@@ -1,6 +1,7 @@
 -- /home/brent/srcsql/bpgsql/kors/MySQL/Import.csv
 -- https://www.mysqltutorial.org/import-csv-file-mysql-table/
 
+
 /*
  * Export data from the production Kors database and import it into the MySQL docker container.
  * 1. Go to the production Kors database at 10.30.1.17 and run the following query:
@@ -33,18 +34,41 @@ select count(*) HourlyOEEValues from HourlyOEEValues;  -- 06/15,49000
  * Run the following command from dbeaver
  */
 
+
+/*
+ * Create and truncate table
+ */
+-- Kors.HourlyOEEValues definition
+
+CREATE TABLE `HourlyOEEValues` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `Workcenter_Code` varchar(50) DEFAULT NULL,
+  `Job_number` varchar(20) DEFAULT NULL,
+  `Part_number` varchar(60) DEFAULT NULL,
+  `Data_hour` int DEFAULT NULL,
+  `Hourly_planned_production_count` int DEFAULT NULL,
+  `Hourly_actual_production_count` int DEFAULT NULL,
+  `Cumulative_planned_production_count` int DEFAULT NULL,
+  `Cumulative_actual_production_count` int DEFAULT NULL,
+  `scrap_count` int DEFAULT NULL,
+  `Downtime_minutes` float DEFAULT NULL,
+  `Date_time_stamp` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) 
+
 -- BE CAREFUL WITH TRUNCATE!!!!!
 -- MAKE SURE YOU ARE ON THE CONTAINER AND NOT THE PRODUCTION SYSTEM !!!!!!!!!!1
 select count(*) HourlyOEEValues from HourlyOEEValues;  -- 672 = 06/14,
 -- !!!!!!!!! TRUNCATE TABLE HourlyOEEValues;  BE CAREFUL YOU ARE CONNECTED TO THE DOCKER CONTAINER!!!!!!!!!!!!!!!!
 
 
-
 /*
  * PATH IS LOCAL TO THE DATABASE SERVER IN THIS CASE
  * would have to move import file to docker container.
  */
-LOAD DATA INFILE '/Kors.csv'  
+LOAD DATA LOCAL INFILE '/home/brent/CSV/Kors.csv'  -- MariaDB
+-- LOAD DATA INFILE '/var/lib/mysql-files/Kors.csv'  -- FOR HOST
+-- LOAD DATA INFILE '/Kors.csv'  -- FOR CONTAINER  
 INTO TABLE HourlyOEEValues
 FIELDS TERMINATED BY ',' ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
@@ -63,7 +87,7 @@ IGNORE 1 ROWS
 	
 select count(*) HourlyOEEValues from HourlyOEEValues;  -- 49,898 = 06/15,
 select * from HourlyOEEValues LIMIT 100 OFFSET 0; 
-
+-- TRUNCATE table HourlyOEEValues; 
 /*
  * This path is local to the database client and it will not be usable
  * unless special privilidges are configured in the database.  I

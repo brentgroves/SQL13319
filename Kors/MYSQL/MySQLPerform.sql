@@ -1,36 +1,8 @@
-
-/*
- * This has been my 'go-to' EXISTS procedure that checks both temp and normal tables. This procedure works in MySQL version 5.6 and above. 
- * The @DEBUG parameter is optional. The default schema is assumed, but can be concatenated to the table in the @s statement.
- */
-
-CREATE TABLE TempTable (
-	ID int NOT NULL AUTO_INCREMENT,
-	Workcenter_Code varchar(50),
-	Job_number varchar(20),
-	Part_number varchar(60),
-	Data_hour int,
-	Hourly_planned_production_count int,
-	Hourly_actual_production_count int,
-	Cumulative_planned_production_count int,
-	Cumulative_actual_production_count int,
-	scrap_count int,
-	Downtime_minutes float,
-	Date_time_stamp datetime,
-  	CONSTRAINT HOV_pk PRIMARY KEY (ID)
-)
-create table t1 (
-startDate datetime
-)
-
-insert into t1 (startDate)
-values('2020-06-08T12:06:26.938')
-
-select * from t1
---  TRUNCATE TABLE debugger; -- table debugger is full error?
--- select * from debugger d2
+SHOW GLOBAL VARIABLES LIKE '%tmp_table_size'; 
+SHOW GLOBAL VARIABLES LIKE 'max_heap_table_size';
 
 
+-- drop table TempTable
 -- set @startDate =STR_TO_DATE('12/31/2019 23:59:59','%m/%d/%Y %H:%i:%s'); -- week 52
 -- set @startDate = STR_TO_DATE('02/09/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
 set @startDate = STR_TO_DATE('05/01/2020 00:00:00','%m/%d/%Y %H:%i:%s'); -- week 0
@@ -57,11 +29,13 @@ set @tableName = 'TempTable';
 -- where Date_time_stamp > '2020-06-06 00:00:00';
 -- limit 100 offset 0
 CALL Kors.Sproc200206(@startDate, @endDate, @tableName,@rec);
-SHOW GLOBAL VARIABLES LIKE '%tmp_table_size' 
-SHOW GLOBAL VARIABLES LIKE 'max_heap_table_size'
+-- CALL Kors.Performance(@startDate, @endDate, @tableName,@rec);
 -- truncate table debugger;
 -- SELECT * from debugger;
+-- select * from results;
+select count(*) from HourlyOEEValues ho limit 100 offset 0
 SELECT @rec;
+select * from results r2
 select * from TempTable;
 select * from debugger d2
 
@@ -72,8 +46,8 @@ drop table TempTable;
 select * from rpt06047;
 select Data_hour AS solution from HourlyOEEValues
 
-DROP PROCEDURE Sproc200206;
-CREATE PROCEDURE Sproc200206
+DROP PROCEDURE Performance;
+CREATE PROCEDURE Performance
 (
 	pStartDate DATETIME,
 	pEndDate DATETIME,
@@ -154,7 +128,9 @@ BEGIN
 	  )s1 
 	  group by year,week,start_week,end_week,part_number,workcenter_code
 	);  
-	-- select * from primary_key;
+
+end;
+-- select * from primary_key;
 	DROP TABLE IF EXISTS set2group;
 	create temporary table set2group
 	(
@@ -163,7 +139,7 @@ BEGIN
 		Hourly_actual_production_count int,
 		scrap_count int,
 		Downtime_minutes float
-	) ENGINE = MEMORY;
+	);  -- ENGINE = MEMORY;
 
 	insert into set2group (primary_key,Hourly_planned_production_count,Hourly_actual_production_count,scrap_count,Downtime_minutes)
 	(
@@ -208,7 +184,8 @@ BEGIN
 	  scrap_count varchar(10),
 	  scrap_percent varchar(10),
 	  downtime_minutes varchar(20)
-	) ENGINE = MEMORY;
+	); -- ENGINE = MEMORY;
+
 	insert into results (primary_key,year_week_fmt,start_week,end_week,part_number,workcenter_code,planned_production_count,actual_production_count,actual_vrs_planned_percent,scrap_count,scrap_percent,downtime_minutes)
 	(
 		select
@@ -262,14 +239,54 @@ BEGIN
 			on sg.primary_key = pk.primary_key
 		) s2
 	);	
-	set @sqlQuery = CONCAT('create table ',tableName,' select * from results order by primary_key');
-	PREPARE stmt FROM @sqlQuery;
-	execute stmt;
+
+ 	-- set @sqlQuery = CONCAT('create temporary table Kors.',tableName,' select * from Kors.Results order by primary_key');
+	-- CALL sys.execute_prepared_stmt(@sqlQuery);
+
+-- PREPARE stmt FROM @sqlQuery;
+
+-- execute stmt;
+end;
     DEALLOCATE PREPARE stmt;
 
    	-- SELECT ROW_COUNT(); -- 0
    	set pRecordCount = FOUND_ROWS();
 end;	
+select * from Results r2 
+
+	DROP TABLE IF EXISTS Results;
+	DROP TABLE IF EXISTS TempTable;
+set @sqlQuery = CONCAT('create temporary table Kors.TempTable select * from Kors.Results order by primary_key');
+CALL sys.execute_prepared_stmt(@sqlQuery);
+select * from TempTable tt 
+select * from results r2 
+	set @tableName='TempTable';
+	
+	SET @sqlQuery = CONCAT('DROP TABLE IF EXISTS ',@tableName);
+   	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+	set @sqlQuery = CONCAT('create table TempTable select * from results order by primary_key');
+
+	PREPARE stmt FROM @sqlQuery;
+
+execute stmt;
+end;
+    DEALLOCATE PREPARE stmt;
+
+	set @tableName='TempTable';
+   
+      SET v_sql = CONCAT(
+         'SELECT ',
+         QUOTE(v_table), ' AS TableName, '
+         'COUNT(*) AS RowCount FROM ',
+         sys.quote_identifier(in_schema),
+         '.',
+         sys.quote_identifier(v_table)
+      );
+      CALL sys.execute_prepared_stmt(v_sql);
+   
+call sys.execute_prepared_stmt('create table TempTable select * from Kors.results order by primary_key');
 
 	declare @sql nvarchar(4000)
 	select @sql = N'SELECT * into ' + quotename(@table_name) + N' from #results order by primary_key'
