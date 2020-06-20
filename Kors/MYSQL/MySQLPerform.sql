@@ -97,7 +97,7 @@ BEGIN
 	  end_week datetime,
 	  part_number varchar(60),
 	  workcenter_code varchar(50)
-	) ENGINE = MEMORY;
+	) ;
 
 	insert into primary_key(primary_key,year_week,year_week_fmt,start_week,end_week,part_number,workcenter_code)
 	(
