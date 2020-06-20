@@ -6,20 +6,21 @@ CREATE TABLE `debugger` (
 -- Kors.dbo.HourlyOEEValues definition
 -- DROP TABLE Kors.dbo.HourlyOEEValues GO
 
-CREATE TABLE HourlyOEEValues (
-	ID int NOT NULL AUTO_INCREMENT,
-	Workcenter_Code varchar(50),
-	Job_number varchar(20),
-	Part_number varchar(60),
-	Data_hour int,
-	Hourly_planned_production_count int,
-	Hourly_actual_production_count int,
-	Cumulative_planned_production_count int,
-	Cumulative_actual_production_count int,
-	scrap_count int,
-	Downtime_minutes float,
-	Date_time_stamp datetime,
-  	CONSTRAINT HOV_DELIMITER //
+CREATE TABLE `HourlyOEEValues` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `Workcenter_Code` varchar(50) DEFAULT NULL,
+  `Job_number` varchar(20) DEFAULT NULL,
+  `Part_number` varchar(60) DEFAULT NULL,
+  `Data_hour` int DEFAULT NULL,
+  `Hourly_planned_production_count` int DEFAULT NULL,
+  `Hourly_actual_production_count` int DEFAULT NULL,
+  `Cumulative_planned_production_count` int DEFAULT NULL,
+  `Cumulative_actual_production_count` int DEFAULT NULL,
+  `scrap_count` int DEFAULT NULL,
+  `Downtime_minutes` float DEFAULT NULL,
+  `Date_time_stamp` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+)
 
  
 CALL Kors.InsertHourlyOEEValues(:_Workcenter_Code,:_Job_number,:_Part_number,:_Data_hour,:_Hourly_planned_production_count,:_Hourly_actual_production_count,:_Cumulative_planned_production_count,:_Cumulative_actual_production_count,:_scrap_count,:_Downtime_minutes,:_Date_time_stamp) 
