@@ -6,6 +6,7 @@ CREATE TABLE `debugger` (
 
 -- Kors.dbo.HourlyOEEValues definition
 -- DROP TABLE Kors.dbo.HourlyOEEValues GO
+
 CREATE TABLE `HourlyOEEValues` (
   `ID` int NOT NULL AUTO_INCREMENT,
   `Workcenter_Code` varchar(50) DEFAULT NULL,
