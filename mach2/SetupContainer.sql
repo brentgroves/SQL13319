@@ -42,14 +42,14 @@ CREATE TABLE SetupContainer(
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 set @transDate = '2020-06-25 00:00:00';
-call InsertSetupContainer(@transDate,'PCN',true,'Workcenter','CNC','Part_No','Name',1,
+call InsertSetupContainer(@transDate,'PCN',false,'Workcenter','CNC','Part_No','Name',1,
  'Container_Note',1234,'Container_Status','Defect_Type',
  'Serial_No',12,13,14,15,16,
  'Standard_Container_Type',17,'Parent_Part','Parent','Cavity_No',18,
  19,'Master_Unit_No','Physical_Printer_Name',20,21,
  'Default_Printer',22,23,24,false,'Container_Type','Container_Type_Description',0); 
 select * from SetupContainer sc 
---delete from SetupContainer sc2 where SetupContainer_Key <= 9
+-- delete from SetupContainer sc2 where SetupContainer_Key <= 4
 -- drop procedure InsertSetupContainer
 CREATE PROCEDURE InsertSetupContainer
 (
