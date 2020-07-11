@@ -22,8 +22,18 @@ set @transDate = '2020-07-09 09:45:00';
 -- set @transDate = '2020-06-25 00:00:00';
 -- delete from CompareContainer where CompareSetupContainer_Key = 3
 -- call CompareContainer(@transDate); 
-select * from CompareContainer 
---where transDate = @transDate;  
+-- select * from CompareContainer limit 10 offset 0
+set @startDate = '2020-07-09 11:30:00';
+set @endDate = '2020-07-09 15:30:00';
+-- set @startDate = '2020-07-09T11:30:00.000Z';  -- 1
+-- set @endDate = '2020-07-09T15:30:00.000Z'; -- 234
+select @pRecordCount := count(*) from CompareContainer where transDate between @startDate and @endDate order by CompareContainer_Key;
+select @pRecordCount;
+select * from CompareContainer where transDate between @startDate and @endDate ORDER BY CompareContainer_Key LIMIT 100 OFFSET 0;
+   	-- SELECT ROW_COUNT(); -- -1
+   	select FOUND_ROWS(); --  144
+select count(*) from CompareContainer where transDate between @startDate and @endDate ORDER BY CompareContainer_Key 
+
 -- drop procedure CompareContainer
 CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`CompareContainer`(
     IN  p_TransDate VARCHAR(25)
@@ -70,3 +80,68 @@ where TransDate = p_TransDate
 order by TransDate,Part_no,Serial_no,Container_Status;
 
 END;
+
+
+set @startDate = '2020-07-09 11:30:00';
+set @endDate = '2020-07-09 15:30:00';
+-- set @startDate = '2020-07-09T11:30:00.000Z';  -- 1
+-- set @endDate = '2020-07-09T15:30:00.000Z'; -- 234
+select count(*) 
+into @pRecordCount
+from CompareContainer where transDate between @startDate and @endDate ORDER BY CompareContainer_Key;
+select @pRecordCount;
+
+
+set @startDate = '2020-07-09 11:30:00';
+set @endDate = '2020-07-09 15:30:00';
+call CompareContainerFetch(@startDate,@endDate,90,2, @rec); 
+select @rec;
+-- drop procedure CompareContainerFetch
+CREATE DEFINER=`brent`@`%` PROCEDURE CompareContainerFetch (
+	pStartDate DATETIME,
+	pEndDate DATETIME,
+	pLimit int,
+	pSkip int,
+	OUT pRecordCount INT 
+)
+BEGIN
+
+	DECLARE startDate,endDate DATETIME;
+	DECLARE startWeek,endWeek INT;
+
+	set startDate =pStartDate;
+	set endDate =pEndDate;
+
+	select 
+	CompareContainer_Key,
+	-- convert_tz(TransDate,'UTC',@@session.time_zone) TransDate,
+	-- CONVERT_TZ( TransDate, 'UTC','America/Fort_Wayne' ) TransDate,
+	date_format(TransDate, '%Y-%m-%d %H:%i') TransDate,
+ 	PCN,
+ 	Workcenter,
+ 	CNC,
+ 	Name,
+ 	Part_No,
+ 	Serial_No,
+ 	tst_Serial_No,
+ 	Quantity,
+ 	tst_Quantity,
+ 	Container_Status,
+ 	Status 
+	from CompareContainer where transDate between pStartDate and pEndDate ORDER BY CompareContainer_Key LIMIT pLimit OFFSET pSkip; 
+	-- select * from CompareContainer where transDate between pStartDate and pEndDate ORDER BY CompareContainer_Key LIMIT pLimit OFFSET pSkip;  
+	-- select @pRecordCount := count(*) from CompareContainer where transDate between pStartDate and pEndDate;
+	-- set pRecordCount = @pRecordCount;
+	select count(*) 
+	into pRecordCount
+	from CompareContainer 
+	where transDate between pStartDate and pEndDate;	
+
+   	-- SELECT ROW_COUNT(); -- 0
+   	-- set pRecordCount = FOUND_ROWS();
+end;
+
+
+
+
+
