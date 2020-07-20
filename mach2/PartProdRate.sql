@@ -23,7 +23,7 @@ LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (part_key,part_no,period,start_date,end_date,quantity);
 
-SELECT * from PartProdRate
+SELECT quantity,format(quantity/480,2),FORMAT(quantity, 2) from PartProdRate
 
 set @startPeriod =  0;
 set @endPeriod = 4;
@@ -54,7 +54,8 @@ BEGIN
 	period,
 	date_format(start_date, '%Y-%m-%d %H:%i') start_date,
 	date_format(end_date, '%Y-%m-%d %H:%i') end_date,
-	Quantity
+	FORMAT(Quantity, 2) Quantity,
+	format(Quantity/480,2) ProdRate
 	from PartProdRate ppr where period between pStartPeriod and pEndPeriod ORDER BY PartProdRate_Key LIMIT pLimit OFFSET pSkip; 
 	-- select * from CompareContainer where transDate between pStartDate and pEndDate ORDER BY CompareContainer_Key LIMIT pLimit OFFSET pSkip;  
 	-- select @pRecordCount := count(*) from CompareContainer where transDate between pStartDate and pEndDate;
