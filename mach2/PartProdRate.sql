@@ -9,7 +9,7 @@ create table PartProdRate
   start_date datetime,
   end_date datetime,
   quantity int,
-  rate decimal (9,2),	
+  rate decimal (19,5),	
   PRIMARY KEY (PartProdRate_Key)  
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
