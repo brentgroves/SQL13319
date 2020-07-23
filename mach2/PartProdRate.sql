@@ -24,9 +24,10 @@ LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (part_key,part_no,period,start_date,end_date,quantity,rate);
 
-select * from PartProdRate ppr 
-order by end_date desc
-
+select * from PartProdRate ppr
+order by part_no,period
+-- order by end_date desc
+select 333/480.0
 
 set @startPeriod =  0;
 set @endPeriod = 4;
@@ -73,4 +74,17 @@ BEGIN
    	-- set pRecordCount = FOUND_ROWS();
 end;
 
+select * from PartProdRate ppr
+order by part_no,period;
 
+select 
+part_no,
+max(period) + 1 numberOfPeriods,
+sum(rate) sumOfRates,
+sum(rate)/(max(period) + 1) meanOfRates,
+sum(quantity)/cast(((max(period)+1)* 480) as decimal) meanOfQuantities
+from PartProdRate ppr
+group by part_no
+order by part_no;
+-- 2795852 18
+-- 2795855 8
