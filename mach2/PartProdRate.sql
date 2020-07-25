@@ -81,10 +81,19 @@ select
 part_no,
 max(period) + 1 numberOfPeriods,
 sum(rate) sumOfRates,
-sum(rate)/(max(period) + 1) meanOfRates,
-sum(quantity)/cast(((max(period)+1)* 480) as decimal) meanOfQuantities
+cast(sum(rate)/(max(period) + 1) as decimal(19,5)) meanOfRates,
+sum(quantity)/cast(((max(period)+1)* 480) as decimal) meanOfQuantities,
+std(rate) std
 from PartProdRate ppr
 group by part_no
 order by part_no;
 -- 2795852 18
 -- 2795855 8
+/*
+ * 
+ * SELECT AVG(value)
+FROM yourtable yt
+INNER JOIN (SELECT AVG(value) AS avrg, STDDEV(value) AS stdv
+FROM your table ) ilv
+ON yt.value BETWEEN avrg-2*stdv AND avrg+2*stdv
+ * */
