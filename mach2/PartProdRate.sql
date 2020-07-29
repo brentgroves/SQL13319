@@ -77,15 +77,39 @@ end;
 select * from PartProdRate ppr
 order by part_no,period;
 
+select 333/480.0
+
+-- drop table PartProdRate
+-- truncate table PartProdRate
+create table Stats
+(
+  PartProdRate_Key INT NOT NULL AUTO_INCREMENT, 
+  part_key long,
+  part_no varchar(113),  
+  numberOfPeriods int,
+  sumOfRates decimal(19,5),
+  meanOfRates decimal(19,5),
+  meanOfQuantities decimal(19,5),  // same as meanOfRates
+  
+  quantity int,
+  rate decimal (19,5),	
+  PRIMARY KEY (PartProdRate_Key)  
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 select 
+part_key,
 part_no,
 max(period) + 1 numberOfPeriods,
 sum(rate) sumOfRates,
-cast(sum(rate)/(max(period) + 1) as decimal(19,5)) meanOfRates,
-sum(quantity)/cast(((max(period)+1)* 480) as decimal) meanOfQuantities,
-std(rate) std
+-- cast(sum(rate)/(max(period) + 1) as decimal(19,5)) meanOfRates,
+cast(sum(rate)/(max(period) + 1) as double) meanOfRates2,
+-- cast(sum(quantity)/((max(period) + 1) * 480) as decimal(19,5)) meanOfQuantities,
+cast(sum(quantity)/((max(period) + 1) * 480) as double) meanOfQuantities,
+std(rate) std,
+stddev(rate) stddev
 from PartProdRate ppr
-group by part_no
+group by part_key,part_no
 order by part_no;
 -- 2795852 18
 -- 2795855 8
