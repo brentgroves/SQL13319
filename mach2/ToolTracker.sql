@@ -48,35 +48,35 @@ insert into ToolListItem (ToolListItemKey,ToolListKey,ToolID,ToolNumber,OpDescri
 -- values (11,1,383264,5,'10MM END MILL')
  values (12,1,383265,2,'1.25\" HELICAL MILL')
 /*
- * Tool List to CNC mapping table. 1 to many
+ * Tool List Item to CNC mapping table. 1 to many
  */
--- drop table ToolTracker
-CREATE TABLE ToolTracker (
-	ToolTrackerKey int NOT NULL, -- AUTO_INCREMENT, I have the keys already in a json file
-	ToolListItemKey int, -- foreign key
+-- drop table WorkCenter
+CREATE TABLE WorkCenter (
+	WorkCenterKey int NOT NULL, -- AUTO_INCREMENT, I have the keys already in a json file
   	CNC int NOT NULL,  -- number on CNC
-  	-- Plex foriegn keys and needed fields for UI
+	-- Plex foriegn keys and needed fields for UI
   	Workcenter_Key int NOT NULL,  -- Plex
   	Workcenter_Code varchar(50) NOT NULL,  -- Plex
-  	PRIMARY KEY (ToolTrackerKey)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool List to CNC mapping table.';
+  	PRIMARY KEY (WorkCenterKey)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Work Center.';
 
-select * from ToolTracker tt 
-insert into ToolTracker (ToolTrackerKey,ToolListItemKey,CNC,Workcenter_Key,Workcenter_Code)
--- values (1,1,103,60740,'Honda RDX CNC- 103') 
--- values (2,2,103,60740,'Honda RDX CNC- 103') 
--- values (3,3,103,60740,'Honda RDX CNC- 103') 
--- values (4,4,103,60740,'Honda RDX CNC- 103')
--- values (5,5,103,60740,'Honda RDX CNC- 103') 
--- values (6,6,103,60740,'Honda RDX CNC- 103')
--- values (7,7,103,60740,'Honda RDX CNC- 103')
--- values (8,8,103,60740,'Honda RDX CNC- 103')
--- values (9,9,103,60740,'Honda RDX CNC- 103')
--- values (10,10,103,60740,'Honda RDX CNC- 103')
--- values (11,11,103,60740,'Honda RDX CNC- 103')
--- values (12,12,103,60740,'Honda RDX CNC- 103')
+select * from WorkCenter tt 
+insert into WorkCenter (WorkCenterKey,CNC,Workcenter_Key,Workcenter_Code)
+values (1,103,60740,'Honda RDX CNC- 103') 
 
-insert into ToolTracker (ToolTrackerKey,CNC,Workcenter_Key,Workcenter_Code,Part_Key,Part_No,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,ToolID,ToolNumber,OpDescription)
+-- drop table ToolChange
+CREATE TABLE ToolChange (
+	ToolChangeKey int(11) NOT NULL AUTO_INCREMENT,
+	ToolListItemKey int(11) NOT NULL,
+  	CNC int NOT NULL,  -- number on CNC
+  	ToolLife int NOT NULL,
+  	TransDate datetime NOT NULL,
+  	PRIMARY KEY (ToolChangeKey)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool change history';
+select * from ToolChange tc 
+
+-- OBSOLETE
+-- insert into ToolTracker (ToolTrackerKey,CNC,Workcenter_Key,Workcenter_Code,Part_Key,Part_No,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,ToolID,ToolNumber,OpDescription)
 -- values (1,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383254,12,'86.125MM PRE FINISH BORE') 
 -- values (2,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383255,1,'85.24MM ROUGH BORE') 
 -- values (3,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383256,10,'86.925MM FINISH BORE') 
@@ -91,13 +91,6 @@ insert into ToolTracker (ToolTrackerKey,CNC,Workcenter_Key,Workcenter_Code,Part_
 -- values (12,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383265,2,'1.25\" HELICAL MILL')
 
 
-CREATE TABLE ToolChange (
-	ToolChangeKey int(11) NOT NULL AUTO_INCREMENT,
-	ToolTrackerKey int(11) NOT NULL,
-  	ToolLife int NOT NULL,
-  	TransDate datetime NOT NULL,
-  	PRIMARY KEY (ToolChangeKey)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool change history';
 
 
 /*
