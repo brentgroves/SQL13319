@@ -2,23 +2,42 @@
  * Tool List master table 
  */
 
--- drop table ToolList
--- truncate table ToolList
-CREATE TABLE ToolList (
-	ToolListKey int NOT NULL, -- AUTO_INCREMENT, I have the keys already in a json file
-  	-- Busche ToolList database foriegn keys and needed fields for UI
-  	ProcessID int NOT NULL,  -- primary key
-  	OriginalProcessID int NOT NULL,  -- ToolBoss
-  	Customer nvarchar(50) NOT NULL,  
-  	PartFamily nvarchar(50) NOT NULL, 
-  	OperationDescription nvarchar(50) NOT NULL,  -- Master  
-  	Part_Key int NOT NULL,  -- Plex
-  	Part_No varchar (100) NOT NULL,
-  	PRIMARY KEY (ToolListKey)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool list master table';
+-- drop table Part
+-- truncate table Part
+CREATE TABLE Part (
+	Part_Key int NOT NULL,
+	Part_No	varchar (100),
+	Revision varchar (8),  -- May not be a good idea to collect revision info.
+	Name varchar (100),
+	Part_Type varchar (50),
+	PRIMARY KEY (Part_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A Tool such as a facemill or drill that can use items such as inserts';
+
+-- drop table Part
+-- truncate table Part
+CREATE TABLE Part_Operation (
+	Part_Key int NOT NULL,
+	Part_Operation_Key	int NOT NULL,
+	Operation_No int NOT NULL,
+	PRIMARY KEY (Assebly_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A Tool such as a facemill or drill that can use items such as inserts';
+
 
 insert into ToolList (ToolListKey,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,Part_Key,Part_No)
 values (1,61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',2960018,'51393TJB A040M1') 
+
+/*
+ * This corresponds to a Plex tool assembly
+ */
+-- drop table ToolList
+-- truncate table ToolAssembly
+CREATE TABLE ToolAssembly (
+	Assembly_Key int NOT NULL, 
+	Assembly_No	varchar (50) NOT NULL,
+	Description	varchar (100) NOT NULL,
+  	PRIMARY KEY (Assebly_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A Tool such as a facemill or drill that can use items such as inserts';
+
 
 select * from ToolList
 
@@ -47,22 +66,39 @@ insert into ToolListItem (ToolListItemKey,ToolListKey,ToolID,ToolNumber,OpDescri
 -- values (10,1,383263,4,'21MM DRILL/SPOTFACE')
 -- values (11,1,383264,5,'10MM END MILL')
  values (12,1,383265,2,'1.25\" HELICAL MILL')
-/*
- * Tool List Item to CNC mapping table. 1 to many
+
+ /*
+ * Work center info
+ * 
  */
 -- drop table WorkCenter
 CREATE TABLE WorkCenter (
 	WorkCenterKey int NOT NULL, -- AUTO_INCREMENT, I have the keys already in a json file
-  	CNC int NOT NULL,  -- number on CNC
 	-- Plex foriegn keys and needed fields for UI
   	Workcenter_Key int NOT NULL,  -- Plex
   	Workcenter_Code varchar(50) NOT NULL,  -- Plex
-  	PRIMARY KEY (WorkCenterKey)
+  	CNC int NOT NULL,  -- number on CNC
+  	PRIMARY KEY (Workcenter_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Work Center.';
 
 select * from WorkCenter tt 
 insert into WorkCenter (WorkCenterKey,CNC,Workcenter_Key,Workcenter_Code)
 values (1,103,60740,'Honda RDX CNC- 103') 
+
+/*
+ * Current CNC tool counter values
+ */
+CREATE TABLE WorkCenterToolCounter (
+	WorkCenterToolCounterKey int NOT NULL AUTO_INCREMENT, 
+	WorkCenterKey int NOT NULL, 
+	ToolListItemKey int NOT NULL,  
+  	Value int NOT NULL
+  	PRIMARY KEY (WorkCenterToolCounterKey)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Work center tool counter';
+
+
+
+
 
 -- drop table ToolChange
 CREATE TABLE ToolChange (
