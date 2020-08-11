@@ -1,4 +1,30 @@
 /*
+ * Subset of Plex part_v_workcenter view.  Plex has multiple CNC assigned to a workcenter.
+ * 
+ */
+-- drop table Workcenter
+CREATE TABLE Workcenter (
+  	Workcenter_Key int NOT NULL,  
+  	Workcenter_Code varchar(50) NOT NULL,  
+  	Name varchar (100),
+  	PRIMARY KEY (Workcenter_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of Plex part_v_workcenter view.';
+insert into Workcenter (Workcenter_Key,Workcenter_Code,Name)
+values (2809196,'Honda Civic CNC 359 362','Honda Civic Knuckle LH') 
+
+select * from Workcenter tt 
+
+-- drop table CNC_Workcenter
+CREATE TABLE CNC_Workcenter (
+	CNC varchar(6),
+  	Workcenter_Key int NOT NULL, 
+  	PRIMARY KEY (CNC)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Link CNC to a workcenter';
+insert into CNC_Workcenter (CNC,Workcenter_Key)
+values ('103',2809196) 
+
+select * from CNC_Workcenter
+/*
  * Tool List master table 
  */
 
@@ -11,105 +37,109 @@ CREATE TABLE Part (
 	Name varchar (100),
 	Part_Type varchar (50),
 	PRIMARY KEY (Part_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A Tool such as a facemill or drill that can use items such as inserts';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_part view';
+insert into Part (Part_Key,Part_No,Revision,Name,Part_Type)
+values (2809196,'51393 TJB A040M1','40-M1-','RDX Right Hand','Bracket') 
+select * from Part
 
--- drop table Part
--- truncate table Part
+-- drop table Part_Operation
+-- truncate table Part_Operation
 CREATE TABLE Part_Operation (
-	Part_Key int NOT NULL,
 	Part_Operation_Key	int NOT NULL,
+	Part_Key int NOT NULL,
 	Operation_No int NOT NULL,
-	PRIMARY KEY (Assebly_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A Tool such as a facemill or drill that can use items such as inserts';
+	Operation_Key int NOT NULL,
+	PRIMARY KEY (Part_Operation_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_part_operation';
+select * from Part_Operation
 
+insert into Part_Operation (Part_Operation_Key,Part_Key,Operation_No,Operation_Key)
+values (7914696,2809196,100,56409)
 
-insert into ToolList (ToolListKey,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,Part_Key,Part_No)
-values (1,61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',2960018,'51393TJB A040M1') 
+-- drop table Operation
+-- truncate table Operation
+CREATE TABLE Operation (
+	Operation_Key	int NOT NULL,
+	Operation_Code	varchar (30),
+	PRIMARY KEY (Operation_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_operation';
+insert into Operation (Operation_Key,Operation_Code)
+values (56409,'Machine Complete')
+
+select * from Operation
 
 /*
  * This corresponds to a Plex tool assembly
  */
--- drop table ToolList
--- truncate table ToolAssembly
-CREATE TABLE ToolAssembly (
+-- drop table Tool_Assembly
+-- truncate table Tool_Assembly
+CREATE TABLE Tool_Assembly (
 	Assembly_Key int NOT NULL, 
 	Assembly_No	varchar (50) NOT NULL,
 	Description	varchar (100) NOT NULL,
-  	PRIMARY KEY (Assebly_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A Tool such as a facemill or drill that can use items such as inserts';
+  	PRIMARY KEY (Assembly_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly';
+insert into Tool_Assembly (Assembly_Key,Assembly_No,Description)
+-- values (1,'T12','86.125MM PRE FINISH BORE')
+-- values (2,'T01','85.24MM ROUGH BORE')
+-- values (3,'T10','86.925MM FINISH BORE')
+-- values (4,'T11','ETCHER')
+-- values (5,'T13','180MM BACK CUTTER RH PART ONLY')
+-- values (6,'T16','135MM BACK CUTTER RH ONLY')
+-- values (7,'T07','8.2MM DRILL')
+-- values (8,'T08','14.3MM DRILL/CHAMFER')
+-- values (9,'T09','15.5MM DRILL/CHAMFER')
+-- values (10,'T04','21MM DRILL/SPOTFACE')
+-- values (11,'T05','10MM END MILL')
+-- values (12,'T02','1.25\" HELICAL MILL')
+
+select * from Tool_Assembly 
 
 
-select * from ToolList
 
-
--- drop table ToolListItem
-CREATE TABLE ToolListItem (
-	ToolListItemKey int NOT NULL,  -- AUTO_INCREMENT, I have the keys already in a json file
-	ToolListKey int NOT NULL, -- foreign key. 1 to many
-  	-- Busche ToolList foriegn keys and needed fields for UI
-  	ToolID int NOT NULL,  -- [ToolList Tool] primary key
-  	ToolNumber int NOT NULL,
-  	OpDescription nvarchar(75) NOT NULL,  
-  	PRIMARY KEY (ToolListItemKey)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool list item descriptions';
-select * from ToolListItem
-insert into ToolListItem (ToolListItemKey,ToolListKey,ToolID,ToolNumber,OpDescription)
--- values (1,1,383254,12,'86.125MM PRE FINISH BORE') 
--- values (2,1,383255,1,'85.24MM ROUGH BORE') 
--- values (3,1,383256,10,'86.925MM FINISH BORE') 
--- values (4,1,383257,11,'ETCHER')
--- values (5,1,383258,13,'180MM BACK CUTTER RH PART ONLY') 
--- values (6,1,383259,16,'135MM BACK CUTTER RH ONLY')
--- values (7,1,383260,7,'8.2MM DRILL')
--- values (8,1,383261,8,'14.3MM DRILL/CHAMFER')
--- values (9,1,383262,9,'15.5MM DRILL/CHAMFER')
--- values (10,1,383263,4,'21MM DRILL/SPOTFACE')
--- values (11,1,383264,5,'10MM END MILL')
- values (12,1,383265,2,'1.25\" HELICAL MILL')
-
- /*
- * Work center info
- * 
- */
--- drop table WorkCenter
-CREATE TABLE WorkCenter (
-	WorkCenterKey int NOT NULL, -- AUTO_INCREMENT, I have the keys already in a json file
-	-- Plex foriegn keys and needed fields for UI
-  	Workcenter_Key int NOT NULL,  -- Plex
-  	Workcenter_Code varchar(50) NOT NULL,  -- Plex
-  	CNC int NOT NULL,  -- number on CNC
-  	PRIMARY KEY (Workcenter_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Work Center.';
-
-select * from WorkCenter tt 
-insert into WorkCenter (WorkCenterKey,CNC,Workcenter_Key,Workcenter_Code)
-values (1,103,60740,'Honda RDX CNC- 103') 
-
+select * from Tool_Life_Assembly
+select * from 
 /*
- * Current CNC tool counter values
+ * CNC tool life for assembly from TLM.SSB
  */
-CREATE TABLE WorkCenterToolCounter (
-	WorkCenterToolCounterKey int NOT NULL AUTO_INCREMENT, 
-	WorkCenterKey int NOT NULL, 
-	ToolListItemKey int NOT NULL,  
-  	Value int NOT NULL
-  	PRIMARY KEY (WorkCenterToolCounterKey)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Work center tool counter';
+-- drop table CNC_Tool_Life 
+CREATE TABLE CNC_Tool_Life (
+	CNC_Tool_Life_Key int NOT NULL,
+	CNC varchar(6) NOT NULL, 
+	Part_Key int NOT NULL, 
+	Assembly_Key int NOT NULL, 
+	Tool_Life int NOT NULL,
+  	Current_Value int NOT NULL,
+  	PRIMARY KEY (CNC_Tool_Life_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC tool life info';
 
+insert into CNC_Tool_Life (CNC_Tool_Life_Key,CNC,Part_Key,Assembly_Key,Tool_Life,Current_Value)
+-- values (1,'103',2809196,1,73000,-1)
+-- values (2,'103',2809196,2,52600,-1)
+-- values (3,'103',2809196,3,80500,-1)
+-- values (4,'103',2809196,4,130000,-1)
+-- values (5,'103',2809196,5,999999,-1)
+-- values (6,'103',2809196,6,999999,-1)
+-- values (7,'103',2809196,7,110000,-1)
+-- values (8,'103',2809196,8,100000,-1)
+-- values (9,'103',2809196,9,110000,-1)
+-- values (10,'103',2809196,10,72000,-1)
+-- values (11,'103',2809196,11,130000,-1)
+ values (12,'103',2809196,12,40000,-1)
+select * from CNC_Tool_Life 
+ 
 
-
-
-
--- drop table ToolChange
-CREATE TABLE ToolChange (
-	ToolChangeKey int(11) NOT NULL AUTO_INCREMENT,
-	ToolListItemKey int(11) NOT NULL,
-  	CNC int NOT NULL,  -- number on CNC
-  	ToolLife int NOT NULL,
-  	TransDate datetime NOT NULL,
-  	PRIMARY KEY (ToolChangeKey)
+-- drop table Tool_Change
+CREATE TABLE Tool_Change (
+	Tool_Change_Key int NOT NULL,
+	CNC varchar(6) NOT NULL, 
+	Part_Key int NOT NULL, 
+	Assembly_Key int NOT NULL, 
+  	Actual_Tool_Life int NOT NULL,
+  	Trans_Date datetime NOT NULL,
+  	PRIMARY KEY (Tool_Change_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool change history';
-select * from ToolChange tc 
+select * from Tool_Change tc 
 
 -- OBSOLETE
 -- insert into ToolTracker (ToolTrackerKey,CNC,Workcenter_Key,Workcenter_Code,Part_Key,Part_No,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,ToolID,ToolNumber,OpDescription)
