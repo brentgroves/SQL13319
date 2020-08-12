@@ -97,49 +97,62 @@ select * from Tool_Assembly
 
 
 
-select * from Tool_Life_Assembly
-select * from 
+/*
+ * CNC info, don't want to have a varchar primary_key
+ */
+-- drop table CNC 
+CREATE TABLE CNC (
+	CNC_Key int NOT NULL,
+	CNC varchar(10) NOT NULL,
+  	PRIMARY KEY (CNC_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC unique identifier';
+insert into CNC (CNC_Key,CNC)
+values (1,'103')
+
+select * from CNC
 /*
  * CNC tool life for assembly from TLM.SSB
  */
--- drop table CNC_Tool_Life 
-CREATE TABLE CNC_Tool_Life (
-	CNC_Tool_Life_Key int NOT NULL,
-	CNC varchar(6) NOT NULL, 
-	Part_Key int NOT NULL, 
+-- drop table CNC_Tool_Tracker 
+CREATE TABLE CNC_Tool_Tracker (
+	CNC_Tool_Tracker_Key int NOT NULL,
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
-	Tool_Life int NOT NULL,
+	Tool_Life int NOT NULL,  -- Can be different for every CNC
   	Current_Value int NOT NULL,
-  	PRIMARY KEY (CNC_Tool_Life_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC tool life info';
+  	PRIMARY KEY (CNC_Tool_Tracker_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC tool tracker info';
 
-insert into CNC_Tool_Life (CNC_Tool_Life_Key,CNC,Part_Key,Assembly_Key,Tool_Life,Current_Value)
--- values (1,'103',2809196,1,73000,-1)
--- values (2,'103',2809196,2,52600,-1)
--- values (3,'103',2809196,3,80500,-1)
--- values (4,'103',2809196,4,130000,-1)
--- values (5,'103',2809196,5,999999,-1)
--- values (6,'103',2809196,6,999999,-1)
--- values (7,'103',2809196,7,110000,-1)
--- values (8,'103',2809196,8,100000,-1)
--- values (9,'103',2809196,9,110000,-1)
--- values (10,'103',2809196,10,72000,-1)
--- values (11,'103',2809196,11,130000,-1)
- values (12,'103',2809196,12,40000,-1)
-select * from CNC_Tool_Life 
+insert into CNC_Tool_Tracker (CNC_Tool_Tracker_Key,CNC_Key,Part_Key,Assembly_Key,Tool_Life,Current_Value)
+-- values (1,1,2809196,1,73000,-1)
+-- values (2,1,2809196,2,52600,-1)
+-- values (3,1,2809196,3,80500,-1)
+-- values (4,1,2809196,4,130000,-1)
+-- values (5,1,2809196,5,999999,-1)
+-- values (6,1,2809196,6,999999,-1)
+-- values (7,1,2809196,7,110000,-1)
+-- values (8,1,2809196,8,100000,-1)
+-- values (9,1,2809196,9,110000,-1)
+-- values (10,1,2809196,10,72000,-1)
+-- values (11,1,2809196,11,130000,-1)
+-- values (12,1,2809196,12,40000,-1)
+select * from CNC_Tool_Tracker 
+where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
  
 
 -- drop table Tool_Change
 CREATE TABLE Tool_Change (
-	Tool_Change_Key int NOT NULL,
-	CNC varchar(6) NOT NULL, 
-	Part_Key int NOT NULL, 
-	Assembly_Key int NOT NULL, 
+	Tool_Change_Key int NOT NULL AUTO_INCREMENT,
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Assembly_Key int NOT NULL,
   	Actual_Tool_Life int NOT NULL,
   	Trans_Date datetime NOT NULL,
   	PRIMARY KEY (Tool_Change_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool change history';
 select * from Tool_Change tc 
+where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
 
 -- OBSOLETE
 -- insert into ToolTracker (ToolTrackerKey,CNC,Workcenter_Key,Workcenter_Code,Part_Key,Part_No,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,ToolID,ToolNumber,OpDescription)
