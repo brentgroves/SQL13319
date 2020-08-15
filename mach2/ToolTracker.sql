@@ -121,25 +121,66 @@ CREATE TABLE CNC_Tool_Tracker (
 	Assembly_Key int NOT NULL, 
 	Tool_Life int NOT NULL,  -- Can be different for every CNC
   	Current_Value int NOT NULL,
+  	Last_Update datetime NOT NULL,
   	PRIMARY KEY (CNC_Tool_Tracker_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC tool tracker info';
 
-insert into CNC_Tool_Tracker (CNC_Tool_Tracker_Key,CNC_Key,Part_Key,Assembly_Key,Tool_Life,Current_Value)
--- values (1,1,2809196,1,73000,-1)
--- values (2,1,2809196,2,52600,-1)
--- values (3,1,2809196,3,80500,-1)
--- values (4,1,2809196,4,130000,-1)
--- values (5,1,2809196,5,999999,-1)
--- values (6,1,2809196,6,999999,-1)
--- values (7,1,2809196,7,110000,-1)
--- values (8,1,2809196,8,100000,-1)
--- values (9,1,2809196,9,110000,-1)
--- values (10,1,2809196,10,72000,-1)
--- values (11,1,2809196,11,130000,-1)
--- values (12,1,2809196,12,40000,-1)
+set @Last_Update = '2020-08-15 00:00:00';
+insert into CNC_Tool_Tracker (CNC_Tool_Tracker_Key,CNC_Key,Part_Key,Assembly_Key,Tool_Life,Current_Value,Last_Update)
+-- values (1,1,2809196,1,73000,-1,@Last_Update )
+-- values (2,1,2809196,2,52600,-1,@Last_Update)
+-- values (3,1,2809196,3,80500,-1,@Last_Update)
+-- values (4,1,2809196,4,130000,-1,@Last_Update)
+-- values (5,1,2809196,5,999999,-1,@Last_Update)
+-- values (6,1,2809196,6,999999,-1,@Last_Update)
+-- values (7,1,2809196,7,110000,-1,@Last_Update)
+-- values (8,1,2809196,8,100000,-1,@Last_Update)
+-- values (9,1,2809196,9,110000,-1,@Last_Update)
+-- values (10,1,2809196,10,72000,-1,@Last_Update)
+-- values (11,1,2809196,11,130000,-1,@Last_Update)
+-- values (12,1,2809196,12,40000,-1,@Last_Update)
+
+update CNC_Tool_Tracker 
+set Current_Value = 999, Last_Update = '2020-08-15 00:00:00' 
+where CNC_Key = 1 and Part_Key = 2809196 and Assembly_Key = 1
+
 select * from CNC_Tool_Tracker 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
- 
+
+DROP PROCEDURE UpdateTrackerCurrentValue;
+CREATE PROCEDURE UpdateTrackerCurrentValue
+(
+	pCNC_Key INT,
+	pPart_Key INT,
+	pAssembly_Key INT,
+	pCurrent_Value INT,	
+	pLast_Update DATETIME,
+	OUT pReturnValue INT 
+)
+BEGIN
+   
+   	update CNC_Tool_Tracker 
+	set Current_Value = pCurrent_Value, Last_Update = pLast_Update
+	where CNC_Key = pCNC_Key and Part_Key = pPart_Key and Assembly_Key = pAssembly_Key;
+
+   	-- SELECT ROW_COUNT(); -- 0
+   	-- set pRecordCount = FOUND_ROWS();
+   	set pReturnValue = 0;
+end;	
+
+set @CNC_Key = 1;
+set @Part_Key = 2809196;
+set @Assembly_Key = 1;
+set @Current_Value = 2;
+set @Last_Update = '2020-08-15 00:00:01';
+
+CALL UpdateTrackerCurrentValue(@CNC_Key,@Part_Key,@Assembly_Key,@Current_Value,@Last_Update,@Return_Value);
+
+SELECT @Return_Value;
+
+select * from CNC_Tool_Tracker 
+where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
+
 
 -- drop table Tool_Change
 CREATE TABLE Tool_Change (
@@ -153,58 +194,6 @@ CREATE TABLE Tool_Change (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool change history';
 select * from Tool_Change tc 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
-
--- OBSOLETE
--- insert into ToolTracker (ToolTrackerKey,CNC,Workcenter_Key,Workcenter_Code,Part_Key,Part_No,ProcessID,OriginalProcessID,Customer,PartFamily,OperationDescription,ToolID,ToolNumber,OpDescription)
--- values (1,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383254,12,'86.125MM PRE FINISH BORE') 
--- values (2,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383255,1,'85.24MM ROUGH BORE') 
--- values (3,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383256,10,'86.925MM FINISH BORE') 
--- values (4,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383257,11,'ETCHER')
--- values (5,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383258,13,'180MM BACK CUTTER RH PART ONLY') 
--- values (6,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383259,16,'135MM BACK CUTTER RH ONLY')
--- values (7,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383260,7,'8.2MM DRILL')
--- values (8,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383261,8,'14.3MM DRILL/CHAMFER')
--- values (9,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383262,9,'15.5MM DRILL/CHAMFER')
--- values (10,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383263,4,'21MM DRILL/SPOTFACE')
--- values (11,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383264,5,'10MM END MILL')
--- values (12,103,60740,'Honda RDX CNC- 103',2960018,'51393TJB A040M1',61442,49396,'SAT','51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET','MILL COMPLETE',383265,2,'1.25\" HELICAL MILL')
-
-
-
-
-/*
- * 
-      "CNC": 103,
-      "workcenter_Key": 60740,
-      "workcenter_Code": "Honda RDX CNC- 103",        
-      "Part_Key": 2960018,
-      "Part_No": "51393TJB A040M1",
-      "ProcessID": 61442, 
-      "OriginalProcessID": 49396,
-      "Customer": "SAT",
-      "PartFamily": "51393-TJB-A040-M1 RH RDX COMPLIANCE BRACKET",
-      "ToolTracker":
-
- */
-
-
-383254,12,'86.125MM PRE FINISH BORE')
-383255,1,'85.24MM ROUGH BORE')
-383256,10,'86.925MM FINISH BORE')
-383257,11,'ETCHER')
-383258,13,'180MM BACK CUTTER RH PART ONLY')
-383259,16,'135MM BACK CUTTER RH ONLY')
-383260,7,'8.2MM DRILL')
-383261,8,'14.3MM DRILL/CHAMFER')
-383262,9,'15.5MM DRILL/CHAMFER')
-383263,4,'21MM DRILL/SPOTFACE')
-383264,5,'10MM END MILL')
-383265,2,'1.25\" HELICAL MILL')
-
-
-
-
-8.2MM DRILL
 
 select * from ToolTracker
 
