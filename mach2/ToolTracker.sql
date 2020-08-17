@@ -118,6 +118,7 @@ CREATE TABLE CNC_Tool_Tracker (
 	CNC_Tool_Tracker_Key int NOT NULL,
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
+	Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
 	Tool_Life int NOT NULL,  -- Can be different for every CNC
   	Current_Value int NOT NULL,
@@ -137,15 +138,59 @@ insert into CNC_Tool_Tracker (CNC_Tool_Tracker_Key,CNC_Key,Part_Key,Assembly_Key
 -- values (8,1,2809196,8,100000,-1,@Last_Update)
 -- values (9,1,2809196,9,110000,-1,@Last_Update)
 -- values (10,1,2809196,10,72000,-1,@Last_Update)
--- values (11,1,2809196,11,130000,-1,@Last_Update)
+-- values (11,1,2809196,11,50000,-1,@Last_Update)
 -- values (12,1,2809196,12,40000,-1,@Last_Update)
 
+
+-- values (1,'T12','86.125MM PRE FINISH BORE')
+-- values (2,'T01','85.24MM ROUGH BORE')
+-- values (3,'T10','86.925MM FINISH BORE')
+-- values (4,'T11','ETCHER')
+-- values (5,'T13','180MM BACK CUTTER RH PART ONLY')
+-- values (6,'T16','135MM BACK CUTTER RH ONLY')
+-- values (7,'T07','8.2MM DRILL')
+-- values (8,'T08','14.3MM DRILL/CHAMFER')
+-- values (9,'T09','15.5MM DRILL/CHAMFER')
+-- values (10,'T04','21MM DRILL/SPOTFACE')
+-- values (11,'T05','10MM END MILL')
+-- values (12,'T02','1.25\" HELICAL MILL')
+
+
+
 update CNC_Tool_Tracker 
-set Current_Value = 999, Last_Update = '2020-08-15 00:00:00' 
-where CNC_Key = 1 and Part_Key = 2809196 and Assembly_Key = 1
+set Tool_Life = 50000 
+-- set Tool_Life = 50000, Last_Update = '2020-08-15 00:00:00' 
+where CNC_Key = 1 and Part_Key = 2809196 and Assembly_Key = 11
 
 select * from CNC_Tool_Tracker 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
+
+/*
+ * Report query
+ */
+select 
+c.CNC,
+p.Part_No,p.Name, 
+tt.Tool_Life,tt.Current_Value,tt.Last_Update
+from CNC_Tool_Tracker tt 
+inner join CNC c 
+on tt.CNC_Key=tt.CNC_Key 
+inner join Part p 
+on tt.Part_Key = p.Part_Key 
+/*
+	Assembly_Key int NOT NULL, 
+	Assembly_No	varchar (50) NOT NULL,
+	Description	varchar (100) NOT NULL,
+
+ *  * 	CNC_Tool_Tracker_Key int NOT NULL,
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Assembly_Key int NOT NULL, 
+	Tool_Life int NOT NULL,  -- Can be different for every CNC
+  	Current_Value int NOT NULL,
+  	Last_Update datetime NOT NULL,
+
+ */
 
 DROP PROCEDURE UpdateTrackerCurrentValue;
 CREATE PROCEDURE UpdateTrackerCurrentValue
