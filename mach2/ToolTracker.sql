@@ -176,21 +176,6 @@ insert into Tool_Assembly_Part (Tool_Assembly_Part_Key,Part_Key,Operation_Key,As
 -- values (12,2809196,56409,12)
 select * from Tool_Assembly_Part
 
--- values (1,1,2809196,1,73000,-1,@Last_Update )
--- values (2,1,2809196,2,52600,-1,@Last_Update)
--- values (3,1,2809196,3,80500,-1,@Last_Update)
--- values (4,1,2809196,4,130000,-1,@Last_Update)
--- values (5,1,2809196,5,999999,-1,@Last_Update)
--- values (6,1,2809196,6,999999,-1,@Last_Update)
--- values (7,1,2809196,7,110000,-1,@Last_Update)
--- values (8,1,2809196,8,100000,-1,@Last_Update)
--- values (9,1,2809196,9,110000,-1,@Last_Update)
--- values (10,1,2809196,10,72000,-1,@Last_Update)
--- values (11,1,2809196,11,50000,-1,@Last_Update)
--- values (12,1,2809196,12,40000,-1,@Last_Update)
-
-
-
 /*
  * UDP Datagrams sent from Moxa units.
  * Common variablies used as assembly counters are identified by an CNC_Part_Operation_Key, Set_No, and Block_No 
@@ -199,70 +184,111 @@ select * from Tool_Assembly_Part
 -- UPDATE ASSEMBLY KEY AFTER TOOLING UPLOAD
 -- drop table CNC_Part_Operation_Set_Block 
 CREATE TABLE CNC_Part_Operation_Set_Block (
-	CNC_Part_Operation_Set_Block int NOT NULL,
-	CNC_Part_Operation_Key int NOT NULL,  -- each Datagram_Key, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
+	CNC_Part_Operation_Set_Block int NOT NULL,   -- each CNC_Part_Operation_Key, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Operation_Key int NOT NULL,
 	Set_No int NOT NULL,  -- Can't avoid this Set_No because of the way the Moxa receives messages from the Okuma's serial port.
 	Block_No int NOT NULL,  -- This is just an index to identify which 10-byte block in a datagram set. 
 	Assembly_Key int NOT NULL, -- foreign key
   	PRIMARY KEY (CNC_Part_Operation_Set_Block)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='UDP Datagrams sent from Moxa units';
 
-insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block,CNC_Part_Operation_Key,Set_No,Block_No,Assembly_Key)
--- values (1,1,1,1,1)
--- values (2,1,1,2,2)
--- values (3,1,1,3,3)
--- values (4,1,1,4,4)
--- values (5,1,1,5,5)
--- values (6,1,1,6,6)
--- values (7,1,1,7,7)
--- values (8,1,1,8,8)
--- values (9,1,1,9,9)
--- values (10,1,2,1,10)
--- values (11,1,2,2,11)
--- values (12,1,2,3,12)
+insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block,CNC_Key,Part_Key,Operation_Key,Set_No,Block_No,Assembly_Key)
+-- values (1,1,2809196,56409,1,1,1)
+-- values (2,1,2809196,56409,1,2,2)
+-- values (3,1,2809196,56409,1,3,3)
+-- values (4,1,2809196,56409,1,4,4)
+-- values (5,1,2809196,56409,1,5,5)
+-- values (6,1,2809196,56409,1,6,6)
+-- values (7,1,2809196,56409,1,7,7)
+-- values (8,1,2809196,56409,1,8,8)
+-- values (9,1,2809196,56409,1,9,9)
+-- values (10,1,2809196,56409,2,1,10)
+-- values (11,1,2809196,56409,2,2,11)
+-- values (12,1,2809196,56409,2,3,12)
 select * from CNC_Part_Operation_Set_Block
 /*
  * CNC tool life for assembly from TLM.SSB
  */
--- drop table CNC_Tool_Tracker 
--- truncate table CNC_Tool_Tracker
-CREATE TABLE CNC_Tool_Tracker (
-	CNC_Tool_Tracker_Key int NOT NULL,
+-- drop table CNC_Part_Operation_Assembly 
+-- truncate table CNC_Part_Operation_Assembly
+CREATE TABLE CNC_Part_Operation_Assembly (
+	CNC_Part_Operation_Assembly_Key int NOT NULL,
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
+	Increment_By int NOT NULL,
 	Tool_Life int NOT NULL,  -- Can be different for every CNC
   	Current_Value int NOT NULL,
   	Last_Update datetime NOT NULL,
-  	PRIMARY KEY (CNC_Tool_Tracker_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC tool tracker info';
+  	PRIMARY KEY (CNC_Part_Operation_Assembly_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC Part operation assembly info';
 
 set @Last_Update = '2020-08-15 00:00:00';
-insert into CNC_Tool_Tracker (CNC_Tool_Tracker_Key,CNC_Key,Part_Key,Assembly_Key,Tool_Life,Current_Value,Last_Update)
--- values (1,1,2809196,1,80500,-1,@Last_Update )
--- values (2,1,2809196,2,130000,-1,@Last_Update)
--- values (3,1,2809196,3,52600,-1,@Last_Update)
--- values (4,1,2809196,4,73000,-1,@Last_Update)
--- values (5,1,2809196,5,40000,-1,@Last_Update)
--- values (6,1,2809196,6,999999,-1,@Last_Update)
--- values (7,1,2809196,7,72000,-1,@Last_Update)
--- values (8,1,2809196,8,50000,-1,@Last_Update)
--- values (9,1,2809196,9,999999,-1,@Last_Update)
--- values (10,1,2809196,10,110000,-1,@Last_Update)
--- values (11,1,2809196,11,100000,-1,@Last_Update)
--- values (12,1,2809196,12,110000,-1,@Last_Update)
+insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
+-- values (1,1,2809196,56409,1,2,80500,-1,@Last_Update )
+-- values (2,1,2809196,56409,2,2,130000,-1,@Last_Update)
+-- values (3,1,2809196,56409,3,2,52600,-1,@Last_Update)
+-- values (4,1,2809196,56409,4,2,73000,-1,@Last_Update)
+-- values (5,1,2809196,56409,5,2,40000,-1,@Last_Update)
+-- values (6,1,2809196,56409,6,2,999999,-1,@Last_Update)
+-- values (7,1,2809196,56409,7,2,72000,-1,@Last_Update)
+-- values (8,1,2809196,56409,8,2,50000,-1,@Last_Update)
+-- values (9,1,2809196,56409,9,2,999999,-1,@Last_Update)
+-- values (10,1,2809196,56409,10,2,110000,-1,@Last_Update)
+-- values (11,1,2809196,56409,11,2,100000,-1,@Last_Update)
+-- values (12,1,2809196,56409,12,2,110000,-1,@Last_Update)
 
-select * from CNC_Tool_Tracker
+select * from CNC_Part_Operation_Assembly
 
 
---update CNC_Tool_Tracker 
+--update CNC_Part_Operation_Assembly 
 --set Tool_Life = 50000 
 -- set Tool_Life = 50000, Last_Update = '2020-08-15 00:00:00' 
 where CNC_Key = 1 and Part_Key = 2809196 and Assembly_Key = 11
 
-select * from CNC_Tool_Tracker 
+select * from CNC_Part_Operation_Assembly
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
+
+set @CNC_Part_Operation_Key = 1;
+set @Set_No = 1;
+set @Block_No = 1;
+
+CALL GetIncrementBy(@CNC_Part_Operation_Key,@Set_No,@Block_No,@IncrementBy,@Return_Value);
+
+SELECT @IncrementBy,@Return_Value;
+
+-- DROP PROCEDURE GetIncrementBy;
+CREATE PROCEDURE GetIncrementBy
+(
+	pCNC_Part_Operation_Key INT,
+	pSet_No INT,
+	pBlock_No INT,
+	OUT pIncrementBy INT,
+	OUT pReturnValue INT 
+)
+BEGIN
+
+	select 
+	-- p.CNC_Key,p.Part_Key,p.Operation_Key,b.Set_No,b.Block_No,b.Assembly_Key,
+	a.Increment_By into pIncrementBy
+	from CNC_Part_Operation p
+	inner join CNC_Part_Operation_Set_Block b 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key
+	and b.Operation_Key = a.Operation_Key
+	and b.Assembly_Key = a.Assembly_Key
+	where b.Set_No = 1 and b.Block_No = 1;
+   	-- SELECT ROW_COUNT(); -- 0
+   	-- set pRecordCount = FOUND_ROWS();
+   	set pReturnValue = 0;
+end;	
 
 /*
  * Report query
@@ -271,25 +297,11 @@ select
 c.CNC,
 p.Part_No,p.Name, 
 tt.Tool_Life,tt.Current_Value,tt.Last_Update
-from CNC_Tool_Tracker tt 
+from CNC_Part_Operation_Assembly oa 
 inner join CNC c 
 on tt.CNC_Key=tt.CNC_Key 
 inner join Part p 
 on tt.Part_Key = p.Part_Key 
-/*
-	Assembly_Key int NOT NULL, 
-	Assembly_No	varchar (50) NOT NULL,
-	Description	varchar (100) NOT NULL,
-
- *  * 	CNC_Tool_Tracker_Key int NOT NULL,
-	CNC_Key int NOT NULL,
-	Part_Key int NOT NULL,
-	Assembly_Key int NOT NULL, 
-	Tool_Life int NOT NULL,  -- Can be different for every CNC
-  	Current_Value int NOT NULL,
-  	Last_Update datetime NOT NULL,
-
- */
 
 DROP PROCEDURE UpdateTrackerCurrentValue;
 CREATE PROCEDURE UpdateTrackerCurrentValue
