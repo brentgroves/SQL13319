@@ -284,7 +284,7 @@ BEGIN
 	and b.Part_Key = a.Part_Key
 	and b.Operation_Key = a.Operation_Key
 	and b.Assembly_Key = a.Assembly_Key
-	where b.Set_No = 1 and b.Block_No = 1;
+	where CNC_Part_Operation_Key=pCNC_Part_Operation_Key and b.Set_No = pSet_No and b.Block_No = pBlock_No;
    	-- SELECT ROW_COUNT(); -- 0
    	-- set pRecordCount = FOUND_ROWS();
    	set pReturnValue = 0;
@@ -303,39 +303,70 @@ on tt.CNC_Key=tt.CNC_Key
 inner join Part p 
 on tt.Part_Key = p.Part_Key 
 
-DROP PROCEDURE UpdateTrackerCurrentValue;
-CREATE PROCEDURE UpdateTrackerCurrentValue
+/*
+ * 	CNC_Part_Operation_Assembly_Key int NOT NULL,
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Operation_Key int NOT NULL,
+	Assembly_Key int NOT NULL, 
+	Increment_By int NOT NULL,
+	Tool_Life int NOT NULL,  -- Can be different for every CNC
+  	Current_Value int NOT NULL,
+  	Last_Update datetime NOT NULL,
+  	PRIMARY KEY (CNC_Part_Operation_Assembly_Key)
+
+ */
+
+DROP PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue;
+CREATE PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue
 (
-	pCNC_Key INT,
-	pPart_Key INT,
-	pAssembly_Key INT,
-	pCurrent_Value INT,	
-	pLast_Update DATETIME,
+	pCNC_Part_Operation_Key INT,
+	pSet_No INT,
+	pBlock_No INT,
+	pCurrent_Value INT,
+	pLast_Update datetime,
 	OUT pReturnValue INT 
 )
 BEGIN
-   
-   	update CNC_Tool_Tracker 
-	set Current_Value = pCurrent_Value, Last_Update = pLast_Update
-	where CNC_Key = pCNC_Key and Part_Key = pPart_Key and Assembly_Key = pAssembly_Key;
+    update
+   	CNC_Part_Operation p
+	inner join CNC_Part_Operation_Set_Block b 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key  -- 1 to many
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key 
+	and b.Operation_Key = a.Operation_Key 
+	and b.Assembly_Key = a.Assembly_Key 
+  	set a.Current_Value = pCurrent_Value,
+  	a.Last_Update = pLast_Update
+	where p.CNC_Part_Operation_Key=@CNC_Part_Operation_Key 
+    and b.Set_No = @Set_No and b.Block_No = @Block_No;
 
-   	-- SELECT ROW_COUNT(); -- 0
+-- SELECT ROW_COUNT(); -- 0
    	-- set pRecordCount = FOUND_ROWS();
    	set pReturnValue = 0;
 end;	
 
-set @CNC_Key = 1;
-set @Part_Key = 2809196;
-set @Assembly_Key = 1;
-set @Current_Value = 2;
-set @Last_Update = '2020-08-15 00:00:01';
 
-CALL UpdateTrackerCurrentValue(@CNC_Key,@Part_Key,@Assembly_Key,@Current_Value,@Last_Update,@Return_Value);
+set @CNC_Part_Operation_Key = 1;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Current_Value = 5;
+set @Last_Update = '2020-08-18 00:00:01';
+-- select a.* from CNC_Part_Operation_Assembly a
+
+CALL UpdateCNCPartOperationAssemblyCurrentValue(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Current_Value,@Last_Update,@Return_Value);
 
 SELECT @Return_Value;
 
-select * from CNC_Tool_Tracker 
-where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
+select * from CNC_Part_Operation_Set_Block b
+where b.Set_No = @Set_No and b.Block_No = @Block_No;
+
+select * from CNC_Part_Operation_Assembly
+where CNC_Key=1 and Part_Key=2809196 and Operation_Key = 56409 and Assembly_Key=1;
+
 
 
 -- drop table Tool_Change
