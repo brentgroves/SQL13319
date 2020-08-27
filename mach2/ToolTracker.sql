@@ -2,29 +2,35 @@
  * Subset of Plex part_v_workcenter view.  Plex has multiple CNC assigned to a workcenter.
  * 
  */
+
+-- drop table Building
+-- truncate table Building
+CREATE TABLE Building 
+(
+	Building_Key int NOT NULL,
+	Building_Code	varchar (50),
+	Name	varchar (100)
+	
+)
+insert into Building (Building_Key,Building_Code,Name)
+-- values (5680,'Mobex Global Avilla','Mobex Global Avilla - Plant 11');
 -- drop table Workcenter
+-- truncate table Workcenter
 CREATE TABLE Workcenter (
-  	Workcenter_Key int NOT NULL,  
+  	Workcenter_Key int NOT NULL,
+  	Building_Key int NOT NULL,  -- This is a null value in Plex for 17 Avilla workcenters so added what it should be
   	Workcenter_Code varchar(50) NOT NULL,  
   	Name varchar (100),
+  	
   	PRIMARY KEY (Workcenter_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of Plex part_v_workcenter view.';
-insert into Workcenter (Workcenter_Key,Workcenter_Code,Name)
-values (2809196,'Honda Civic CNC 359 362','Honda Civic Knuckle LH') 
+insert into Workcenter (Workcenter_Key,Building_Key,Workcenter_Code,Name)
+-- values (61324,5680,'CNC103','Honda RDX RH') 
+-- values (61314,5680,'Honda Civic CNC 359 362','Honda Civic Knuckle LH') 
 
 select * from Workcenter tt 
 
 
--- drop table CNC_Type 
-CREATE TABLE CNC_Type (
-	CNC_Type_Key int NOT NULL,
-	CNC_Type varchar(50) NOT NULL,
-  	PRIMARY KEY (CNC_Type_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC types such as Makino, Okuma, Welles, etc.';
-insert into CNC_Type (CNC_Type_key,CNC_Type)
--- values (1,'Okuma')
-values (2,'Makino')
-select * from CNC_Type
 
 /*
  * CNC info, don't want to have a varchar primary_key
@@ -39,23 +45,36 @@ CREATE TABLE CNC (
   	PRIMARY KEY (CNC_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC info';
 insert into CNC (CNC_Key,CNC,CNC_Type_Key,Serial_Port,Networked)
-values (1,'103',1,true,false)
+-- values (1,'103',1,true,false)
+-- values (2,'362',2,false,true)
 
 select * from CNC
 
+-- drop table CNC_Type 
+CREATE TABLE CNC_Type (
+	CNC_Type_Key int NOT NULL,
+	CNC_Type varchar(50) NOT NULL,
+  	PRIMARY KEY (CNC_Type_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC types such as Makino, Okuma, Welles, etc.';
+insert into CNC_Type (CNC_Type_key,CNC_Type)
+-- values (1,'Okuma')
+values (2,'Makino')
+select * from CNC_Type
 
 /*
  * Many CNC can be assigned to 1 work center
  */
 -- drop table CNC_Workcenter
+-- truncate table CNC_Workcenter
 CREATE TABLE CNC_Workcenter (
 	CNC_Workcenter_Key int NOT NULL,
 	CNC_Key int NOT NULL,  -- foreign key
   	Workcenter_Key int NOT NULL, -- foreign key
   	PRIMARY KEY (CNC_Workcenter_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Link CNC to a workcenter';
-insert into CNC_Workcenter (CNC_Key,Workcenter_Key)
-values (1,2809196) 
+insert into CNC_Workcenter (CNC_Workcenter_Key,CNC_Key,Workcenter_Key)
+-- values (1,1,61324) 
+-- values (2,2,61314) 
 
 select * from CNC_Workcenter
 /*
@@ -222,25 +241,30 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 	Increment_By int NOT NULL,
 	Tool_Life int NOT NULL,  -- Can be different for every CNC
   	Current_Value int NOT NULL,
+  	Fastest_Cycle_Time int NOT NULL, -- In seconds
   	Last_Update datetime NOT NULL,
   	PRIMARY KEY (CNC_Part_Operation_Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC Part operation assembly info';
 
-set @Last_Update = '2020-08-15 00:00:00';
-insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
--- values (1,1,2809196,56409,1,2,80500,-1,@Last_Update )
--- values (2,1,2809196,56409,2,2,130000,-1,@Last_Update)
--- values (3,1,2809196,56409,3,2,52600,-1,@Last_Update)
--- values (4,1,2809196,56409,4,2,73000,-1,@Last_Update)
--- values (5,1,2809196,56409,5,2,40000,-1,@Last_Update)
--- values (6,1,2809196,56409,6,2,999999,-1,@Last_Update)
--- values (7,1,2809196,56409,7,2,72000,-1,@Last_Update)
--- values (8,1,2809196,56409,8,2,50000,-1,@Last_Update)
--- values (9,1,2809196,56409,9,2,999999,-1,@Last_Update)
--- values (10,1,2809196,56409,10,2,110000,-1,@Last_Update)
--- values (11,1,2809196,56409,11,2,100000,-1,@Last_Update)
--- values (12,1,2809196,56409,12,2,110000,-1,@Last_Update)
+-- 5 * 60 = 300
 
+
+
+set @Last_Update = '2020-08-15 00:00:00';
+insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
+-- values (1,1,2809196,56409,1,2,80500,-1,300,@Last_Update )  -- vc10
+-- values (2,1,2809196,56409,2,2,132000,-1,300,@Last_Update)  -- vc11
+-- values (3,1,2809196,56409,3,2,52600,-1,300,@Last_Update)
+-- values (4,1,2809196,56409,4,2,78000,-1,300,@Last_Update)  -- vc12
+-- values (5,1,2809196,56409,5,2,40000,-1,300,@Last_Update)
+-- values (6,1,2809196,56409,6,2,999999,-1,300,@Last_Update)
+-- values (7,1,2809196,56409,7,2,72000,-1,300,@Last_Update)
+-- values (8,1,2809196,56409,8,2,50000,-1,300,@Last_Update)
+-- values (9,1,2809196,56409,9,2,999999,-1,300,@Last_Update)
+-- values (10,1,2809196,56409,10,2,110000,-1,300,@Last_Update)
+-- values (11,1,2809196,56409,11,2,100000,-1,300,@Last_Update)
+-- values (12,1,2809196,56409,12,2,110000,-1,300,@Last_Update)
+-- delete from CNC_Part_Operation_Assembly a where CNC_Part_Operation_Assembly_Key in (2,4)
 select * from CNC_Part_Operation_Assembly
 
 
@@ -303,30 +327,6 @@ on tt.CNC_Key=tt.CNC_Key
 inner join Part p 
 on tt.Part_Key = p.Part_Key 
 
-/*
- * 	CNC_Part_Operation_Assembly_Key int NOT NULL,
-	CNC_Key int NOT NULL,
-	Part_Key int NOT NULL,
-	Operation_Key int NOT NULL,
-	Assembly_Key int NOT NULL, 
-	Increment_By int NOT NULL,
-	Tool_Life int NOT NULL,  -- Can be different for every CNC
-  	Current_Value int NOT NULL,
-  	Last_Update datetime NOT NULL,
-  	PRIMARY KEY (CNC_Part_Operation_Assembly_Key)
-
-  	IN nodeId varchar(50),
-  	IN name varchar(50),
-  	IN plexus_Customer_No int(11),
-	IN pcn varchar(50),
-  	IN workcenter_Key int(11),
-  	IN workcenter_Code varchar(50),
-  	IN cnc varchar(6),
-  	IN value int(11),
-  	IN transDate datetime
-
-
- */
 
 DROP PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue;
 CREATE PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue
@@ -360,19 +360,79 @@ BEGIN
    	set pReturnValue = 0;
 end;	
 
-drop procedure Test
-CREATE PROCEDURE Test
-(
+
+set @CNC_Part_Operation_Key = 1;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Current_Value = 2;
+set @Last_Update = '2020-08-18 00:00:01';
+-- CNC_Part_Operation_Key=1,Set_No=1,Block_No=1,Current_Value=18136,Last_Update=2020-08-25 10:38:27
+-- "CNC_Part_Operation_Key":1,"Set_No":1,"Block_No":7,"Current_Value":29392,"Trans_Date":"2020-08-25 10:17:55"
+-- select a.* from CNC_Part_Operation_Assembly a
+CALL UpdateCNCPartOperationAssemblyCurrentValue(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Current_Value,@Last_Update,@Return_Value);
+	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
+SELECT @Return_Value;
+
+select * from CNC_Part_Operation_Set_Block b
+where b.Set_No = @Set_No and b.Block_No = @Block_No;
+
+select * from CNC_Part_Operation_Assembly
+where CNC_Key=1 and Part_Key=2809196 and Operation_Key = 56409 and Assembly_Key=1;
+
+-- drop table Tool_Assembly_Change_History
+CREATE TABLE Tool_Assembly_Change_History (
+	Tool_Assembly_Change_History_Key int NOT NULL AUTO_INCREMENT,
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Operation_Key int NOT NULL,
+	Assembly_Key int NOT NULL,
+  	Actual_Tool_Assembly_Life int NOT NULL,
+  	Trans_Date datetime NOT NULL,
+  	PRIMARY KEY (Tool_Assembly_Change_History_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool assembly change history';
+
+
+set @CNC_Part_Operation_Key = 1;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Actual_Tool_Life = 2;
+set @Trans_Date = '2020-08-18 00:00:01';
+-- CNC_Part_Operation_Key=1,Set_No=1,Block_No=1,Current_Value=18136,Last_Update=2020-08-25 10:38:27
+-- "CNC_Part_Operation_Key":1,"Set_No":1,"Block_No":7,"Current_Value":29392,"Trans_Date":"2020-08-25 10:17:55"
+-- select a.* from CNC_Part_Operation_Assembly a
+CALL Tool_Assembly_Change_History(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Life,@Trans_Date,@Return_Value);
+	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
+SELECT @Return_Value;
+
+-- drop procedure InsToolAssemblyChangeHistory;
+CREATE PROCEDURE InsToolAssemblyChangeHistory(
 	IN pCNC_Part_Operation_Key INT,
 	IN pSet_No INT,
 	IN pBlock_No INT,
-	IN pCurrent_Value INT,
-	IN pLast_Update datetime,
+	IN pActual_Tool_Assembly_Life INT,
+  	IN pTrans_Date datetime,
+  	OUT pTool_Assembly_Change_History_Key INT,
 	OUT pReturnValue INT 
 )
 BEGIN
-    update
-   -- select * from
+-- truncate table Tool_Assembly_Change_History	
+/*
+	set @CNC_Key = 1;
+set @Part_Key = 1;
+set @Operation_Key = 1;
+set @Assembly_Key = 1;
+set @Actual_Tool_Life = 2;
+set @Trans_Date = '2020-08-18 00:00:01';	
+	set @pCNC_Part_Operation_Key = 1;
+	set @pSet_No = 1;
+	set @pBlock_No = 1;
+    set @pActual_Tool_Life = 12;
+	set @pTrans_Date = '2020-08-18 00:00:01';	
+  */ 
+
+/*
+	select a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key,@Actual_Tool_Life,@Trans_Date
+	from 
    	CNC_Part_Operation p
 	inner join CNC_Part_Operation_Set_Block b 
 	on p.CNC_Key = b.CNC_Key
@@ -383,59 +443,101 @@ BEGIN
 	and b.Part_Key = a.Part_Key 
 	and b.Operation_Key = a.Operation_Key 
 	and b.Assembly_Key = a.Assembly_Key 
-  	set a.Current_Value = pCurrent_Value,
-  	a.Last_Update = pLast_Update
-	where p.CNC_Part_Operation_Key=1 
-    and b.Set_No = 1 and b.Block_No = 1;
+	where p.CNC_Part_Operation_Key=@pCNC_Part_Operation_Key 
+    and b.Set_No = @pSet_No and b.Block_No = @pBlock_No;
+*/
+INSERT INTO Tool_Assembly_Change_History
+(CNC_Key,Part_Key,Operation_Key,Assembly_Key,Actual_Tool_Assembly_Life,Trans_Date)
+	select a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key,pActual_Tool_Assembly_Life,pTrans_Date
+	from 
+   	CNC_Part_Operation p
+	inner join CNC_Part_Operation_Set_Block b 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key  -- 1 to many
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key 
+	and b.Operation_Key = a.Operation_Key 
+	and b.Assembly_Key = a.Assembly_Key 
+	where p.CNC_Part_Operation_Key=pCNC_Part_Operation_Key 
+    and b.Set_No = pSet_No and b.Block_No = pBlock_No;
 
--- SELECT ROW_COUNT(); -- 0
-   	-- set pRecordCount = FOUND_ROWS();
-   	set pReturnValue = 0;
-end;	
+
+-- VALUES(pCNC_Key,pPart_Key,pOperation_Key,pAssembly_Key,pActual_Tool_Life,pTrans_Date);
+-- VALUES(@CNC_Key,@Part_Key,@Operation_Key,Assembly_Key,@Actual_Tool_Life,@Trans_Date);
+
+-- Display the last inserted row.
+set pTool_Assembly_Change_History_Key = (select Tool_Assembly_Change_History_Key from Tool_Assembly_Change_History where Tool_Assembly_Change_History_Key =(SELECT LAST_INSERT_ID()));
+-- select pTool_Assembly_Change_History_Key;
+-- SET @total_tax = (SELECT SUM(tax) FROM taxable_transactions);
+set pReturnValue = 0;
 select * from CNC_Part_Operation_Assembly
-    update CNC_Part_Operation_Assembly
-  	set Current_Value = pCurrent_Value,
-  	Last_Update = pLast_Update 
- 	where CNC_Part_Operation_Assembly_Key=1;
-
-
+END;
+-- truncate table Tool_Assembly_Change_History
 set @CNC_Part_Operation_Key = 1;
 set @Set_No = 1;
 set @Block_No = 1;
-set @Current_Value = 2;
-set @Last_Update = '2020-08-18 00:00:01';
+set @Actual_Tool_Assembly_Life = 2;
+set @Trans_Date = '2020-08-18 00:00:01';
 -- CNC_Part_Operation_Key=1,Set_No=1,Block_No=1,Current_Value=18136,Last_Update=2020-08-25 10:38:27
 -- "CNC_Part_Operation_Key":1,"Set_No":1,"Block_No":7,"Current_Value":29392,"Trans_Date":"2020-08-25 10:17:55"
 -- select a.* from CNC_Part_Operation_Assembly a
-CALL Test(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Current_Value,@Last_Update,@Return_Value);
-
--- CALL UpdateCNCPartOperationAssemblyCurrentValue(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Current_Value,@Last_Update,@Return_Value);
+CALL InsToolAssemblyChangeHistory(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Assembly_Life,@Trans_Date,@Tool_Assembly_Change_History_Key,@Return_Value);
 	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
-SELECT @Return_Value;
+SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
 
-select * from CNC_Part_Operation_Set_Block b
-where b.Set_No = @Set_No and b.Block_No = @Block_No;
-
-select * from CNC_Part_Operation_Assembly
-where CNC_Key=1 and Part_Key=2809196 and Operation_Key = 56409 and Assembly_Key=1;
-
-
-
--- drop table Tool_Change
-CREATE TABLE Tool_Change (
-	Tool_Change_Key int NOT NULL AUTO_INCREMENT,
-	CNC_Key int NOT NULL,
-	Part_Key int NOT NULL,
-	Assembly_Key int NOT NULL,
-  	Actual_Tool_Life int NOT NULL,
-  	Trans_Date datetime NOT NULL,
-  	PRIMARY KEY (Tool_Change_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool change history';
-select * from Tool_Change tc 
+select * from Tool_Assembly_Change_History tc 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
 
-select * from ToolTracker
 
-set @transDate = '2020-06-25 00:00:00';
-call InsToolLife(103,12345, 100, @transDate); 
-select * from ToolLife where cnc=103 order by CNC, desc
+/*
+Tool Assembly Tool Change Report query
+*/
+
+-- drop procedure FetchToolAssemblyToolChange;
+CREATE PROCEDURE FetchToolAssemblyToolChange(
+	IN pCNC_Part_Operation_Key INT,
+	IN pSet_No INT,
+	IN pBlock_No INT,
+	IN pActual_Tool_Assembly_Life INT,
+  	IN pTrans_Date datetime,
+  	OUT pTool_Assembly_Change_History_Key INT,
+	OUT pReturnValue INT 
+)
+BEGIN
+
+select 
+-- b.Building_Code,b.Name,
+-- w.Workcenter_Code, w.Name, 
+c.CNC, 
+p.Part_No,
+-- p.Part_No,p.Revision,o.Operation_Code,
+a.Tool_Life,
+a.Current_Value,
+-- (a.Tool_Life - a.Current_Value) Diff,
+-- ((a.Tool_Life - a.Current_Value) / a.Increment_By) Cycles_Remaining,
+-- (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) Seconds_Remaining,
+-- ((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60) Minutes_Remaining,
+Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60)) iMinutes_Remaining,
+Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) % 60)) Seconds
+from CNC_Part_Operation_Assembly a
+inner join CNC_Part_Operation cpo 
+on a.CNC_Key = cpo.CNC_Key -- 1 to 1
+inner join Part p 
+on cpo.Part_Key = p.Part_Key -- 1 to 1 
+inner join Operation o 
+on cpo.Operation_Key = o.Operation_Key
+inner join CNC_Workcenter cw 
+on a.CNC_Key = cw.CNC_Key   -- 1 to 1
+inner join Workcenter w 
+on cw.Workcenter_Key = w.Workcenter_Key -- 1 to 1 
+inner join Building b 
+on w.Building_Key = b.Building_Key
+inner join CNC c 
+on a.CNC_Key = c.CNC_Key 
+where b.Building_Key = 5680
+order by (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time)
+END 
+
+
