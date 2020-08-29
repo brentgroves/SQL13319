@@ -3,17 +3,58 @@
  * 
  */
 
--- drop table Building
+
+/*
+ 	building_key	building_code	name
+1	4543	Southfield	Mobex Global Southfield
+2	5665	Tech Center	Tech Center
+3	4261	Main	Main
+4	4261	Mobex Global Fruitport	Mobex Global Fruitport
+5	4261	Mobex Global Franklin	Mobex Global Franklin
+6	4261	Main	Main
+7	4261	Main	Main
+8	5229	Mobex Global HQ and Technical Center	Mobex Global HQ and Technical Center
+9	4261	Main	Main
+10	5301	Mobex Global Hartselle	Mobex Global Hartselle
+11	5533	American Axle	Grede Holdings, LLC
+12	5534	Mobex Global Fruitport	Mobex Global Fruitport
+13	5535	Waupaca	Hitachi Metals
+14	5536	Kobe	KAAP
+15	5504	Mobex Global Plant 5	Mobex Global Albion - Plant 5
+16	5641	Mobex Global Plant 8	Mobex Global Albion - Plant 8
+17	5642	Mobex Global Plant 3	Mobex Global Albion - Plant 3
+18	5643	Mobex Global Plant 2	Mobex Global Albion - Plant 2
+19	5644	Mobex Global Plant 6	Mobex Global Albion - Plant 6
+20	5645	Mobex Global Plant 7	Mobex Global Kendallville - Plant 7
+21	5646	Mobex Global Plant 9	Mobex Global Albion - Plant 9
+22	5647	Mobex Global Plant 11	Mobex Global Avilla - Plant 11
+23	5648	Mobex Global Warehouse	Mobex Global Albion - Warehouse
+24	5649	Mobex Global Workholding	Mobex Global Workholding
+25	5650	Mobex Global Central Stores	Mobex Global Albion - Central Stores
+26	5651	Mobex Global Distribution Center	Mobex Global Albion - Distribution Center
+27	5652	Mobex Global Metrology Lab	Mobex Global Albion - Metrology Laboratory
+28	5660	Mobex Global Pole Barn	Mobex Global Albion - Pole Barn
+29	5696	Mobex Global Edon	Mobex Global Edon
+30	5609	Mobex Global Edon	Mobex Global Edon
+31	5668	Edon Plant 2	Edon Plant 2
+32	5680	Mobex Global Avilla	Mobex Global Avilla - Plant 11
+33	5865	BPG Workholding	BPG Workholding
+*/
+drop table 
+-- mach2.Building definition
+
 -- truncate table Building
-CREATE TABLE Building 
-(
-	Building_Key int NOT NULL,
-	Building_Code	varchar (50),
-	Name	varchar (100)
-	
-)
-insert into Building (Building_Key,Building_Code,Name)
--- values (5680,'Mobex Global Avilla','Mobex Global Avilla - Plant 11');
+CREATE TABLE Building (
+  Building_Key int NOT NULL,
+  Building_Code varchar(50) DEFAULT NULL,
+  Name varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+insert into Building (Building_Key,Building_Code,Name )
+-- values(5680,'Mobex Global Avilla','Mobex Global Avilla - Plant 11')
+-- values(5641,'Mobex Global Plant 8','Mobex Global Albion - Plant 8')
+-- select * from Building b2 
+
 -- drop table Workcenter
 -- truncate table Workcenter
 CREATE TABLE Workcenter (
@@ -328,8 +369,8 @@ inner join Part p
 on tt.Part_Key = p.Part_Key 
 
 
-DROP PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue;
-CREATE PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue
+DROP PROCEDURE UpdateCNCPartOperationAssembly;
+CREATE PROCEDURE UpdateCNCPartOperationAssembly
 (
 	IN pCNC_Part_Operation_Key INT,
 	IN pSet_No INT,
@@ -339,6 +380,64 @@ CREATE PROCEDURE UpdateCNCPartOperationAssemblyCurrentValue
 	OUT pReturnValue INT 
 )
 BEGIN
+
+/* Debug only Section Start*/
+	/*
+	set @CNC_Part_Operation_Key = 1;
+	set @Set_No = 1;
+	set @Block_No = 1;
+	set @Current_Value = 9999;
+	set @Last_Update = '2020-08-028 10:10:00:00';
+
+	select a.Fastest_Cycle_TimeStart,
+	-- syntax is "old date" - :"new date", so:
+	TIMESTAMPDIFF(SECOND, a.Last_Update, @Last_Update),
+	case 
+	when TIMESTAMPDIFF(SECOND, a.Last_Update, @Last_Update) < a.Fastest_Cycle_Time then 'New Fastest time'
+	else 'Not faster'
+	end compareFastestCycleTime
+--	 SELECT TIMESTAMPDIFF(SECOND, '2018-11-14 15:00:00', '2018-11-15 15:00:30')
+	from 
+   	CNC_Part_Operation p
+	inner join CNC_Part_Operation_Set_Block b 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key  -- 1 to many
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key 
+	and b.Operation_Key = a.Operation_Key 
+	and b.Assembly_Key = a.Assembly_Key 
+  --	set a.Current_Value = pCurrent_Value,
+ -- 	a.Last_Update = pLast_Update
+
+	where p.CNC_Part_Operation_Key=@CNC_Part_Operation_Key 
+    and b.Set_No = @Set_No and b.Block_No = @Block_No;	
+	
+   select * from CNC_Part_Operation_Assembly a
+   */
+/* Debug only Section End */  
+    update
+   	CNC_Part_Operation p
+	inner join CNC_Part_Operation_Set_Block b 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key  -- 1 to many
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key 
+	and b.Operation_Key = a.Operation_Key 
+	and b.Assembly_Key = a.Assembly_Key 
+  	set a.Fastest_Cycle_Time = case 
+	when TIMESTAMPDIFF(SECOND, a.Last_Update, pLast_Update) < a.Fastest_Cycle_Time then  TIMESTAMPDIFF(SECOND, a.Last_Update, pLast_Update)
+	else a.Fastest_Cycle_Time 
+	end
+	where p.CNC_Part_Operation_Key=pCNC_Part_Operation_Key 
+    and b.Set_No = pSet_No and b.Block_No = pBlock_No;
+
+   /*
+    * Two update states needed since the first has a case clause.
+    */
     update
    	CNC_Part_Operation p
 	inner join CNC_Part_Operation_Set_Block b 
@@ -355,6 +454,7 @@ BEGIN
 	where p.CNC_Part_Operation_Key=pCNC_Part_Operation_Key 
     and b.Set_No = pSet_No and b.Block_No = pBlock_No;
 
+   
 -- SELECT ROW_COUNT(); -- 0
    	-- set pRecordCount = FOUND_ROWS();
    	set pReturnValue = 0;
@@ -490,19 +590,13 @@ SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
 select * from Tool_Assembly_Change_History tc 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
 
-
 /*
 Tool Assembly Tool Change Report query
 */
 
--- drop procedure FetchToolAssemblyToolChange;
-CREATE PROCEDURE FetchToolAssemblyToolChange(
-	IN pCNC_Part_Operation_Key INT,
-	IN pSet_No INT,
-	IN pBlock_No INT,
-	IN pActual_Tool_Assembly_Life INT,
-  	IN pTrans_Date datetime,
-  	OUT pTool_Assembly_Change_History_Key INT,
+-- drop procedure FetchUpcomingToolChanges;
+CREATE PROCEDURE FetchUpcomingToolChanges(
+	IN pBuilding_Key INT,
 	OUT pReturnValue INT 
 )
 BEGIN
@@ -513,14 +607,15 @@ select
 c.CNC, 
 p.Part_No,
 -- p.Part_No,p.Revision,o.Operation_Code,
-a.Tool_Life,
-a.Current_Value,
+Format(a.Tool_Life,0) Tool_Life,
+Format(a.Current_Value,0) Current_Value,
 -- (a.Tool_Life - a.Current_Value) Diff,
 -- ((a.Tool_Life - a.Current_Value) / a.Increment_By) Cycles_Remaining,
 -- (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) Seconds_Remaining,
 -- ((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60) Minutes_Remaining,
-Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60)) iMinutes_Remaining,
-Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) % 60)) Seconds
+Format(Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60)),0) iMinutes_Remaining,
+-- Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) % 60)) Seconds,
+DATE_FORMAT(a.Last_Update,'%m/%d/%Y %h:%i') Last_Update 
 from CNC_Part_Operation_Assembly a
 inner join CNC_Part_Operation cpo 
 on a.CNC_Key = cpo.CNC_Key -- 1 to 1
