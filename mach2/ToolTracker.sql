@@ -290,7 +290,6 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 -- 5 * 60 = 300
 
 
-
 set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
 -- values (1,1,2809196,56409,1,2,80500,-1,300,@Last_Update )  -- vc10
@@ -358,15 +357,7 @@ end;
 /*
  * Report query
  */
-select 
-c.CNC,
-p.Part_No,p.Name, 
-tt.Tool_Life,tt.Current_Value,tt.Last_Update
-from CNC_Part_Operation_Assembly oa 
-inner join CNC c 
-on tt.CNC_Key=tt.CNC_Key 
-inner join Part p 
-on tt.Part_Key = p.Part_Key 
+
 
 
 DROP PROCEDURE UpdateCNCPartOperationAssembly;
@@ -464,17 +455,14 @@ end;
 set @CNC_Part_Operation_Key = 1;
 set @Set_No = 1;
 set @Block_No = 1;
-set @Current_Value = 2;
-set @Last_Update = '2020-08-18 00:00:01';
+set @Current_Value = 19342;
+set @Last_Update = '2020-08-28 10:15:49';
 -- CNC_Part_Operation_Key=1,Set_No=1,Block_No=1,Current_Value=18136,Last_Update=2020-08-25 10:38:27
 -- "CNC_Part_Operation_Key":1,"Set_No":1,"Block_No":7,"Current_Value":29392,"Trans_Date":"2020-08-25 10:17:55"
 -- select a.* from CNC_Part_Operation_Assembly a
-CALL UpdateCNCPartOperationAssemblyCurrentValue(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Current_Value,@Last_Update,@Return_Value);
+CALL UpdateCNCPartOperationAssembly(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Current_Value,@Last_Update,@Return_Value);
 	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
 SELECT @Return_Value;
-
-select * from CNC_Part_Operation_Set_Block b
-where b.Set_No = @Set_No and b.Block_No = @Block_No;
 
 select * from CNC_Part_Operation_Assembly
 where CNC_Key=1 and Part_Key=2809196 and Operation_Key = 56409 and Assembly_Key=1;
