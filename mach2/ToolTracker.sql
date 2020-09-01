@@ -44,15 +44,18 @@ drop table
 -- mach2.Building definition
 
 -- truncate table Building
+drop table Building 
 CREATE TABLE Building (
   Building_Key int NOT NULL,
   Building_Code varchar(50) DEFAULT NULL,
-  Name varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  Name varchar(100) DEFAULT NULL,
+  Building_No int NOT NULL,
+  PRIMARY KEY (Building_Key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Subset of Plex part_v_building view.';
 
-insert into Building (Building_Key,Building_Code,Name )
--- values(5680,'Mobex Global Avilla','Mobex Global Avilla - Plant 11')
--- values(5641,'Mobex Global Plant 8','Mobex Global Albion - Plant 8')
+insert into Building (Building_Key,Building_Code,Name,Building_No)
+-- values(5680,'Mobex Global Avilla','Mobex Global Avilla - Plant 11',11)
+-- values(5641,'Mobex Global Plant 8','Mobex Global Albion - Plant 8',8)
 -- select * from Building b2 
 
 -- drop table Workcenter
@@ -582,45 +585,89 @@ where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
 Tool Assembly Tool Change Report query
 */
 
--- drop procedure FetchUpcomingToolChanges;
-CREATE PROCEDURE FetchUpcomingToolChanges(
+-- drop procedure CreateUpcomingToolChanges;
+CREATE PROCEDURE CreateUpcomingToolChanges(
 	IN pBuilding_Key INT,
+	IN pTableName varchar(12),
+	OUT pRecordCount INT, 	
 	OUT pReturnValue INT 
 )
 BEGIN
 
-select 
--- b.Building_Code,b.Name,
--- w.Workcenter_Code, w.Name, 
-c.CNC, 
-p.Part_No,
--- p.Part_No,p.Revision,o.Operation_Code,
-Format(a.Tool_Life,0) Tool_Life,
-Format(a.Current_Value,0) Current_Value,
--- (a.Tool_Life - a.Current_Value) Diff,
--- ((a.Tool_Life - a.Current_Value) / a.Increment_By) Cycles_Remaining,
--- (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) Seconds_Remaining,
--- ((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60) Minutes_Remaining,
-Format(Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60)),0) iMinutes_Remaining,
--- Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) % 60)) Seconds,
-DATE_FORMAT(a.Last_Update,'%m/%d/%Y %h:%i') Last_Update 
-from CNC_Part_Operation_Assembly a
-inner join CNC_Part_Operation cpo 
-on a.CNC_Key = cpo.CNC_Key -- 1 to 1
-inner join Part p 
-on cpo.Part_Key = p.Part_Key -- 1 to 1 
-inner join Operation o 
-on cpo.Operation_Key = o.Operation_Key
-inner join CNC_Workcenter cw 
-on a.CNC_Key = cw.CNC_Key   -- 1 to 1
-inner join Workcenter w 
-on cw.Workcenter_Key = w.Workcenter_Key -- 1 to 1 
-inner join Building b 
-on w.Building_Key = b.Building_Key
-inner join CNC c 
-on a.CNC_Key = c.CNC_Key 
-where b.Building_Key = 5680
-order by (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time)
-END 
+	DECLARE tableName varchar(12);
 
+   set @pBuilding_Key = 5680;
+   set @pTableName = 'test0901';
 
+	-- SET tableName = pTableName;
+	SET @sqlQuery = CONCAT('DROP TABLE IF EXISTS ',pTableName);
+   	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+
+   -- set @pBuilding_Key = 5680;
+  -- set @pTableName = 'test0901';
+	set @results = 
+	CONCAT(' select 
+	-- b.Building_Code,b.Name,
+	-- w.Workcenter_Code, w.Name,
+	b.Building_No, 
+	c.CNC, 
+	p.Part_No,
+	-- p.Part_No,p.Revision,o.Operation_Code,
+	Format(a.Tool_Life,0) Tool_Life,
+	Format(a.Current_Value,0) Current_Value,
+	-- (a.Tool_Life - a.Current_Value) Diff,
+	-- ((a.Tool_Life - a.Current_Value) / a.Increment_By) Cycles_Remaining,
+	-- (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) Seconds_Remaining,
+	-- ((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60) Minutes_Remaining,
+	Format(Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60)),0) iMinutes_Remaining,
+	-- Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) % 60)) Seconds,
+	DATE_FORMAT(a.Last_Update,"%m/%d/%Y %h:%i") Last_Update 
+	-- select DATEselect DATE_FORMAT(NOW(),"%m/%d/%Y %h:%i") Last_Update _FORMAT(NOW(),"%m/%d/%Y %h:%i") Last_Update 
+	from CNC_Part_Operation_Assembly a
+	inner join CNC_Part_Operation cpo 
+	on a.CNC_Key = cpo.CNC_Key -- 1 to 1
+	inner join Part p 
+	on cpo.Part_Key = p.Part_Key -- 1 to 1 
+	inner join Operation o 
+	on cpo.Operation_Key = o.Operation_Key
+	inner join CNC_Workcenter cw 
+	on a.CNC_Key = cw.CNC_Key   -- 1 to 1
+	inner join Workcenter w 
+	on cw.Workcenter_Key = w.Workcenter_Key -- 1 to 1 
+	inner join Building b 
+	on w.Building_Key = b.Building_Key
+	inner join CNC c 
+	on a.CNC_Key = c.CNC_Key
+	where b.Building_Key =',cast(pBuilding_Key as char));
+	set @results = CONCAT(@results,' order by (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time)');
+    -- select @results;
+    /*
+	PREPARE stmt FROM @results;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+	*/
+
+	set @sqlQuery = CONCAT('create table ',pTableName,@results);
+	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+
+   	set pRecordCount = FOUND_ROWS();
+	set pReturnValue = 0;
+   
+END; 
+
+set @Building_Key = 5680;
+set @tableName = 'test0901';
+
+call CreateUpcomingToolChanges(@Building_Key,@tableName,@recordCount,@returnValue);
+select @recordCount,@returnValue;
+
+-- drop table test0901
+
+CREATE PROCEDURE FetchUpcomingChanges(
+	IN pBuilding_Key INT,
+	OUT pReturnValue INT 
+)
