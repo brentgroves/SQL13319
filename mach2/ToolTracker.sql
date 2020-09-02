@@ -664,10 +664,10 @@ set @tableName = 'test0901';
 
 call CreateUpcomingToolChanges(@Building_Key,@tableName,@recordCount,@returnValue);
 select @recordCount,@returnValue;
-
+select * from test0901
 -- drop table test0901
 
-CREATE PROCEDURE FetchUpcomingChanges(
+CREATE PROCEDURE FetchUpcomingToolChanges(
 	IN pBuilding_Key INT,
 	OUT pReturnValue INT 
 )
