@@ -39,7 +39,7 @@ select @pRecordCount;
 
 set @startPeriod =  0;
 set @endPeriod = 4;
-call PartProdRateFetch(@startPeriod,@endPeriod,90,0, @rec); 
+call PartProdRateFetch(@startPeriod,@endPeriod,10,10, @rec); 
 select @rec;
 -- drop procedure PartProdRateFetch
 CREATE DEFINER=`brent`@`%` PROCEDURE PartProdRateFetch (
