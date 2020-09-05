@@ -247,17 +247,17 @@ select * from Tool_Assembly_Part
 -- UPDATE ASSEMBLY KEY AFTER TOOLING UPLOAD
 -- drop table CNC_Part_Operation_Set_Block 
 CREATE TABLE CNC_Part_Operation_Set_Block (
-	CNC_Part_Operation_Set_Block int NOT NULL,   -- each CNC_Part_Operation_Key, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
+	CNC_Part_Operation_Set_Block_Key int NOT NULL,   -- each CNC_Part_Operation_Key, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL,
 	Set_No int NOT NULL,  -- Can't avoid this Set_No because of the way the Moxa receives messages from the Okuma's serial port.
 	Block_No int NOT NULL,  -- This is just an index to identify which 10-byte block in a datagram set. 
 	Assembly_Key int NOT NULL, -- foreign key
-  	PRIMARY KEY (CNC_Part_Operation_Set_Block)
+  	PRIMARY KEY (CNC_Part_Operation_Set_Block_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='UDP Datagrams sent from Moxa units';
-
-insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block,CNC_Key,Part_Key,Operation_Key,Set_No,Block_No,Assembly_Key)
+-- select * from CNC_Part_Operation_Set_Block
+insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_Key,Part_Key,Operation_Key,Set_No,Block_No,Assembly_Key)
 -- values (1,1,2809196,56409,1,1,1)
 -- values (2,1,2809196,56409,1,2,2)
 -- values (3,1,2809196,56409,1,3,3)
@@ -327,6 +327,10 @@ CALL GetIncrementBy(@CNC_Part_Operation_Key,@Set_No,@Block_No,@IncrementBy,@Retu
 
 SELECT @IncrementBy,@Return_Value;
 
+/*
+ * So that we don't have to maintain a configuration file for UDP13319 we have
+ * stored assembly counter increment values in a table. 
+ */
 -- DROP PROCEDURE GetIncrementBy;
 CREATE PROCEDURE GetIncrementBy
 (
@@ -482,19 +486,23 @@ CREATE TABLE Tool_Assembly_Change_History (
   	PRIMARY KEY (Tool_Assembly_Change_History_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool assembly change history';
 
+select * from Tool_Assembly_Change_History where assembly_key = 10;
 
 set @CNC_Part_Operation_Key = 1;
 set @Set_No = 1;
-set @Block_No = 1;
+set @Block_No = 10;
 set @Actual_Tool_Life = 2;
 set @Trans_Date = '2020-08-18 00:00:01';
--- CNC_Part_Operation_Key=1,Set_No=1,Block_No=1,Current_Value=18136,Last_Update=2020-08-25 10:38:27
--- "CNC_Part_Operation_Key":1,"Set_No":1,"Block_No":7,"Current_Value":29392,"Trans_Date":"2020-08-25 10:17:55"
--- select a.* from CNC_Part_Operation_Assembly a
+-- select * from Tool_Assembly_Change_History
 CALL Tool_Assembly_Change_History(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Life,@Trans_Date,@Return_Value);
 	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
 SELECT @Return_Value;
 
+/*
+ * The only information we have at the CNC is a CNC_Part_Operation_Key,Set_No,Block_No,
+ * so we have to use this info to link to CNC_Part_Operation_Assembly table.
+ *
+ */
 -- drop procedure InsToolAssemblyChangeHistory;
 CREATE PROCEDURE InsToolAssemblyChangeHistory(
 	IN pCNC_Part_Operation_Key INT,
@@ -563,20 +571,211 @@ set pTool_Assembly_Change_History_Key = (select Tool_Assembly_Change_History_Key
 -- select pTool_Assembly_Change_History_Key;
 -- SET @total_tax = (SELECT SUM(tax) FROM taxable_transactions);
 set pReturnValue = 0;
-select * from CNC_Part_Operation_Assembly
 END;
+select * from Tool_Assembly_Change_History
+
 -- truncate table Tool_Assembly_Change_History
 set @CNC_Part_Operation_Key = 1;
 set @Set_No = 1;
 set @Block_No = 1;
-set @Actual_Tool_Assembly_Life = 2;
-set @Trans_Date = '2020-08-18 00:00:01';
--- CNC_Part_Operation_Key=1,Set_No=1,Block_No=1,Current_Value=18136,Last_Update=2020-08-25 10:38:27
--- "CNC_Part_Operation_Key":1,"Set_No":1,"Block_No":7,"Current_Value":29392,"Trans_Date":"2020-08-25 10:17:55"
--- select a.* from CNC_Part_Operation_Assembly a
+set @Actual_Tool_Assembly_Life = 80500;
+set @Trans_Date = '2020-09-05 09:50:00';
 CALL InsToolAssemblyChangeHistory(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Assembly_Life,@Trans_Date,@Tool_Assembly_Change_History_Key,@Return_Value);
-	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
 SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
+
+/*
+	-- set CNC_Part_Operation_Key = 1;
+	set Set_No = 1;
+	set Block_No = 1;
+	set Actual_Tool_Assembly_Life = 80500;
+	set Trans_Date = '2020-09-05 09:50:00';
+  */ 
+-- truncate table Tool_Assembly_Change_History;
+call GenerateToolAssemblyChangeHistory();
+select * from Tool_Assembly_Change_History
+-- drop procedure GenerateToolAssemblyChangeHistory
+CREATE PROCEDURE GenerateToolAssemblyChangeHistory()
+BEGIN
+	DECLARE x  INT;
+	DECLARE CNC_Part_Operation_Key int;
+	DECLARE Set_No int;
+	DECLARE Block_No int;
+	DECLARE Actual_Tool_Assembly_Life int;
+	DECLARE Trans_Date datetime;
+	DECLARE Return_Value int;
+	DECLARE Tool_Assembly_Change_History_Key int;
+     
+	SET x = 1;
+	set CNC_Part_Operation_Key = 1;
+	set Set_No = 1;
+	set Block_No = 1;
+	set Actual_Tool_Assembly_Life = 80500;  -- equals tool life
+	set Trans_Date = '2020-09-05 09:50:00';
+
+	loop_label:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 2;
+	set Actual_Tool_Assembly_Life = 131000;  -- less than tool life 132000
+	loop_label2:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label2;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 3;
+	set Actual_Tool_Assembly_Life = 52700;  -- greater than tool life 52600
+	loop_label3:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label3;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 4;
+	set Actual_Tool_Assembly_Life = 78000;  -- equal to tool life 78000
+	loop_label4:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label4;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 5;
+	set Actual_Tool_Assembly_Life = 39000;  -- less than to tool life 40000
+	loop_label5:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label5;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 6;
+	set Actual_Tool_Assembly_Life = 10000;  -- less than to tool life 999999
+	loop_label6:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label6;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 7;
+	set Actual_Tool_Assembly_Life = 72500;  -- greater than tool life 72000
+	loop_label7:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label7;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 8;
+	set Actual_Tool_Assembly_Life = 50000;  -- equal to tool life 50000
+	loop_label8:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label8;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 9;
+	set Actual_Tool_Assembly_Life = 20000;  -- less than tool life 999999
+	loop_label9:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label9;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Set_No = 2;
+	set Block_No = 1;
+	set Actual_Tool_Assembly_Life = 110100;  -- greater than tool life 110000
+	loop_label10:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label10;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 2;
+	set Actual_Tool_Assembly_Life = 100000;  -- equal to tool life 100000
+	loop_label11:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label11;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+	SET x = 1;
+	set Block_No = 3;
+	set Actual_Tool_Assembly_Life = 109900;  -- less than tool life 110000
+	loop_label12:  LOOP
+		IF  x > 10 THEN 
+			LEAVE  loop_label12;
+		END  IF;
+		            
+		SET  x = x + 1;
+		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
+	END LOOP;
+
+END
+/*
+(CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
+                             Assembly_Key 
+-- values (12,1,2809196,56409,12,2,110000,-1,300,@Last_Update)
+
+CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_Key,Part_Key,Operation_Key,Set_No,Block_No,Assembly_Key)
+                                 Assembly_Key
+-- values (1,1,2809196,56409,1,1,1)
+-- values (2,1,2809196,56409,1,2,2)
+-- values (3,1,2809196,56409,1,3,3)
+-- values (4,1,2809196,56409,1,4,4)
+-- values (5,1,2809196,56409,1,5,5)
+-- values (6,1,2809196,56409,1,6,6)
+-- values (7,1,2809196,56409,1,7,7)
+-- values (8,1,2809196,56409,1,8,8)
+-- values (9,1,2809196,56409,1,9,9)
+-- values (10,1,2809196,56409,2,1,10)
+-- values (11,1,2809196,56409,2,2,11)
+-- values (12,1,2809196,56409,2,3,12)
+
+*/
 
 select * from Tool_Assembly_Change_History tc 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
