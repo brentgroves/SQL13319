@@ -779,6 +779,79 @@ CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_Key,Part_Key,
 
 select * from Tool_Assembly_Change_History tc 
 where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
+/*
+ * Tool life detail report 
+ * Test data has the same trans_date
+ */
+
+select 
+c.CNC, 
+p.Name,
+CONCAT(CONCAT(p.Part_No,' Rev'),p.Revision) Part_No, 
+ta.Assembly_No,
+ta.Description, 
+cp.Tool_Life,
+tc.Actual_Tool_Assembly_Life,
+tc.Trans_Date 
+from Tool_Assembly_Change_History tc 
+inner join CNC c 
+on tc.CNC_Key = c.CNC_Key 
+inner join CNC_Part_Operation_Assembly cp 
+on tc.CNC_Key = cp.CNC_Key 
+and tc.Part_Key = cp.Part_Key 
+and tc.Operation_Key = cp.Operation_Key 
+and tc.Assembly_Key = cp.Assembly_Key 
+inner join Part p 
+on tc.Part_Key = p.Part_Key 
+inner join Tool_Assembly ta  
+on tc.Assembly_Key=ta.Assembly_Key 
+
+/*
+ * Tool life summary report 
+ * Test data has the same trans_date
+ */
+select 
+s1.CNC,
+s1.Name,
+s1.Part_No,
+s1.Assembly_No,
+s1.Description,
+s1.Tool_Life,
+-- s1.CNC_Part_Operation_Assembly_Key,
+-- sum(s1.Actual_Tool_Assembly_Life) assySum,
+-- count(*) assyCount,
+-- sum(s1.Actual_Tool_Assembly_Life) / count(*) assyAvg,
+round(sum(s1.Actual_Tool_Assembly_Life) / count(*),0) Avg_Tool_Life
+
+from 
+(
+	select 
+	cp.CNC_Part_Operation_Assembly_Key, 
+	c.CNC, 
+	p.Name,
+	CONCAT(CONCAT(p.Part_No,' Rev'),p.Revision) Part_No, 
+	ta.Assembly_No,
+	ta.Description, 
+	cp.Tool_Life,
+	tc.Actual_Tool_Assembly_Life,
+	tc.Trans_Date 
+	from Tool_Assembly_Change_History tc 
+	inner join CNC c 
+	on tc.CNC_Key = c.CNC_Key 
+	inner join CNC_Part_Operation_Assembly cp 
+	on tc.CNC_Key = cp.CNC_Key 
+	and tc.Part_Key = cp.Part_Key 
+	and tc.Operation_Key = cp.Operation_Key 
+	and tc.Assembly_Key = cp.Assembly_Key 
+	inner join Part p 
+	on tc.Part_Key = p.Part_Key 
+	inner join Tool_Assembly ta  
+	on tc.Assembly_Key=ta.Assembly_Key 
+)s1
+group by s1.CNC_Part_Operation_Assembly_Key,s1.CNC,s1.Name,s1.Part_No,s1.Assembly_No,s1.Description,s1.Tool_Life
+
+
+select * from CNC_Part_Operation_Assembly
 
 /*
 Tool Assembly Tool Change Report query
