@@ -583,20 +583,20 @@ set @Trans_Date = '2020-09-05 09:50:00';
 CALL InsToolAssemblyChangeHistory(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Assembly_Life,@Trans_Date,@Tool_Assembly_Change_History_Key,@Return_Value);
 SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
 
-/*
-	-- set CNC_Part_Operation_Key = 1;
-	set Set_No = 1;
-	set Block_No = 1;
-	set Actual_Tool_Assembly_Life = 80500;
-	set Trans_Date = '2020-09-05 09:50:00';
-  */ 
+
+set @Trans_Date = '2020-09-07 09:50:00';
+call GenerateToolAssemblyChangeHistory(@Trans_Date);
+
 -- truncate table Tool_Assembly_Change_History;
-call GenerateToolAssemblyChangeHistory();
-select * from Tool_Assembly_Change_History
+select count(*) from Tool_Assembly_Change_History
 -- drop procedure GenerateToolAssemblyChangeHistory
-CREATE PROCEDURE GenerateToolAssemblyChangeHistory()
+CREATE PROCEDURE GenerateToolAssemblyChangeHistory
+(
+	IN pTrans_Date datetime
+)
 BEGIN
 	DECLARE x  INT;
+	DECLARE rnd INT;
 	DECLARE CNC_Part_Operation_Key int;
 	DECLARE Set_No int;
 	DECLARE Block_No int;
@@ -604,14 +604,15 @@ BEGIN
 	DECLARE Trans_Date datetime;
 	DECLARE Return_Value int;
 	DECLARE Tool_Assembly_Change_History_Key int;
-     
+
+	set Trans_Date = pTrans_Date;
+
 	SET x = 1;
 	set CNC_Part_Operation_Key = 1;
 	set Set_No = 1;
 	set Block_No = 1;
-	set Actual_Tool_Assembly_Life = 80500;  -- equals tool life
-	set Trans_Date = '2020-09-05 09:50:00';
-
+	set rnd = RAND() * (80500*.1);
+	set Actual_Tool_Assembly_Life = 80500 - (80500 * .05) + rnd;  -- equals tool life - 5%
 	loop_label:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label;
@@ -623,7 +624,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 2;
-	set Actual_Tool_Assembly_Life = 131000;  -- less than tool life 132000
+	set rnd = RAND() * (132000*.1);
+	set Actual_Tool_Assembly_Life = 132000 - (132000 * .05) + rnd;  -- +/- 5%
 	loop_label2:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label2;
@@ -635,7 +637,9 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 3;
-	set Actual_Tool_Assembly_Life = 52700;  -- greater than tool life 52600
+	set rnd = RAND() * (52600*.1);
+	set Actual_Tool_Assembly_Life = 52600 - (52600 * .05) + rnd;  -- +/- 5%
+	
 	loop_label3:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label3;
@@ -647,7 +651,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 4;
-	set Actual_Tool_Assembly_Life = 78000;  -- equal to tool life 78000
+	set rnd = RAND() * (78000*.1);
+	set Actual_Tool_Assembly_Life = 78000 - (78000 * .05) + rnd;  -- +/- 5%
 	loop_label4:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label4;
@@ -659,7 +664,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 5;
-	set Actual_Tool_Assembly_Life = 39000;  -- less than to tool life 40000
+	set rnd = RAND() * (40000*.1);
+	set Actual_Tool_Assembly_Life = 40000 - (40000 * .05) + rnd;  -- +/- 5%
 	loop_label5:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label5;
@@ -671,7 +677,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 6;
-	set Actual_Tool_Assembly_Life = 10000;  -- less than to tool life 999999
+	set rnd = RAND() * (10000*.1);
+	set Actual_Tool_Assembly_Life = 10000 - (10000 * .05) + rnd;  -- +/- 5%
 	loop_label6:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label6;
@@ -683,7 +690,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 7;
-	set Actual_Tool_Assembly_Life = 72500;  -- greater than tool life 72000
+	set rnd = RAND() * (72000*.1);
+	set Actual_Tool_Assembly_Life = 72000 - (72000 * .05) + rnd;  -- +/- 5%
 	loop_label7:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label7;
@@ -695,7 +703,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 8;
-	set Actual_Tool_Assembly_Life = 50000;  -- equal to tool life 50000
+	set rnd = RAND() * (50000*.1);
+	set Actual_Tool_Assembly_Life = 50000 - (50000 * .05) + rnd;  -- +/- 5%
 	loop_label8:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label8;
@@ -707,7 +716,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 9;
-	set Actual_Tool_Assembly_Life = 20000;  -- less than tool life 999999
+	set rnd = RAND() * (20000*.1);
+	set Actual_Tool_Assembly_Life = 20000 - (20000 * .05) + rnd;  -- +/- 5%
 	loop_label9:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label9;
@@ -717,10 +727,12 @@ BEGIN
 		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
 	END LOOP;
 
+
 	SET x = 1;
 	set Set_No = 2;
 	set Block_No = 1;
-	set Actual_Tool_Assembly_Life = 110100;  -- greater than tool life 110000
+	set rnd = RAND() * (110000*.1);
+	set Actual_Tool_Assembly_Life = 110000 - (110000 * .05) + rnd;  -- +/- 5%
 	loop_label10:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label10;
@@ -732,7 +744,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 2;
-	set Actual_Tool_Assembly_Life = 100000;  -- equal to tool life 100000
+	set rnd = RAND() * (100000*.1);
+	set Actual_Tool_Assembly_Life = 100000 - (100000 * .05) + rnd;  -- +/- 5%
 	loop_label11:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label11;
@@ -744,7 +757,8 @@ BEGIN
 
 	SET x = 1;
 	set Block_No = 3;
-	set Actual_Tool_Assembly_Life = 109900;  -- less than tool life 110000
+	set rnd = RAND() * (110000*.1);
+	set Actual_Tool_Assembly_Life = 110000 - (110000 * .05) + rnd;  -- +/- 5%
 	loop_label12:  LOOP
 		IF  x > 10 THEN 
 			LEAVE  loop_label12;
@@ -783,11 +797,12 @@ where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
  * Tool life detail report 
  * Test data has the same trans_date
  */
-
+-- GenerateToolAssemblyChangeHistory
 select 
 c.CNC, 
 p.Name,
 CONCAT(CONCAT(p.Part_No,' Rev'),p.Revision) Part_No, 
+o.Operation_Code,
 ta.Assembly_No,
 ta.Description, 
 cp.Tool_Life,
@@ -795,61 +810,107 @@ tc.Actual_Tool_Assembly_Life,
 tc.Trans_Date 
 from Tool_Assembly_Change_History tc 
 inner join CNC c 
-on tc.CNC_Key = c.CNC_Key 
+on tc.CNC_Key = c.CNC_Key  -- 1 to 1 
 inner join CNC_Part_Operation_Assembly cp 
 on tc.CNC_Key = cp.CNC_Key 
 and tc.Part_Key = cp.Part_Key 
 and tc.Operation_Key = cp.Operation_Key 
-and tc.Assembly_Key = cp.Assembly_Key 
+and tc.Assembly_Key = cp.Assembly_Key  -- 1 to 1 
 inner join Part p 
-on tc.Part_Key = p.Part_Key 
+on tc.Part_Key = p.Part_Key -- 1 to 1
+inner join Operation o 
+on tc.Operation_Key = o.Operation_Key -- 1 to 1
 inner join Tool_Assembly ta  
-on tc.Assembly_Key=ta.Assembly_Key 
+on tc.Assembly_Key=ta.Assembly_Key -- 1 to 1
+
+
+set @startDate = '2020-09-05 09:50:00';
+set @endDate = '2020-09-07 23:59:59';
+set @tableName = 'test0901';
+
+call CreateToolChangeSummary(@startDate,@endDate,@tableName,@recordCount,@returnValue);
+select @recordCount,@returnValue;
+select * from test0901 t2; 
+
+DROP PROCEDURE CreateToolAssemblyChangeSummary;
 
 /*
- * Tool life summary report 
- * Test data has the same trans_date
+ * Tool assembly change summary report 
  */
-select 
-s1.CNC,
-s1.Name,
-s1.Part_No,
-s1.Assembly_No,
-s1.Description,
-s1.Tool_Life,
--- s1.CNC_Part_Operation_Assembly_Key,
--- sum(s1.Actual_Tool_Assembly_Life) assySum,
--- count(*) assyCount,
--- sum(s1.Actual_Tool_Assembly_Life) / count(*) assyAvg,
-round(sum(s1.Actual_Tool_Assembly_Life) / count(*),0) Avg_Tool_Life
-
-from 
+CREATE PROCEDURE CreateToolChangeSummary
 (
-	select 
-	cp.CNC_Part_Operation_Assembly_Key, 
-	c.CNC, 
-	p.Name,
-	CONCAT(CONCAT(p.Part_No,' Rev'),p.Revision) Part_No, 
-	ta.Assembly_No,
-	ta.Description, 
-	cp.Tool_Life,
-	tc.Actual_Tool_Assembly_Life,
-	tc.Trans_Date 
-	from Tool_Assembly_Change_History tc 
-	inner join CNC c 
-	on tc.CNC_Key = c.CNC_Key 
-	inner join CNC_Part_Operation_Assembly cp 
-	on tc.CNC_Key = cp.CNC_Key 
-	and tc.Part_Key = cp.Part_Key 
-	and tc.Operation_Key = cp.Operation_Key 
-	and tc.Assembly_Key = cp.Assembly_Key 
-	inner join Part p 
-	on tc.Part_Key = p.Part_Key 
-	inner join Tool_Assembly ta  
-	on tc.Assembly_Key=ta.Assembly_Key 
-)s1
-group by s1.CNC_Part_Operation_Assembly_Key,s1.CNC,s1.Name,s1.Part_No,s1.Assembly_No,s1.Description,s1.Tool_Life
+	pStartDate DATETIME,
+	pEndDate DATETIME,
+	pTableName varchar(12),
+	OUT pRecordCount INT,
+	OUT pReturnValue INT
+)
+BEGIN
+	DECLARE startDate,endDate DATETIME;
+	DECLARE tableName varchar(12);
 
+	SET tableName = pTableName;
+	set startDate =pStartDate;
+	set endDate =pEndDate;
+
+	SET @sqlQuery = CONCAT('DROP TABLE IF EXISTS ',tableName);
+   	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+   
+  -- set @startDate = '2020-09-05 09:50:00';
+  -- set @endDate = '2020-09-08 23:59:59';
+  -- set @tableName = 'test0907';
+	set @results = 
+	CONCAT('
+	select 
+	s1.CNC,
+	s1.Name,
+	s1.Part_No,
+	s1.Operation_Code,
+	s1.Assembly_No,
+	s1.Description,
+	s1.Tool_Life,
+	round(sum(s1.Actual_Tool_Assembly_Life) / count(*),0) Avg_Tool_Life
+	from 
+	(
+		select 
+		cp.CNC_Part_Operation_Assembly_Key, 
+		c.CNC, 
+		p.Name,
+		CONCAT(CONCAT(p.Part_No," Rev"),p.Revision) Part_No, 
+		o.Operation_Code,
+		ta.Assembly_No,
+		ta.Description, 
+		cp.Tool_Life,
+		tc.Actual_Tool_Assembly_Life,
+		tc.Trans_Date 
+		from Tool_Assembly_Change_History tc 
+		inner join CNC c 
+		on tc.CNC_Key = c.CNC_Key  -- 1 to 1 
+		inner join CNC_Part_Operation_Assembly cp 
+		on tc.CNC_Key = cp.CNC_Key 
+		and tc.Part_Key = cp.Part_Key 
+		and tc.Operation_Key = cp.Operation_Key 
+		and tc.Assembly_Key = cp.Assembly_Key  -- 1 to 1 
+		inner join Part p 
+		on tc.Part_Key = p.Part_Key -- 1 to 1
+		inner join Operation o 
+		on tc.Operation_Key = o.Operation_Key -- 1 to 1
+		inner join Tool_Assembly ta  
+		on tc.Assembly_Key=ta.Assembly_Key -- 1 to 1
+		where tc.Trans_Date BETWEEN \'', startDate,'\' and \'', endDate,'\'
+	)s1
+	group by s1.CNC_Part_Operation_Assembly_Key,s1.CNC,s1.Name,s1.Part_No,s1.Operation_Code,s1.Assembly_No,s1.Description,s1.Tool_Life;');
+	select @results;
+	
+	set @sqlQuery = CONCAT('create table ',tableName,@results);
+	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
+	set pRecordCount = FOUND_ROWS();
+	set pReturnValue = 0;
+end
 
 select * from CNC_Part_Operation_Assembly
 
