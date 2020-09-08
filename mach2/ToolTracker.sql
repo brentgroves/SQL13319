@@ -826,13 +826,15 @@ on tc.Assembly_Key=ta.Assembly_Key -- 1 to 1
 
 set @startDate = '2020-09-05 09:50:00';
 set @endDate = '2020-09-07 23:59:59';
-set @tableName = 'test0901';
+set @tableName = 'test0901b';
 
+--   CreateToolChangeSummary(?,?,?,@recordCount,@returnValue)
 call CreateToolChangeSummary(@startDate,@endDate,@tableName,@recordCount,@returnValue);
 select @recordCount,@returnValue;
-select * from test0901 t2; 
+select * from test0902 t2; 
+select * from rpt09083
 
-DROP PROCEDURE CreateToolAssemblyChangeSummary;
+DROP PROCEDURE CreateToolChangeSummary;
 
 /*
  * Tool assembly change summary report 
@@ -902,16 +904,25 @@ BEGIN
 		where tc.Trans_Date BETWEEN \'', startDate,'\' and \'', endDate,'\'
 	)s1
 	group by s1.CNC_Part_Operation_Assembly_Key,s1.CNC,s1.Name,s1.Part_No,s1.Operation_Code,s1.Assembly_No,s1.Description,s1.Tool_Life;');
-	select @results;
+	-- select @results;
 	
 	set @sqlQuery = CONCAT('create table ',tableName,@results);
 	PREPARE stmt FROM @sqlQuery;
 	execute stmt;
     DEALLOCATE PREPARE stmt;
 	set pRecordCount = FOUND_ROWS();
-	set pReturnValue = 0;
+	set pReturnValue = 1;
 end
+/*
+	set @sqlQuery = CONCAT('create table ',pTableName,@results);
+	PREPARE stmt FROM @sqlQuery;
+	execute stmt;
+    DEALLOCATE PREPARE stmt;
 
+   	set pRecordCount = FOUND_ROWS();
+	set pReturnValue = 0;
+
+ */
 select * from CNC_Part_Operation_Assembly
 
 /*
@@ -988,15 +999,16 @@ BEGIN
     DEALLOCATE PREPARE stmt;
 
    	set pRecordCount = FOUND_ROWS();
-	set pReturnValue = 0;
+	set pReturnValue = 1;
    
 END; 
 
 set @Building_Key = 5680;
-set @tableName = 'test0901';
+set @tableName = 'test0901a';
 
 call CreateUpcomingToolChanges(@Building_Key,@tableName,@recordCount,@returnValue);
 select @recordCount,@returnValue;
+select @returnValue;
 select * from test0901
 -- drop table test0901
 select * from rpt09020
