@@ -824,23 +824,33 @@ inner join Tool_Assembly ta
 on tc.Assembly_Key=ta.Assembly_Key -- 1 to 1
 
 
-set @startDate = '2020-09-05 09:50:00';
-set @endDate = '2020-09-07 23:59:59';
-set @tableName = 'test0901b';
-
+  set @startDate = '2020-09-05 09:50:00';
+  set @endDate = '2020-09-08 23:59:59';
+  set @tableName = 'rpt0909a';
+-- select * from rpt0909a;
+-- select @returnValue;
+-- drop table rpt0909a;
 --   CreateToolChangeSummary(?,?,?,@recordCount,@returnValue)
 call CreateToolChangeSummary(@startDate,@endDate,@tableName,@recordCount,@returnValue);
 select @recordCount,@returnValue;
+
+select @recordCount,@returnValue;
 select * from test0902 t2; 
-select * from rpt09083
+select * from rpt0909a
+
+set @Building_Key = 5680;
+set @tableName = 'test0901a';
+
+call CreateUpcomingToolChanges(@Building_Key,@tableName,@recordCount,@returnValue);
+select @recordCount,@returnValue;
 
 DROP PROCEDURE CreateToolChangeSummary;
 
 /*
  * Tool assembly change summary report 
  */
-CREATE PROCEDURE CreateToolChangeSummary
-(
+
+CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`CreateToolChangeSummary`(
 	pStartDate DATETIME,
 	pEndDate DATETIME,
 	pTableName varchar(12),
@@ -912,8 +922,16 @@ BEGIN
     DEALLOCATE PREPARE stmt;
 	set pRecordCount = FOUND_ROWS();
 	set pReturnValue = 1;
-end
+end;
 /*
+set pRecordCount = FOUND_ROWS();
+MySQL says it is depreciated
+https://mariadb.com/kb/en/found_rows/
+https://dev.mysql.com/doc/refman/5.7/en/set-variable.html
+*/
+/*
+  	set pRecordCount = FOUND_ROWS();
+	set pReturnValue = 1;
 	set @sqlQuery = CONCAT('create table ',pTableName,@results);
 	PREPARE stmt FROM @sqlQuery;
 	execute stmt;
@@ -930,7 +948,8 @@ Tool Assembly Tool Change Report query
 */
 
 -- drop procedure CreateUpcomingToolChanges;
-CREATE PROCEDURE CreateUpcomingToolChanges(
+
+CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`CreateUpcomingToolChanges`(
 	IN pBuilding_Key INT,
 	IN pTableName varchar(12),
 	OUT pRecordCount INT, 	
@@ -942,6 +961,7 @@ BEGIN
 
    set @pBuilding_Key = 5680;
    set @pTableName = 'test0901';
+
 
 	-- SET tableName = pTableName;
 	SET @sqlQuery = CONCAT('DROP TABLE IF EXISTS ',pTableName);
@@ -955,6 +975,9 @@ BEGIN
 	CONCAT(' select 
 	-- b.Building_Code,b.Name,
 	-- w.Workcenter_Code, w.Name,
+	ROW_NUMBER() OVER (
+	  ORDER BY (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time)
+	) primary_key,
 	b.Building_No, 
 	c.CNC, 
 	p.Part_No,
@@ -985,7 +1008,7 @@ BEGIN
 	inner join CNC c 
 	on a.CNC_Key = c.CNC_Key
 	where b.Building_Key =',cast(pBuilding_Key as char));
-	set @results = CONCAT(@results,' order by (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time)');
+	-- set @results = CONCAT(@results,' order by (((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time)');
     -- select @results;
     /*
 	PREPARE stmt FROM @results;
@@ -1001,7 +1024,9 @@ BEGIN
    	set pRecordCount = FOUND_ROWS();
 	set pReturnValue = 1;
    
-END; 
+END;
+
+
 
 set @Building_Key = 5680;
 set @tableName = 'test0901a';
@@ -1009,7 +1034,7 @@ set @tableName = 'test0901a';
 call CreateUpcomingToolChanges(@Building_Key,@tableName,@recordCount,@returnValue);
 select @recordCount,@returnValue;
 select @returnValue;
-select * from test0901
+select * from test0901a
 -- drop table test0901
 select * from rpt09020
 CREATE PROCEDURE FetchUpcomingToolChanges(
