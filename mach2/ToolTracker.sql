@@ -1026,7 +1026,7 @@ BEGIN
    
 END;
 
-
+select * from CNC_Part_Operation_Assembly a
 
 set @Building_Key = 5680;
 set @tableName = 'test0901a';
