@@ -15,7 +15,9 @@ CREATE TABLE Kep13319 (
 
 set @transDate = '2020-06-25 00:00:00';
 call InsKep13319('test','partCounter', 123,'Avilla',123, 'CNC103', '103', 5, @transDate); 
-select * from Kep13319 k where cnc='362' order by kep13319Key desc
+select * from Kep13319 k
+where transDate >= '2020-09-14 00:00:00'
+-- where cnc='362' order by kep13319Key desc
 -- drop procedure InsKep13319
 CREATE PROCEDURE InsKep13319
 (

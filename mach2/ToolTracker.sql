@@ -584,7 +584,7 @@ CALL InsToolAssemblyChangeHistory(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Act
 SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
 
 
-set @Trans_Date = '2020-09-07 09:50:00';
+set @Trans_Date = '2020-09-14 09:50:00';
 call GenerateToolAssemblyChangeHistory(@Trans_Date);
 
 -- truncate table Tool_Assembly_Change_History;
