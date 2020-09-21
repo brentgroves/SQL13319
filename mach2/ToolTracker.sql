@@ -56,6 +56,7 @@ CREATE TABLE Building (
 insert into Building (Building_Key,Building_Code,Name,Building_No)
 -- values(5680,'Mobex Global Avilla','Mobex Global Avilla - Plant 11',11)
 -- values(5641,'Mobex Global Plant 8','Mobex Global Albion - Plant 8',8)
+values(5644,'Mobex Global Plant 6','Mobex Global Albion - Plant 6',6)
 -- select * from Building b2 
 
 -- drop table Workcenter
@@ -71,6 +72,7 @@ CREATE TABLE Workcenter (
 insert into Workcenter (Workcenter_Key,Building_Key,Workcenter_Code,Name)
 -- values (61324,5680,'CNC103','Honda RDX RH') 
 -- values (61314,5680,'Honda Civic CNC 359 362','Honda Civic Knuckle LH') 
+values(61090,5644,'CNC 120 LH 6K Knuckle','P558 LH 6K Knuckle')
 
 select * from Workcenter tt 
 
@@ -91,6 +93,7 @@ CREATE TABLE CNC (
 insert into CNC (CNC_Key,CNC,CNC_Type_Key,Serial_Port,Networked)
 -- values (1,'103',1,true,false)
 -- values (2,'362',2,false,true)
+values(3,'120',1,true,false)
 
 select * from CNC
 
@@ -119,6 +122,7 @@ CREATE TABLE CNC_Workcenter (
 insert into CNC_Workcenter (CNC_Workcenter_Key,CNC_Key,Workcenter_Key)
 -- values (1,1,61324) 
 -- values (2,2,61314) 
+values(3,3,61090)
 
 select * from CNC_Workcenter
 /*
@@ -139,7 +143,8 @@ CREATE TABLE Part (
 	PRIMARY KEY (Part_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_part view';
 insert into Part (Part_Key,Part_No,Revision,Name,Part_Type)
-values (2809196,'51393 TJB A040M1','40-M1-','RDX Right Hand','Bracket') 
+-- values (2809196,'51393 TJB A040M1','40-M1-','RDX Right Hand','Bracket') 
+values (2794706,'10103355','A','P558 6K Knuckle Left Hand','Knuckle')
 select * from Part
 
 /*
@@ -153,7 +158,8 @@ CREATE TABLE Operation (
 	PRIMARY KEY (Operation_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_operation';
 insert into Operation (Operation_Key,Operation_Code)
-values (56409,'Machine Complete')
+-- values (56409,'Machine Complete')
+values (51168,'Machine A - WIP')
 
 select * from Operation
 
@@ -170,7 +176,8 @@ CREATE TABLE Part_Operation (
 	PRIMARY KEY (Part_Operation_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_part_operation';
 insert into Part_Operation (Part_Operation_Key,Part_Key,Operation_Key)
-values (7914696,2809196,56409)
+-- values (7914696,2809196,56409)
+values (7874404,2794706,51168)
 select * from Part_Operation
 
 
@@ -184,7 +191,8 @@ CREATE TABLE CNC_Part_Operation (
 	PRIMARY KEY (CNC_Part_Operation_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Links CNC to a part operation';
 insert into CNC_Part_Operation (CNC_Part_Operation_Key,CNC_Key,Part_Key,Operation_Key)
-values(1,1,2809196,56409)
+-- values(1,1,2809196,56409)
+values(2,3,2794706,51168)
 select * from CNC_Part_Operation 
 
 /*
@@ -200,6 +208,29 @@ CREATE TABLE Tool_Assembly (
   	PRIMARY KEY (Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly';
 insert into Tool_Assembly (Assembly_Key,Assembly_No,Description)
+-- P558 LH Knuckles
+-- values (13,'T01','3IN FACEMILL')
+-- values (14,'T21','2IN FACEMILL')
+-- values (15,'T22','M6 TAP DRILL')
+-- values (16,'T23','M6X1 TAP')
+-- values (17,'T72','15.1MM DRILL')
+-- values (18,'T33','ROUGH BORE')
+-- values (19,'T30','FINISH CENTER BORE')
+-- values (20,'T4','16.95 CALIPER HOLES')
+-- values (21,'T15','1.937 INDEXABLE DRILL')
+-- values (22,'T7','ROUGH DATUM J BORE')
+-- values (23,'T6','ROUGH DATUM L BORE')
+-- values (24,'T9','DATUM L 44.330MM ROMICRON')
+-- values (25,'T8','DATUM J 50.110MM ROMICRON')
+-- values (26,'T12','TAPER DREAMER')
+-- values (27,'T13','PLUNGE MILL')
+-- values (28,'T14','CHAMFER MILL')
+
+ /*
+PUT VC14 (CHAMFER MILL - P1,+2)
+
+  */
+-- RDX, cnc 103
 -- values (1,'T10','86.575MM FINISH BORE')
 -- values (2,'T11','ETCHING TOOL')
 -- values (3,'T01','85.24MM ROUGH BORE')
@@ -212,6 +243,7 @@ insert into Tool_Assembly (Assembly_Key,Assembly_No,Description)
 -- values (10,'T07','8.2MM DRILL')
 -- values (11,'T08','14.3MM DRILL')
 -- values (12,'T09','15.5MM DRILL')
+
 select * from Tool_Assembly 
 
 -- drop table Tool_Assembly_Part
@@ -225,6 +257,40 @@ CREATE TABLE Tool_Assembly_Part (
   	PRIMARY KEY (Tool_Assembly_Part_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly_Part';
 insert into Tool_Assembly_Part (Tool_Assembly_Part_Key,Part_Key,Operation_Key,Assembly_Key)
+-- values (13,2794706,51168,13)
+-- values (14,2794706,51168,14)
+-- values (15,2794706,51168,15)
+-- values (16,2794706,51168,16)
+-- values (17,2794706,51168,17)
+-- values (18,2794706,51168,18)
+-- values (19,2794706,51168,19)
+-- values (20,2794706,51168,20)
+-- values (21,2794706,51168,21)
+-- values (22,2794706,51168,22)
+-- values (23,2794706,51168,23)
+-- values (24,2794706,51168,24)
+-- values (25,2794706,51168,25)
+-- values (26,2794706,51168,26)
+-- values (27,2794706,51168,27)
+-- values (28,2794706,51168,28)
+/*
+13|T01        |3IN FACEMILL             
+14|T21        |2IN FACEMILL             
+15|T22        |M6 TAP DRILL             
+16|T23        |M6X1 TAP                 
+17|T72        |15.1MM DRILL             
+18|T33        |ROUGH BORE               
+19|T30        |FINISH CENTER BORE       
+20|T4         |16.95 CALIPER HOLES      
+21|T15        |1.937 INDEXABLE DRILL    
+22|T7         |ROUGH DATUM J BORE       
+23|T6         |ROUGH DATUM L BORE       
+24|T9         |DATUM L 44.330MM ROMICRON
+25|T8         |DATUM J 50.110MM ROMICRON
+26|T12        |TAPER DREAMER            
+27|T13        |PLUNGE MILL              
+28|T14        |CHAMFER MILL             
+ */
 -- values (1,2809196,56409,1)
 -- values (2,2809196,56409,2)
 -- values (3,2809196,56409,3)
@@ -238,6 +304,7 @@ insert into Tool_Assembly_Part (Tool_Assembly_Part_Key,Part_Key,Operation_Key,As
 -- values (11,2809196,56409,11)
 -- values (12,2809196,56409,12)
 select * from Tool_Assembly_Part
+
 
 /*
  * UDP Datagrams sent from Moxa units.
@@ -258,6 +325,26 @@ CREATE TABLE CNC_Part_Operation_Set_Block (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='UDP Datagrams sent from Moxa units';
 -- select * from CNC_Part_Operation_Set_Block
 insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_Key,Part_Key,Operation_Key,Set_No,Block_No,Assembly_Key)
+-- values (13,3,2794706,51168,1,1,13)
+-- values (14,3,2794706,51168,1,2,14)
+-- values (15,3,2794706,51168,1,3,15)
+-- values (16,3,2794706,51168,1,4,16)
+-- values (17,3,2794706,51168,1,5,17)
+-- values (18,3,2794706,51168,1,6,18)
+-- values (19,3,2794706,51168,1,7,19)
+-- values (20,3,2794706,51168,1,8,20)
+-- values (21,3,2794706,51168,1,9,21)
+
+-- values (22,3,2794706,51168,2,1,22)
+-- values (23,3,2794706,51168,2,2,23)
+-- values (24,3,2794706,51168,2,3,24)
+-- values (25,3,2794706,51168,2,4,25)
+-- values (26,3,2794706,51168,2,5,26)
+
+-- values (27,3,2794706,51168,3,1,27)
+-- values (28,3,2794706,51168,3,1,28)
+
+-- RDX,CNC103
 -- values (1,1,2809196,56409,1,1,1)
 -- values (2,1,2809196,56409,1,2,2)
 -- values (3,1,2809196,56409,1,3,3)
@@ -291,10 +378,30 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC Part operation assembly info';
 
 -- 5 * 60 = 300
-
+select * from CNC_Part_Operation_Assembly
 
 set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
+-- P558 LH Knuckles, CNC120
+-- values (13,3,2794706,51168,13,2,198,-1,600,@Last_Update )  -- vc1
+-- values (14,3,2794706,51168,14,2,198,-1,600,@Last_Update )  -- vc21
+-- values (15,3,2794706,51168,15,2,2498,-1,600,@Last_Update )  -- vc22
+-- values (16,3,2794706,51168,16,2,2998,-1,600,@Last_Update )  -- vc23
+-- values (17,3,2794706,51168,17,2,1798,-1,600,@Last_Update )  -- vc72
+-- values (18,3,2794706,51168,18,2,198,-1,600,@Last_Update )  -- vc33
+-- values (19,3,2794706,51168,19,2,348,-1,600,@Last_Update )  -- vc30
+-- values (20,3,2794706,51168,20,2,798,-1,600,@Last_Update )  -- vc4
+-- values (21,3,2794706,51168,21,2,298,-1,600,@Last_Update )  -- vc15
+-- values (22,3,2794706,51168,22,2,2498,-1,600,@Last_Update )  -- vc7
+-- values (23,3,2794706,51168,23,2,198,-1,600,@Last_Update )  -- vc6
+-- values (24,3,2794706,51168,24,2,3498,-1,600,@Last_Update )  -- vc9
+-- values (25,3,2794706,51168,25,2,3498,-1,600,@Last_Update )  -- vc8
+-- values (26,3,2794706,51168,26,2,17998,-1,600,@Last_Update )  -- vc12
+-- values (27,3,2794706,51168,27,2,798,-1,600,@Last_Update )  -- vc13
+-- values (28,3,2794706,51168,28,2,4998,-1,600,@Last_Update )  -- vc14
+
+
+-- RDX, CNC 103
 -- values (1,1,2809196,56409,1,2,80500,-1,300,@Last_Update )  -- vc10
 -- values (2,1,2809196,56409,2,2,132000,-1,300,@Last_Update)  -- vc11
 -- values (3,1,2809196,56409,3,2,52600,-1,300,@Last_Update)
