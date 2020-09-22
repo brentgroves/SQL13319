@@ -344,6 +344,7 @@ insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_K
 -- values (27,3,2794706,51168,3,1,27)
 -- values (28,3,2794706,51168,3,1,28)
 
+
 -- RDX,CNC103
 -- values (1,1,2809196,56409,1,1,1)
 -- values (2,1,2809196,56409,1,2,2)
@@ -379,6 +380,7 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 
 -- 5 * 60 = 300
 select * from CNC_Part_Operation_Assembly
+
 
 set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
@@ -471,6 +473,45 @@ end;
 /*
  * Report query
  */
+
+/*
+ Published UpdateCNCPartOperationAssembly => {"CNC_Part_Operation_Key":2,"Set_No":1,"Block_No":4,"Current_Value":1182,"Last_Update":"2020-09-22 07:51:51"}
+app13319    | updated currentAssembly.Current_Value=1182
+app13319    | Tracker13319 => {"CNC_Part_Operation_Key":2,"Set_No":1,"Block_No":4,"Current_Value":1182,"Last_Update":"2020-09-22 07:51:51"}
+*/
+/*
+set @Last_Update = '2020-09-22 08:33:51';
+    select
+    a.Last_Update,
+    @Last_Update,
+    TIMESTAMPDIFF(SECOND, a.Last_Update, @Last_Update),
+   a.Fastest_Cycle_Time
+   	from CNC_Part_Operation p
+	inner join CNC_Part_Operation_Set_Block b 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key  -- 1 to many
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key 
+	and b.Operation_Key = a.Operation_Key 
+	and b.Assembly_Key = a.Assembly_Key 
+	where p.CNC_Part_Operation_Key=2 
+    and b.Set_No = 1 and b.Block_No = 4;
+	
+	
+  	set a.Fastest_Cycle_Time = case 
+	when TIMESTAMPDIFF(SECOND, a.Last_Update, pLast_Update) < a.Fastest_Cycle_Time then  TIMESTAMPDIFF(SECOND, a.Last_Update, pLast_Update)
+	else a.Fastest_Cycle_Time 
+	end
+	where p.CNC_Part_Operation_Key=pCNC_Part_Operation_Key 
+    and b.Set_No = pSet_No and b.Block_No = pBlock_No;
+
+select a.Fastest_Cycle_Time,a.CNC_Key  
+from CNC_Part_Operation_Assembly a
+-- update CNC_Part_Operation_Assembly 
+set Fastest_Cycle_Time = 999999
+*/
 
 
 
@@ -1055,6 +1096,7 @@ Tool Assembly Tool Change Report query
 */
 
 -- drop procedure CreateUpcomingToolChanges;
+	Format(a.Fastest_Cycle_Time,0) iFastest_Cycle_Time
 
 CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`CreateUpcomingToolChanges`(
 	IN pBuilding_Key INT,
@@ -1097,7 +1139,8 @@ BEGIN
 	-- ((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60) Minutes_Remaining,
 	Format(Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) / 60)),0) iMinutes_Remaining,
 	-- Floor(((((a.Tool_Life - a.Current_Value) / a.Increment_By) * a.Fastest_Cycle_Time) % 60)) Seconds,
-	DATE_FORMAT(a.Last_Update,"%m/%d/%Y %h:%i") Last_Update 
+	DATE_FORMAT(a.Last_Update,"%m/%d/%Y %h:%i") Last_Update,
+	Format(a.Fastest_Cycle_Time,0) iFastest_Cycle_Time 
 	-- select DATEselect DATE_FORMAT(NOW(),"%m/%d/%Y %h:%i") Last_Update _FORMAT(NOW(),"%m/%d/%Y %h:%i") Last_Update 
 	from CNC_Part_Operation_Assembly a
 	inner join CNC_Part_Operation cpo 
