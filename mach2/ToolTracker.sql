@@ -342,7 +342,7 @@ insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_K
 -- values (26,3,2794706,51168,2,5,26)
 
 -- values (27,3,2794706,51168,3,1,27)
--- values (28,3,2794706,51168,3,1,28)
+-- values (28,3,2794706,51168,3,2,28)
 
 
 -- RDX,CNC103
@@ -1131,6 +1131,8 @@ BEGIN
 	c.CNC, 
 	p.Part_No,
 	-- p.Part_No,p.Revision,o.Operation_Code,
+	ta.Assembly_No,
+	ta.Description,
 	Format(a.Tool_Life,0) Tool_Life,
 	Format(a.Current_Value,0) Current_Value,
 	-- (a.Tool_Life - a.Current_Value) Diff,
@@ -1143,6 +1145,8 @@ BEGIN
 	Format(a.Fastest_Cycle_Time,0) iFastest_Cycle_Time 
 	-- select DATEselect DATE_FORMAT(NOW(),"%m/%d/%Y %h:%i") Last_Update _FORMAT(NOW(),"%m/%d/%Y %h:%i") Last_Update 
 	from CNC_Part_Operation_Assembly a
+	inner join Tool_Assembly ta
+	on a.Assembly_Key=ta.Assembly_Key
 	inner join CNC_Part_Operation cpo 
 	on a.CNC_Key = cpo.CNC_Key -- 1 to 1
 	inner join Part p 
@@ -1178,7 +1182,8 @@ END;
 
 select * from CNC_Part_Operation_Assembly a
 
-set @Building_Key = 5680;
+-- set @Building_Key = 5680;  -- Avilla
+set @Building_Key = 5644;  -- Plant 6
 set @tableName = 'test0901a';
 
 call CreateUpcomingToolChanges(@Building_Key,@tableName,@recordCount,@returnValue);
