@@ -305,7 +305,51 @@ insert into Tool_Assembly_Part (Tool_Assembly_Part_Key,Part_Key,Operation_Key,As
 -- values (12,2809196,56409,12)
 select * from Tool_Assembly_Part
 
+-- (LEFT HAND 6K P558)
+-- (PART# 10037973)
 
+/*
+ * This corresponds to a Plex tool_bom table.
+ * -- THIS WILL NEED TO BE UPDATED AFTER TOOLING MODULE UPLOAD
+ */
+-- drop table Tool_BOM
+-- truncate table Tool_BOM
+CREATE TABLE Tool_BOM (
+	Tool_BOM_Key int,
+	Tool_Key int,
+	Assembly_Key int NOT NULL, 
+	Quantity_Required decimal (18,2),
+	NumberOfCuttingEdges int not null, -- Comes from Busche Tool List
+	QuantityPerCuttingEdge int not null,  -- Comes from Busche Tool List
+  	PRIMARY KEY (Tool_BOM_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
+insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required)  
+values (1,1,)
+-- P558 LH Knuckles
+
+/*
+ * This corresponds to a Plex tool_bom table.
+ * -- THIS WILL NEED TO BE UPDATED AFTER TOOLING MODULE UPLOAD
+ */
+-- drop table Tool
+-- truncate table Tool
+CREATE TABLE Tool (
+	Tool_Key int,
+	Tool_No	varchar (50),
+	Tool_Type_Key	int,
+	Tool_Group_Key	int,
+	Description	varchar (50),
+	Consumable bit, -- Comes from Busche Tool List
+	NumberOfCuttingEdges int, -- Comes from Busche Tool List
+	Assembly_Key int NOT NULL, 
+	Quantity_Required decimal (18,2),
+  	PRIMARY KEY (Tool_BOM_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
+insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required)  
+values (1,1,)
+-- P558 LH Knuckles
+
+-- 009196|INSERT
 /*
  * UDP Datagrams sent from Moxa units.
  * Common variablies used as assembly counters are identified by an CNC_Part_Operation_Key, Set_No, and Block_No 
@@ -735,188 +779,6 @@ SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
 set @Trans_Date = '2020-09-14 09:50:00';
 call GenerateToolAssemblyChangeHistory(@Trans_Date);
 
--- truncate table Tool_Assembly_Change_History;
-select count(*) from Tool_Assembly_Change_History
--- drop procedure GenerateToolAssemblyChangeHistory
-CREATE PROCEDURE GenerateToolAssemblyChangeHistory
-(
-	IN pTrans_Date datetime
-)
-BEGIN
-	DECLARE x  INT;
-	DECLARE rnd INT;
-	DECLARE CNC_Part_Operation_Key int;
-	DECLARE Set_No int;
-	DECLARE Block_No int;
-	DECLARE Actual_Tool_Assembly_Life int;
-	DECLARE Trans_Date datetime;
-	DECLARE Return_Value int;
-	DECLARE Tool_Assembly_Change_History_Key int;
-
-	set Trans_Date = pTrans_Date;
-
-	SET x = 1;
-	set CNC_Part_Operation_Key = 1;
-	set Set_No = 1;
-	set Block_No = 1;
-	set rnd = RAND() * (80500*.1);
-	set Actual_Tool_Assembly_Life = 80500 - (80500 * .05) + rnd;  -- equals tool life - 5%
-	loop_label:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 2;
-	set rnd = RAND() * (132000*.1);
-	set Actual_Tool_Assembly_Life = 132000 - (132000 * .05) + rnd;  -- +/- 5%
-	loop_label2:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label2;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 3;
-	set rnd = RAND() * (52600*.1);
-	set Actual_Tool_Assembly_Life = 52600 - (52600 * .05) + rnd;  -- +/- 5%
-	
-	loop_label3:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label3;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 4;
-	set rnd = RAND() * (78000*.1);
-	set Actual_Tool_Assembly_Life = 78000 - (78000 * .05) + rnd;  -- +/- 5%
-	loop_label4:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label4;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 5;
-	set rnd = RAND() * (40000*.1);
-	set Actual_Tool_Assembly_Life = 40000 - (40000 * .05) + rnd;  -- +/- 5%
-	loop_label5:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label5;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 6;
-	set rnd = RAND() * (10000*.1);
-	set Actual_Tool_Assembly_Life = 10000 - (10000 * .05) + rnd;  -- +/- 5%
-	loop_label6:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label6;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 7;
-	set rnd = RAND() * (72000*.1);
-	set Actual_Tool_Assembly_Life = 72000 - (72000 * .05) + rnd;  -- +/- 5%
-	loop_label7:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label7;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 8;
-	set rnd = RAND() * (50000*.1);
-	set Actual_Tool_Assembly_Life = 50000 - (50000 * .05) + rnd;  -- +/- 5%
-	loop_label8:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label8;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 9;
-	set rnd = RAND() * (20000*.1);
-	set Actual_Tool_Assembly_Life = 20000 - (20000 * .05) + rnd;  -- +/- 5%
-	loop_label9:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label9;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-
-	SET x = 1;
-	set Set_No = 2;
-	set Block_No = 1;
-	set rnd = RAND() * (110000*.1);
-	set Actual_Tool_Assembly_Life = 110000 - (110000 * .05) + rnd;  -- +/- 5%
-	loop_label10:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label10;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 2;
-	set rnd = RAND() * (100000*.1);
-	set Actual_Tool_Assembly_Life = 100000 - (100000 * .05) + rnd;  -- +/- 5%
-	loop_label11:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label11;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-	SET x = 1;
-	set Block_No = 3;
-	set rnd = RAND() * (110000*.1);
-	set Actual_Tool_Assembly_Life = 110000 - (110000 * .05) + rnd;  -- +/- 5%
-	loop_label12:  LOOP
-		IF  x > 10 THEN 
-			LEAVE  loop_label12;
-		END  IF;
-		            
-		SET  x = x + 1;
-		CALL InsToolAssemblyChangeHistory(CNC_Part_Operation_Key,Set_No,Block_No,Actual_Tool_Assembly_Life,Trans_Date,Tool_Assembly_Change_History_Key,Return_Value);
-	END LOOP;
-
-END
 /*
 (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
                              Assembly_Key 
