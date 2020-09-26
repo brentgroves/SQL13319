@@ -209,27 +209,43 @@ CREATE TABLE Tool_Assembly (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly';
 insert into Tool_Assembly (Assembly_Key,Assembly_No,Description)
 -- P558 LH Knuckles
--- values (13,'T01','3IN FACEMILL')
--- values (14,'T21','2IN FACEMILL')
--- values (15,'T22','M6 TAP DRILL')
--- values (16,'T23','M6X1 TAP')
--- values (17,'T72','15.1MM DRILL')
--- values (18,'T33','ROUGH BORE')
+-- values (13,'T01','3IN FACE MILL')
+-- values (14,'T21','2.5IN FACE MILL')
+-- values (15,'T22','M6 DRILL')
+-- values (16,'T23','M6 X 1.0 TAP')
+-- values (17,'T72','DRILL FACE HOLES')
+-- values (18,'T33','ROUGH MULTI BORE')
 -- values (19,'T30','FINISH CENTER BORE')
--- values (20,'T4','16.95 CALIPER HOLES')
--- values (21,'T15','1.937 INDEXABLE DRILL')
--- values (22,'T7','ROUGH DATUM J BORE')
--- values (23,'T6','ROUGH DATUM L BORE')
--- values (24,'T9','DATUM L 44.330MM ROMICRON')
--- values (25,'T8','DATUM J 50.110MM ROMICRON')
--- values (26,'T12','TAPER DREAMER')
--- values (27,'T13','PLUNGE MILL')
--- values (28,'T14','CHAMFER MILL')
-
- /*
-PUT VC14 (CHAMFER MILL - P1,+2)
-
-  */
+-- values (20,'T4','FACE & DRILL CALIPER HOLES')
+-- values (21,'T15','1.937 ROUGH DRILL J BORE')
+-- values (22,'T7','DATUM J BACK FACE')
+-- values (23,'T6','DATUM L ROUGH BORE')
+-- values (24,'T9','FINISH DATUM L')
+-- values (25,'T8','FINISH DATUM J')
+-- values (26,'T12','TAPER REAM ONE SIDE')
+-- values (27,'T13','MILL PADS AND STOP')
+-- values (28,'T14','CHAMFER HOLES')
+select * from Tool_Assembly 
+ /*  From ToolListAssemblies
+tn|Description               
+--|--------------------------
+ 1|3" FACE MILL              
+ 4|FACE & DRILL CALIPER HOLES
+ 6|DATUM L ROUGH BORE        
+ 7|DATUM J BACK FACE         
+ 8|FINISH DATUM J            
+ 9|FINISH DATUM L            
+12|TAPER REAM ONE SIDE       
+13|MILL PADS AND STOP        
+14|CHAMFER HOLES             
+15|1.937 ROUGH DRILL J BORE  
+21|2.5" FACE MILL            
+22|M6 DRILL                  
+23|M6 X 1.0 TAP              
+30|FINISH CENTER BORE        
+33|ROUGH MULTI BORE          
+72|DRILL FACE HOLES          
+*/
 -- RDX, cnc 103
 -- values (1,'T10','86.575MM FINISH BORE')
 -- values (2,'T11','ETCHING TOOL')
@@ -308,24 +324,40 @@ select * from Tool_Assembly_Part
 -- (LEFT HAND 6K P558)
 -- (PART# 10037973)
 
+
 /*
- * This corresponds to a Plex tool_bom table.
- * -- THIS WILL NEED TO BE UPDATED AFTER TOOLING MODULE UPLOAD
+ * This corresponds to a Plex tool_type table.
  */
--- drop table Tool_BOM
--- truncate table Tool_BOM
-CREATE TABLE Tool_BOM (
-	Tool_BOM_Key int,
-	Tool_Key int,
-	Assembly_Key int NOT NULL, 
-	Quantity_Required decimal (18,2),
-	NumberOfCuttingEdges int not null, -- Comes from Busche Tool List
-	QuantityPerCuttingEdge int not null,  -- Comes from Busche Tool List
-  	PRIMARY KEY (Tool_BOM_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
-insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required)  
-values (1,1,)
--- P558 LH Knuckles
+-- drop table Tool_Type
+-- truncate table Tool_Type
+CREATE TABLE Tool_Type (
+	Tool_Type_Key int,
+	Tool_Type_Code	varchar (20),
+  	PRIMARY KEY (Tool_Type_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Type';
+insert into Tool_Type (Tool_Type_Key,Tool_Type_Code)
+-- values (30048,'Insert')
+-- values (30016,'Drill')
+-- values (1,'Reamer')  -- Just added this get real number
+-- values (2,'Tap')  -- Just added this get real number
+select * from Tool_Type
+
+/*
+ * This corresponds to a Plex Tool_Group table.
+ * Albion’s ExportMasterToolList Tool_Group looks like a tool_type where as Alabama and now Edon are set to Mill.
+ * ADDED MILL TOOL GROUP LOOKUP TOOL_GROUP_KEY LATER AND CHANGE FROM 1
+ */
+-- drop table Tool_Group
+-- truncate table Tool_Group
+CREATE TABLE Tool_Group (
+	Tool_Group_Key int,
+	Tool_Group_Code	varchar (20),
+  	PRIMARY KEY (Tool_Group_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Group';
+insert into Tool_Group (Tool_Group_Key,Tool_Group_Code)
+-- values (1,'Mill')
+select * from Tool_Group 
+
 
 /*
  * This corresponds to a Plex tool_bom table.
@@ -341,13 +373,285 @@ CREATE TABLE Tool (
 	Description	varchar (50),
 	Consumable bit, -- Comes from Busche Tool List
 	NumberOfCuttingEdges int, -- Comes from Busche Tool List
+	Price	decimal (18,4),
+  	PRIMARY KEY (Tool_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
+insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Consumable,NumberOfCuttingEdges,Price)  
+-- values (1,'009196',30048,1,'ONMU 090520ANTN-M15 MK2050',1,16,14.380000)  --insert
+-- values (2,'17100',30016,1,'CCC-34231',1,1,276.000000)  -- drill
+-- values (3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,4,8.770000) -- 3 inserts are shown for this tool so I'm listing them all.
+-- values (4,'15721',30048,1,'SHLT140516N-FS IN2005',1,4,12.570000) -- 3 inserts are shown for this tool so I'm listing them all.
+-- values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- 3 inserts are shown for this tool so I'm listing them all.
+-- values (6,'008485',30048,1,'CDE323L022 IN2530',1,2,9.820000)  -- insert 
+-- values (7,'007864',30048,1,'TCMT 21.51-F1 TP1501',1,3,5.950000)  -- insert 
+-- values (8,'010338',1,1,'CCC-23575 REV A',1,1,506.000000)  -- Reamer 
+-- values (9,'008410',1,1,'CCC-21216 REV B',1,1,198.000000)  -- Reamer 
+-- values (10,'0003396',30048,1,'APFT1604PDTL-D15 MP1500 Insert',1,2,9.810000)  -- insert
+-- values (11,'008435',30048,1,'TCMT 110202 LC225T',1,3,10.370000)  -- insert
+-- values (12,'009155',30048,1,'SPLT140512N-PH IN2005',1,4,9.980000)  -- insert
+-- values (13,'13753',30048,1,'WDXT 156012-H ACK300',1,4,6.952000)  -- insert
+-- values (14,'17022',30048,1,'SNMX1407ZNTR-M16 MK2050',1,8,12.510000)  -- insert
+-- values (15,'14710',30016,1,'CCC-27629 REV 0',1,1,93.000000)  -- drill
+-- values (16,'0000951',2,1,'23910-05',1,1,32.350000)  -- Tap
+-- values (17,'16547',30048,1,'CCMT21.52MK MC5015',1,2,6.640000)  -- insert
+-- values (18,'010559',30048,1,'CCMT 32.52 -M3 TK1501',1,2,6.030000)  -- insert
+-- values (19,'15843',30048,1,'CCMT 432MT TT7015 INSERT',1,2,5.800000)  -- insert
+values (20,'14855',30016,1,'CCC-28434 REV 1',1,1,212.000000)  -- drill
+
+select * from Tool
+
+/*
+ * This corresponds to a Plex tool_bom table.
+ * -- THIS WILL NEED TO BE UPDATED AFTER TOOLING MODULE UPLOAD
+ */
+-- drop table Tool_BOM
+-- truncate table Tool_BOM
+CREATE TABLE Tool_BOM (
+	Tool_BOM_Key int,
+	Tool_Key int,
 	Assembly_Key int NOT NULL, 
 	Quantity_Required decimal (18,2),
+	QuantityPerCuttingEdge int,  -- This is take from the Tool List item.
   	PRIMARY KEY (Tool_BOM_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
-insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required)  
-values (1,1,)
+insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,QuantityPerCuttingEdge)  
+-- values (1,1,13,9,200)
+-- values (2,2,20,1,3000)
+-- values (3,3,23,2,200)
+-- values (4,4,23,2,200)
+-- values (5,5,23,2,200)
+-- values (6,6,22,7,2500)
+
+-- values (7,7,24,1,3000)
+-- values (8,7,25,1,3000)
+
+-- values (9,8,26,1,18000)
+-- values (10,9,26,1,18000)
+-- values (11,10,27,2,800)
+-- values (12,11,28,2,5000)
+-- values (13,12,21,2,300)
+-- values (14,13,21,2,300)
+-- values (15,14,14,6,200)
+-- values (16,15,15,1,2500)
+-- values (17,16,16,1,3000)
+-- values (18,17,19,1,350)
+-- values (19,18,18,1,1000)
+-- values (20,19,18,9,200)
+-- values (21,20,17,1,1800)
+select * from Tool_BOM
+/*
+tn|item   |qty  
+--|-------|-----
+ 1|009196 |  200
+ 4|17100  | 3000
+ 6|009240 |  200
+ 6|15721  |  200
+ 6|008318 |  200
+ 7|008485 | 2500
+ 8|007864 | 3000
+ 9|007864 | 3000
+12|008410 |18000
+12|010338 |18000
+13|0003396|  800
+14|008435 | 5000
+15|009155 |  300
+15|13753  |  300
+21|17022  |  200
+22|14710  | 2500
+23|0000951| 3000
+30|16547  |  350
+33|15843  |  200
+33|010559 | 1000
+72|14855  | 1800
+ */
 -- P558 LH Knuckles
+select * from Tool_BOM
+/*
+14|T21        |2IN FACEMILL             
+15|T22        |M6 TAP DRILL             
+16|T23        |M6X1 TAP                 
+17|T72        |15.1MM DRILL             
+18|T33        |ROUGH BORE               
+19|T30        |FINISH CENTER BORE       
+21|T15        |1.937 INDEXABLE DRILL    
+22|T7         |ROUGH DATUM J BORE       
+23|T6         |ROUGH DATUM L BORE       
+24|T9         |DATUM L 44.330MM ROMICRON
+25|T8         |DATUM J 50.110MM ROMICRON
+26|T12        |TAPER DREAMER            
+27|T13        |PLUNGE MILL              
+28|T14        |CHAMFER MILL             
+ */
+
+select
+s1.CNC,s1.Part_No,s1.Operation_Code,s1.Description,s1.Tool_No,s1.Tool_Type_Code,s1.Tool_Group_Code,s1.Tool_Life,
+sum(Price_Per_Tool_Change) Price_Per_Tool_Change,
+sum(Price_Per_Tool_Change) / s1.Tool_Life CPU
+from 
+(
+	select 
+	-- ta.Description, tt.Tool_Type_Code,tg.Tool_Group_Code,t.Description,tb.Quantity_Required,t.NumberOfCuttingEdges
+	c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No, ta.Description,t.Tool_No,tt.Tool_Type_Code,tg.Tool_Group_Code,ca.Tool_Life,tb.Quantity_Required,t.NumberOfCuttingEdges,t.Price,
+	t.price/t.NumberOfCuttingEdges Price_Per_Cutting_Edge,
+	tb.Quantity_Required*(t.price/t.NumberOfCuttingEdges) Price_Per_Tool_Change
+	from CNC_Part_Operation_Assembly ca 
+	inner join CNC c 
+	on ca.CNC_Key=c.CNC_Key -- 1 to 1
+	inner join Part p 
+	on ca.Part_Key = p.Part_Key 
+	inner join Operation o 
+	on ca.Operation_Key = o.Operation_Key 
+	inner join Tool_Assembly ta 
+	on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
+	inner join Tool_BOM tb 
+	on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
+	inner join Tool t 
+	on tb.Tool_Key=t.Tool_Key -- 1 to many
+	inner join Tool_Type tt 
+	on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
+	inner join Tool_Group tg 
+	on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
+)s1
+group by s1.CNC,s1.Part_No,s1.Operation_Code,s1.Description,s1.Tool_No,s1.Tool_Type_Code,s1.Tool_Group_Code,s1.Tool_Life
+/*
+      198|         8.08875000000000
+      798|       276.00000000000000
+      198|         4.38500000000000
+      198|         6.28500000000000
+      198|         5.47500000000000
+     2498|        34.37000000000000
+     3498|         1.98333333300000
+     3498|         1.98333333300000
+    17998|       506.00000000000000
+    17998|       198.00000000000000
+      798|         9.81000000000000
+     4998|         6.91333333200000
+      298|         4.99000000000000
+      298|         3.47600000000000
+      198|         9.38250000000000
+     2498|        93.00000000000000
+     2998|        32.35000000000000
+      348|         3.32000000000000
+      198|         0.60300000000000
+      198|        26.10000000000000
+     1798|       212.00000000000000
+ */
+
+/* CPU Report */
+select 
+r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life,
+sum(Adj_Price_Per_Tool_Change) Price_Per_Tool_Change,
+Format(sum(Adj_Price_Per_Tool_Change),2) Frm_Price_Per_Tool_Change,
+Format(sum(Adj_Price_Per_Tool_Change) / r.Tool_Life,5) CPU
+
+-- select r.*
+from
+(
+	SELECT 
+	a1.CNC,a1.Part_No,a1.Operation_Code,a1.Assembly_No, a1.Description,a1.Tool_No,
+	a1.Tool_Life, -- Tool Life in OTLM.SSB
+	a1.QuantityPerCuttingEdge,mQ.MinQuantityPerCuttingEdge,
+	mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge Tool_Life_Ratio,
+	a1.Price_Per_Tool_Change,
+	a1.Price_Per_Tool_Change*(mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge) Adj_Price_Per_Tool_Change
+	-- select a1.Tool_Life,a1.Price_Per_Tool_Change*(mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge) Adj_Price_Per_Tool_Change
+	from 
+	(
+	
+		select 
+		ca.CNC_Part_Operation_Assembly_Key,
+		-- c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No,
+		min(tb.QuantityPerCuttingEdge) MinQuantityPerCuttingEdge 
+		from CNC_Part_Operation_Assembly ca 
+		inner join CNC c 
+		on ca.CNC_Key=c.CNC_Key -- 1 to 1
+		inner join Part p 
+		on ca.Part_Key = p.Part_Key 
+		inner join Operation o 
+		on ca.Operation_Key = o.Operation_Key 
+		inner join Tool_Assembly ta 
+		on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
+		inner join Tool_BOM tb 
+		on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
+		inner join Tool t 
+		on tb.Tool_Key=t.Tool_Key -- 1 to many
+		inner join Tool_Type tt 
+		on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
+		inner join Tool_Group tg 
+		on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
+		group by ca.CNC_Part_Operation_Assembly_Key,c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No
+	)mQ
+	inner join 
+	(
+		select 
+		-- ta.Description, tt.Tool_Type_Code,tg.Tool_Group_Code,t.Description,tb.Quantity_Required,t.NumberOfCuttingEdges
+		ca.CNC_Part_Operation_Assembly_Key,
+		c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No, ta.Description,t.Tool_No,tt.Tool_Type_Code,tg.Tool_Group_Code,ca.Tool_Life,
+		tb.Quantity_Required,tb.QuantityPerCuttingEdge,t.NumberOfCuttingEdges,t.Price,
+		t.price/t.NumberOfCuttingEdges Price_Per_Cutting_Edge,
+		tb.Quantity_Required*(t.price/t.NumberOfCuttingEdges) Price_Per_Tool_Change
+		from CNC_Part_Operation_Assembly ca 
+		inner join CNC c 
+		on ca.CNC_Key=c.CNC_Key -- 1 to 1
+		inner join Part p 
+		on ca.Part_Key = p.Part_Key 
+		inner join Operation o 
+		on ca.Operation_Key = o.Operation_Key 
+		inner join Tool_Assembly ta 
+		on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
+		inner join Tool_BOM tb 
+		on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
+		inner join Tool t 
+		on tb.Tool_Key=t.Tool_Key -- 1 to many
+		inner join Tool_Type tt 
+		on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
+		inner join Tool_Group tg 
+		on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
+	)a1
+	on mQ.CNC_Part_Operation_Assembly_Key=a1.CNC_Part_Operation_Assembly_Key
+)r
+group by r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life
+
+
+-- select * from Tool_Assembly ta2 
+
+-- Quantity,QuantityPerCuttingEdge,NumberOfCuttingEdges,
+-- P558 LH Knuckles
+-- values (13,2794706,51168,13)
+-- values (14,2794706,51168,14)
+-- values (15,2794706,51168,15)
+-- values (16,2794706,51168,16)
+-- values (17,2794706,51168,17)
+-- values (18,2794706,51168,18)
+-- values (19,2794706,51168,19)
+-- values (20,2794706,51168,20)
+-- values (21,2794706,51168,21)
+-- values (22,2794706,51168,22)
+-- values (23,2794706,51168,23)
+-- values (24,2794706,51168,24)
+-- values (25,2794706,51168,25)
+-- values (26,2794706,51168,26)
+-- values (27,2794706,51168,27)
+-- values (28,2794706,51168,28)
+/*
+13|T01        |3IN FACEMILL             
+14|T21        |2IN FACEMILL             
+15|T22        |M6 TAP DRILL             
+16|T23        |M6X1 TAP                 
+17|T72        |15.1MM DRILL             
+18|T33        |ROUGH BORE               
+19|T30        |FINISH CENTER BORE       
+20|T4         |16.95 CALIPER HOLES      
+21|T15        |1.937 INDEXABLE DRILL    
+22|T7         |ROUGH DATUM J BORE       
+23|T6         |ROUGH DATUM L BORE       
+24|T9         |DATUM L 44.330MM ROMICRON
+25|T8         |DATUM J 50.110MM ROMICRON
+26|T12        |TAPER DREAMER            
+27|T13        |PLUNGE MILL              
+28|T14        |CHAMFER MILL             
+ */
+
 
 -- 009196|INSERT
 /*
@@ -415,12 +719,17 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 	Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
 	Increment_By int NOT NULL,
-	Tool_Life int NOT NULL,  -- Can be different for every CNC
+	Tool_Life int NOT NULL,  
+	-- Tool Life per cutting edge,Can be different for every CNC, corresponds to QuantityPerCuttingEdge, The average of when the tool is changed.
+	-- If there are multiple cutting tools this will be the tool life of the tool with the minimum tool life. 
+	-- This number is take from OTLM.SSB of the CNC and not from the tool list.
   	Current_Value int NOT NULL,
   	Fastest_Cycle_Time int NOT NULL, -- In seconds
   	Last_Update datetime NOT NULL,
   	PRIMARY KEY (CNC_Part_Operation_Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC Part operation assembly info';
+
+
 
 -- 5 * 60 = 300
 select * from CNC_Part_Operation_Assembly
@@ -462,6 +771,7 @@ insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key
 -- values (12,1,2809196,56409,12,2,110000,-1,300,@Last_Update)
 -- delete from CNC_Part_Operation_Assembly a where CNC_Part_Operation_Assembly_Key in (2,4)
 select * from CNC_Part_Operation_Assembly
+
 
 
 --update CNC_Part_Operation_Assembly 
@@ -774,6 +1084,43 @@ set @Actual_Tool_Assembly_Life = 80500;
 set @Trans_Date = '2020-09-05 09:50:00';
 CALL InsToolAssemblyChangeHistory(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Assembly_Life,@Trans_Date,@Tool_Assembly_Change_History_Key,@Return_Value);
 SELECT @Tool_Assembly_Change_History_Key,@Return_Value;
+
+
+/*
+ * Phase 2:
+ * There may be multiple cutting tools per tool assembly.
+ * Each cutting tool can have a different tool life.
+ * Can't store this info in Tool_BOM because an assembly can be on more than 1 CNC part operation.
+ * This must be manually entered by the tool setter via an HMI.
+ */
+
+CREATE TABLE Tool_Life_History (
+	TOOL_Life_Key int NOT NULL,
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Operation_Key int NOT NULL,
+	Assembly_Key int NOT NULL, 
+	Tool_Key int NOT NULL,
+	Tool_Life int NOT NULL,
+	Trans_Date datetime NOT NULL
+)
+
+-- values (1,1,2794706,51168,13,1,198,-1,600,@Last_Update )  -- vc1
+-- values (14,3,2794706,51168,14,2,198,-1,600,@Last_Update )  -- vc21
+-- values (15,3,2794706,51168,15,2,2498,-1,600,@Last_Update )  -- vc22
+-- values (16,3,2794706,51168,16,2,2998,-1,600,@Last_Update )  -- vc23
+-- values (17,3,2794706,51168,17,2,1798,-1,600,@Last_Update )  -- vc72
+-- values (18,3,2794706,51168,18,2,198,-1,600,@Last_Update )  -- vc33
+-- values (19,3,2794706,51168,19,2,348,-1,600,@Last_Update )  -- vc30
+-- values (20,3,2794706,51168,20,2,798,-1,600,@Last_Update )  -- vc4
+-- values (21,3,2794706,51168,21,2,298,-1,600,@Last_Update )  -- vc15
+-- values (22,3,2794706,51168,22,2,2498,-1,600,@Last_Update )  -- vc7
+-- values (23,3,2794706,51168,23,2,198,-1,600,@Last_Update )  -- vc6
+-- values (24,3,2794706,51168,24,2,3498,-1,600,@Last_Update )  -- vc9
+-- values (25,3,2794706,51168,25,2,3498,-1,600,@Last_Update )  -- vc8
+-- values (26,3,2794706,51168,26,2,17998,-1,600,@Last_Update )  -- vc12
+-- values (27,3,2794706,51168,27,2,798,-1,600,@Last_Update )  -- vc13
+-- values (28,3,2794706,51168,28,2,4998,-1,600,@Last_Update )  -- vc14
 
 
 set @Trans_Date = '2020-09-14 09:50:00';
