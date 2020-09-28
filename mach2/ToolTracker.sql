@@ -1280,6 +1280,8 @@ BEGIN
 	set pRecordCount = FOUND_ROWS();
 	set pReturnValue = 1;
 end;
+
+
 /*
 set pRecordCount = FOUND_ROWS();
 MySQL says it is depreciated
