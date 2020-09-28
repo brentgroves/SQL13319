@@ -439,6 +439,7 @@ insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Quant
 -- values (20,19,18,9,200)
 -- values (21,20,17,1,1800)
 select * from Tool_BOM
+select * from Tool_Assembly ta where Assembly_Key = 18
 /*
 tn|item   |qty  
 --|-------|-----
@@ -1148,8 +1149,36 @@ CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_Key,Part_Key,
 
 */
 
-select * from Tool_Assembly_Change_History tc 
-where CNC_Key = 1 and Part_Key = 2809196 and assembly_key = 1
+select
+c.CNC,ta.Assembly_No,ta.Description,
+tc.Actual_Tool_Assembly_Life,
+Trans_Date
+ 
+
+-- tc.* 
+from Tool_Assembly_Change_History tc 
+		inner join CNC c 
+		on tc.CNC_Key = c.CNC_Key  -- 1 to 1 
+		inner join CNC_Workcenter cw 
+		on c.CNC_Key = cw.CNC_Key -- 1 to 1
+		inner join Workcenter w 
+		on cw.Workcenter_Key = w.Workcenter_Key  -- 1 to 1 
+		inner join Building b 
+		on w.Building_Key = b.Building_Key -- 1 to 1
+		inner join CNC_Part_Operation_Assembly cp 
+		on tc.CNC_Key = cp.CNC_Key 
+		and tc.Part_Key = cp.Part_Key 
+		and tc.Operation_Key = cp.Operation_Key 
+		and tc.Assembly_Key = cp.Assembly_Key  -- 1 to 1 
+		inner join Part p 
+		on tc.Part_Key = p.Part_Key -- 1 to 1
+		inner join Operation o 
+		on tc.Operation_Key = o.Operation_Key -- 1 to 1
+		inner join Tool_Assembly ta  
+		on tc.Assembly_Key=ta.Assembly_Key -- 1 to 1
+
+where tc.CNC_Key = 3 
+
 /*
  * Tool life detail report 
  * Test data has the same trans_date

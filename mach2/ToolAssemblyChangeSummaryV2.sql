@@ -1,3 +1,8 @@
+/*
+This report shows the average tool life for each tool assembly for each week
+as recorded by the Plex Tool Tracker.  The target tool life is taken from the CNC’s OTLM.SSB subroutine. 
+*/
+
 	select 
 		cp.CNC_Part_Operation_Assembly_Key, 
 		c.CNC, 
@@ -34,7 +39,7 @@
 -- drop table rpt0909a;
 call WeeklyToolChangeSummary(@startDate,@endDate,@tableName,@recordCount,@returnValue);
 -- drop procedure WeeklyToolChangeSummary;
-CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`WeeklyToolChangeSummary`(
+CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`WeeklyToolChangeSummaryV2`(
 	pStartDate DATETIME,
 	pEndDate DATETIME,
 	pTableName varchar(12),
@@ -213,6 +218,108 @@ BEGIN
 	);
 	-- select * from set2group limit 100;
 
+	DROP temporary TABLE IF EXISTS STD_CPU;
+	create temporary table STD_CPU
+	(
+		primary_key int,
+		Price_Per_Tool_Change decimal(12,5),
+		Frm_Price_Per_Tool_Change varchar(25),
+		STD_CPU varchar(25)
+	) ENGINE = MEMORY;
+
+	insert into STD_CPU (primary_key,Price_Per_Tool_Change,Frm_Price_Per_Tool_Change,STD_CPU)
+	(
+		select 
+		pk.primary_key,s.Price_Per_Tool_Change,s.Frm_Price_Per_Tool_Change,s.STD_CPU
+		from primary_key pk
+		inner join 
+		(
+			select 
+			-- r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life,
+			-- r.primary_key,
+			CNC_Key,Part_Key,Operation_Key,Assembly_Key,
+			sum(Adj_Price_Per_Tool_Change) Price_Per_Tool_Change,
+			Format(sum(Adj_Price_Per_Tool_Change),2) Frm_Price_Per_Tool_Change,
+			Format(sum(Adj_Price_Per_Tool_Change) / r.Tool_Life,5) STD_CPU
+			
+			-- select r.*
+			from
+			(
+				SELECT 
+				a1.CNC,a1.Part_No,a1.Operation_Code,a1.Assembly_No, a1.Description,a1.Tool_No,
+				a1.CNC_Key,a1.Part_Key,a1.Operation_Key,a1.Assembly_Key,
+				a1.Tool_Life, -- Tool Life in OTLM.SSB
+				a1.QuantityPerCuttingEdge,mQ.MinQuantityPerCuttingEdge,
+				mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge Tool_Life_Ratio,
+				a1.Price_Per_Tool_Change,
+				a1.Price_Per_Tool_Change*(mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge) Adj_Price_Per_Tool_Change
+				-- select a1.Tool_Life,a1.Price_Per_Tool_Change*(mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge) Adj_Price_Per_Tool_Change
+				from 
+				(
+				
+					select 
+					ca.CNC_Part_Operation_Assembly_Key,
+					-- c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No,
+					min(tb.QuantityPerCuttingEdge) MinQuantityPerCuttingEdge 
+					from CNC_Part_Operation_Assembly ca 
+					inner join CNC c 
+					on ca.CNC_Key=c.CNC_Key -- 1 to 1
+					inner join Part p 
+					on ca.Part_Key = p.Part_Key 
+					inner join Operation o 
+					on ca.Operation_Key = o.Operation_Key 
+					inner join Tool_Assembly ta 
+					on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
+					inner join Tool_BOM tb 
+					on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
+					inner join Tool t 
+					on tb.Tool_Key=t.Tool_Key -- 1 to many
+					inner join Tool_Type tt 
+					on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
+					inner join Tool_Group tg 
+					on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
+					group by ca.CNC_Part_Operation_Assembly_Key,c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No
+				)mQ
+				inner join 
+				(
+					select 
+					-- ta.Description, tt.Tool_Type_Code,tg.Tool_Group_Code,t.Description,tb.Quantity_Required,t.NumberOfCuttingEdges
+					ca.CNC_Part_Operation_Assembly_Key,
+					ca.CNC_Key,ca.Part_Key,ca.Operation_Key,ca.Assembly_Key,
+					c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No, ta.Description,t.Tool_No,tt.Tool_Type_Code,tg.Tool_Group_Code,ca.Tool_Life,
+					tb.Quantity_Required,tb.QuantityPerCuttingEdge,t.NumberOfCuttingEdges,t.Price,
+					t.price/t.NumberOfCuttingEdges Price_Per_Cutting_Edge,
+					tb.Quantity_Required*(t.price/t.NumberOfCuttingEdges) Price_Per_Tool_Change
+					from CNC_Part_Operation_Assembly ca 
+					inner join CNC c 
+					on ca.CNC_Key=c.CNC_Key -- 1 to 1
+					inner join Part p 
+					on ca.Part_Key = p.Part_Key 
+					inner join Operation o 
+					on ca.Operation_Key = o.Operation_Key 
+					inner join Tool_Assembly ta 
+					on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
+					inner join Tool_BOM tb 
+					on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
+					inner join Tool t 
+					on tb.Tool_Key=t.Tool_Key -- 1 to many
+					inner join Tool_Type tt 
+					on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
+					inner join Tool_Group tg 
+					on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
+				)a1
+				on mQ.CNC_Part_Operation_Assembly_Key=a1.CNC_Part_Operation_Assembly_Key
+			)r
+			group by r.CNC_Key,r.Part_Key,r.Operation_Key,r.Assembly_Key,r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life
+		)s 
+		on pk.CNC_Key=s.CNC_Key 
+		and pk.Part_Key=s.Part_Key 
+		and pk.Operation_Key=s.Operation_Key 
+		and pk.Assembly_Key=s.Assembly_Key
+		
+	);
+END;
+START HERE;
 	DROP temporary TABLE IF EXISTS results;
 	create temporary table results
 	(
@@ -281,6 +388,8 @@ BEGIN
 	set pRecordCount = FOUND_ROWS();
 	set pReturnValue = 1;
 end;
+
+
 
 select
 c.CNC,ta.Assembly_No,ta.Description,
