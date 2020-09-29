@@ -381,7 +381,7 @@ insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Cons
 -- values (2,'17100',30016,1,'CCC-34231',1,1,276.000000)  -- drill
 -- values (3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,4,8.770000) -- 3 inserts are shown for this tool so I'm listing them all.
 -- values (4,'15721',30048,1,'SHLT140516N-FS IN2005',1,4,12.570000) -- 3 inserts are shown for this tool so I'm listing them all.
--- values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- 3 inserts are shown for this tool so I'm listing them all.
+----- values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- 3 inserts are shown for this tool so I'm listing them all.  -- This one is obsolete  Delete it
 -- values (6,'008485',30048,1,'CDE323L022 IN2530',1,2,9.820000)  -- insert 
 -- values (7,'007864',30048,1,'TCMT 21.51-F1 TP1501',1,3,5.950000)  -- insert 
 -- values (8,'010338',1,1,'CCC-23575 REV A',1,1,506.000000)  -- Reamer 
@@ -397,6 +397,8 @@ insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Cons
 -- values (18,'010559',30048,1,'CCMT 32.52 -M3 TK1501',1,2,6.030000)  -- insert
 -- values (19,'15843',30048,1,'CCMT 432MT TT7015 INSERT',1,2,5.800000)  -- insert
 values (20,'14855',30016,1,'CCC-28434 REV 1',1,1,212.000000)  -- drill
+
+delete from Tool where Tool_Key = 5
 
 select * from Tool
 
@@ -419,7 +421,8 @@ insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Quant
 -- values (2,2,20,1,3000)
 -- values (3,3,23,2,200)
 -- values (4,4,23,2,200)
--- values (5,5,23,2,200)
+-- values (5,5,23,2,200)  -- Obsolete in Plex so delete it
+-- delete from Tool_BOM where Tool_BOM_Key = 5;
 -- values (6,6,22,7,2500)
 
 -- values (7,7,24,1,3000)

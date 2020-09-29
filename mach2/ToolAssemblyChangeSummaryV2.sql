@@ -39,7 +39,7 @@ as recorded by the Plex Tool Tracker.  The target tool life is taken from the CN
 -- drop table rpt0909a;
 call WeeklyToolChangeSummary(@startDate,@endDate,@tableName,@recordCount,@returnValue);
 -- drop procedure WeeklyToolChangeSummary;
-CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`WeeklyToolChangeSummaryV2`(
+CREATE DEFINER=`brent`@`%` PROCEDURE `mach2`.`WeeklyToolChangeSummary`(
 	pStartDate DATETIME,
 	pEndDate DATETIME,
 	pTableName varchar(12),
@@ -103,12 +103,12 @@ BEGIN
 	  Operation_Code varchar(30),
 	  Assembly_No varchar(50),
 	  Description varchar(100), 
-	  Tool_Life int
+	  STD_Tool_Life int
 	  
 	) ENGINE = MEMORY;
 
 	insert into primary_key(primary_key,year_week,year_week_fmt,start_week,end_week,Building_Key,Workcenter_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,
-	Building_No,Workcenter,CNC,Name,Part_No,Operation_Code,Assembly_No,Description,Tool_Life)
+	Building_No,Workcenter,CNC,Name,Part_No,Operation_Code,Assembly_No,Description,STD_Tool_Life)
 	(
 	  select 
 	  ROW_NUMBER() OVER (
@@ -135,7 +135,7 @@ BEGIN
 	  Operation_Code,
 	  Assembly_No,
 	  Description, 
-	  Tool_Life
+	  STD_Tool_Life
 	  from 
 	  (
 	    select
@@ -157,7 +157,7 @@ BEGIN
 		o.Operation_Code,
 		ta.Assembly_No,
 		ta.Description, 
-		cp.Tool_Life
+		cp.Tool_Life STD_Tool_Life
 	    from Tool_Assembly_Change_History tc 
 		inner join CNC c 
 		on tc.CNC_Key = c.CNC_Key  -- 1 to 1 
@@ -180,7 +180,7 @@ BEGIN
 		on tc.Assembly_Key=ta.Assembly_Key -- 1 to 1
 	    where Trans_Date between startWeekStartDate and endWeekEndDate
 	  )s1 
-	  group by year,week,start_week,end_week,Building_Key,Workcenter_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Building_No,Workcenter,CNC,Name,Part_No,Operation_Code,Assembly_No,Description,Tool_Life
+	  group by year,week,start_week,end_week,Building_Key,Workcenter_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Building_No,Workcenter,CNC,Name,Part_No,Operation_Code,Assembly_No,Description,STD_Tool_Life
 
 	);  
 	-- select * from primary_key;
@@ -218,6 +218,25 @@ BEGIN
 	);
 	-- select * from set2group limit 100;
 
+	DROP temporary TABLE IF EXISTS Week_Tool_Life;
+	create temporary table Week_Tool_Life
+	(
+		primary_key int,
+		Week_Tool_Life int,
+		Tool_Change_Count int
+	);
+	insert into Week_Tool_Life (primary_key,Week_Tool_Life,Tool_Change_Count)
+	(
+		select
+		primary_key,
+		round(sum(Actual_Tool_Assembly_Life) / count(*),0) Week_Tool_Life,
+		count(*) Tool_Change_Count
+		from set2group 
+		group by primary_key
+	);
+
+	-- select * from Week_Tool_Life;
+
 	DROP temporary TABLE IF EXISTS STD_CPU;
 	create temporary table STD_CPU
 	(
@@ -231,8 +250,7 @@ BEGIN
 	(
 		select 
 		pk.primary_key,s.Price_Per_Tool_Change,s.Frm_Price_Per_Tool_Change,s.STD_CPU
-		from primary_key pk
-		inner join 
+		from  
 		(
 			select 
 			-- r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life,
@@ -312,14 +330,36 @@ BEGIN
 			)r
 			group by r.CNC_Key,r.Part_Key,r.Operation_Key,r.Assembly_Key,r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life
 		)s 
-		on pk.CNC_Key=s.CNC_Key 
-		and pk.Part_Key=s.Part_Key 
-		and pk.Operation_Key=s.Operation_Key 
-		and pk.Assembly_Key=s.Assembly_Key
+		inner join primary_key pk
+		on s.CNC_Key=pk.CNC_Key 
+		and s.Part_Key=pk.Part_Key 
+		and s.Operation_Key=pk.Operation_Key 
+		and s.Assembly_Key=pk.Assembly_Key  -- 1 to many
 		
 	);
-END;
-START HERE;
+
+	DROP temporary TABLE IF EXISTS Week_CPU;
+	create temporary table Week_CPU
+	(
+		primary_key int,
+		Week_CPU varchar(25)
+	) ENGINE = MEMORY;
+	insert into Week_CPU (primary_key,Week_CPU)
+	(
+		select 
+		pk.primary_key,
+		Format(std.Price_Per_Tool_Change / wtl.Week_Tool_Life,5) Week_CPU
+		from STD_CPU std  -- Not based on week, but only CNC_Key,Part_Key,Operation_Key,Assembly_Key
+		inner join primary_key pk
+		on std.primary_key=pk.primary_key -- 1 to many
+		inner join Week_Tool_Life wtl 
+		on pk.primary_key=wtl.primary_key  -- 1 to 1
+	   -- Primary key is based upon records from Tool_Assembly_Change_History and so is Week_Tool_Life through set2group
+	   -- It is a grouping of year_week,CNC_Key,Part_Key,Operation_Key,Assembly_Key records in Tool_Assembly_Change_History
+	   -- so ever primary_key record should have an Week_Tool_Life record.
+	   -- We could have included this in the STD_CPU query by adding another level and changing it's name to CPU
+	 );
+
 	DROP temporary TABLE IF EXISTS results;
 	create temporary table results
 	(
@@ -342,12 +382,14 @@ START HERE;
 	  Operation_Code varchar(30),
 	  Assembly_No varchar(50),
 	  Description varchar(100), 
-	  Tool_Life int,
-	  Avg_Tool_Life int,
+	  STD_CPU varchar(25),
+	  Week_CPU varchar(25),
+	  STD_Tool_Life int,
+	  Week_Tool_Life int,
 	  Tool_Change_Count int
 	) ENGINE = MEMORY;
 	insert into results (primary_key,year_week,year_week_fmt,start_week,end_week,Building_Key,Workcenter_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,
-	Building_No,Workcenter,CNC,Name,Part_No,Operation_Code,Assembly_No,Description,Tool_Life,Avg_Tool_Life,Tool_Change_Count)
+	Building_No,Workcenter,CNC,Name,Part_No,Operation_Code,Assembly_No,Description,STD_CPU,Week_CPU,STD_Tool_Life,Week_Tool_Life,Tool_Change_Count)
 	(
 		select
 		pk.primary_key,
@@ -364,20 +406,19 @@ START HERE;
 		pk.Operation_Code,
 		pk.Assembly_No,
 		pk.Description,
-		pk.Tool_Life,
-		Avg_Tool_Life,
+		std.STD_CPU,
+		cpu.Week_CPU,
+		pk.STD_Tool_Life,
+		wtl.Week_Tool_Life,
 		Tool_Change_Count
-		from
-		(
-			select
-			primary_key,
-			round(sum(Actual_Tool_Assembly_Life) / count(*),0) Avg_Tool_Life,
-			count(*) Tool_Change_Count
-			from set2group 
-			group by primary_key
-		) sg
-		inner join primary_key as pk
-		on sg.primary_key = pk.primary_key
+		from primary_key pk 
+		inner join Week_Tool_Life wtl 
+		on pk.primary_key=wtl.primary_key  -- 1 to 1
+		inner join STD_CPU std 
+		on pk.primary_key = std.primary_key  -- many to 1 
+		inner join Week_CPU cpu
+		on pk.primary_key=cpu.primary_key  -- 1 to 1 
+		
 	);	
 	set @sqlQuery = CONCAT('create table ',tableName,' select * from results order by Building_No,CNC,Part_No,Operation_Code,Assembly_No,year_week');
 	PREPARE stmt FROM @sqlQuery;
