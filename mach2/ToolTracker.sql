@@ -416,12 +416,13 @@ CREATE TABLE Tool_BOM (
 	QuantityPerCuttingEdge int,  -- This is take from the Tool List item.
   	PRIMARY KEY (Tool_BOM_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
-insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,QuantityPerCuttingEdge)  
+insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,QuantityPerCuttingEdge) 
+
 -- values (1,1,13,9,200)
 -- values (2,2,20,1,3000)
 -- values (3,3,23,2,200)
 -- values (4,4,23,2,200)
--- values (5,5,23,2,200)  -- Obsolete in Plex so delete it
+-- values (5,5,23,2,200)  -- Alternate Tool; Obsolete in Plex so delete it; If there are more of these tools they could be used.
 -- delete from Tool_BOM where Tool_BOM_Key = 5;
 -- values (6,6,22,7,2500)
 
@@ -442,6 +443,38 @@ insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Quant
 -- values (20,19,18,9,200)
 -- values (21,20,17,1,1800)
 select * from Tool_BOM
+
+select 
+ta.Assembly_No TN,t.Tool_No CribId,tb.QuantityPerCuttingEdge TLife 
+/*
+-- ta.Description, tt.Tool_Type_Code,tg.Tool_Group_Code,t.Description,tb.Quantity_Required,t.NumberOfCuttingEdges
+ca.CNC_Part_Operation_Assembly_Key,
+ca.CNC_Key,ca.Part_Key,ca.Operation_Key,ca.Assembly_Key,
+c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No, ta.Description,t.Tool_No,tt.Tool_Type_Code,tg.Tool_Group_Code,ca.Tool_Life,
+tb.Quantity_Required,tb.QuantityPerCuttingEdge,t.NumberOfCuttingEdges,t.Price,
+t.price/t.NumberOfCuttingEdges Price_Per_Cutting_Edge,
+tb.Quantity_Required*(t.price/t.NumberOfCuttingEdges) Price_Per_Tool_Change
+*/
+from CNC_Part_Operation_Assembly ca 
+inner join CNC c 
+on ca.CNC_Key=c.CNC_Key -- 1 to 1
+inner join Part p 
+on ca.Part_Key = p.Part_Key 
+inner join Operation o 
+on ca.Operation_Key = o.Operation_Key 
+inner join Tool_Assembly ta 
+on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
+inner join Tool_BOM tb 
+on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
+inner join Tool t 
+on tb.Tool_Key=t.Tool_Key -- 1 to many
+inner join Tool_Type tt 
+on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
+inner join Tool_Group tg 
+on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
+where c.CNC='120'
+select * from CNC
+
 select * from Tool_Assembly ta where Assembly_Key = 18
 /*
 tn|item   |qty  
@@ -487,36 +520,6 @@ select * from Tool_BOM
 28|T14        |CHAMFER MILL             
  */
 
-select
-s1.CNC,s1.Part_No,s1.Operation_Code,s1.Description,s1.Tool_No,s1.Tool_Type_Code,s1.Tool_Group_Code,s1.Tool_Life,
-sum(Price_Per_Tool_Change) Price_Per_Tool_Change,
-sum(Price_Per_Tool_Change) / s1.Tool_Life CPU
-from 
-(
-	select 
-	-- ta.Description, tt.Tool_Type_Code,tg.Tool_Group_Code,t.Description,tb.Quantity_Required,t.NumberOfCuttingEdges
-	c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No, ta.Description,t.Tool_No,tt.Tool_Type_Code,tg.Tool_Group_Code,ca.Tool_Life,tb.Quantity_Required,t.NumberOfCuttingEdges,t.Price,
-	t.price/t.NumberOfCuttingEdges Price_Per_Cutting_Edge,
-	tb.Quantity_Required*(t.price/t.NumberOfCuttingEdges) Price_Per_Tool_Change
-	from CNC_Part_Operation_Assembly ca 
-	inner join CNC c 
-	on ca.CNC_Key=c.CNC_Key -- 1 to 1
-	inner join Part p 
-	on ca.Part_Key = p.Part_Key 
-	inner join Operation o 
-	on ca.Operation_Key = o.Operation_Key 
-	inner join Tool_Assembly ta 
-	on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
-	inner join Tool_BOM tb 
-	on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
-	inner join Tool t 
-	on tb.Tool_Key=t.Tool_Key -- 1 to many
-	inner join Tool_Type tt 
-	on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
-	inner join Tool_Group tg 
-	on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
-)s1
-group by s1.CNC,s1.Part_No,s1.Operation_Code,s1.Description,s1.Tool_No,s1.Tool_Type_Code,s1.Tool_Group_Code,s1.Tool_Life
 /*
       198|         8.08875000000000
       798|       276.00000000000000
@@ -541,80 +544,6 @@ group by s1.CNC,s1.Part_No,s1.Operation_Code,s1.Description,s1.Tool_No,s1.Tool_T
      1798|       212.00000000000000
  */
 
-/* CPU Report */
-select 
-r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life,
-sum(Adj_Price_Per_Tool_Change) Price_Per_Tool_Change,
-Format(sum(Adj_Price_Per_Tool_Change),2) Frm_Price_Per_Tool_Change,
-Format(sum(Adj_Price_Per_Tool_Change) / r.Tool_Life,5) CPU
-
--- select r.*
-from
-(
-	SELECT 
-	a1.CNC,a1.Part_No,a1.Operation_Code,a1.Assembly_No, a1.Description,a1.Tool_No,
-	a1.Tool_Life, -- Tool Life in OTLM.SSB
-	a1.QuantityPerCuttingEdge,mQ.MinQuantityPerCuttingEdge,
-	mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge Tool_Life_Ratio,
-	a1.Price_Per_Tool_Change,
-	a1.Price_Per_Tool_Change*(mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge) Adj_Price_Per_Tool_Change
-	-- select a1.Tool_Life,a1.Price_Per_Tool_Change*(mQ.MinQuantityPerCuttingEdge/a1.QuantityPerCuttingEdge) Adj_Price_Per_Tool_Change
-	from 
-	(
-	
-		select 
-		ca.CNC_Part_Operation_Assembly_Key,
-		-- c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No,
-		min(tb.QuantityPerCuttingEdge) MinQuantityPerCuttingEdge 
-		from CNC_Part_Operation_Assembly ca 
-		inner join CNC c 
-		on ca.CNC_Key=c.CNC_Key -- 1 to 1
-		inner join Part p 
-		on ca.Part_Key = p.Part_Key 
-		inner join Operation o 
-		on ca.Operation_Key = o.Operation_Key 
-		inner join Tool_Assembly ta 
-		on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
-		inner join Tool_BOM tb 
-		on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
-		inner join Tool t 
-		on tb.Tool_Key=t.Tool_Key -- 1 to many
-		inner join Tool_Type tt 
-		on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
-		inner join Tool_Group tg 
-		on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
-		group by ca.CNC_Part_Operation_Assembly_Key,c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No
-	)mQ
-	inner join 
-	(
-		select 
-		-- ta.Description, tt.Tool_Type_Code,tg.Tool_Group_Code,t.Description,tb.Quantity_Required,t.NumberOfCuttingEdges
-		ca.CNC_Part_Operation_Assembly_Key,
-		c.CNC,p.Part_No,o.Operation_Code,ta.Assembly_No, ta.Description,t.Tool_No,tt.Tool_Type_Code,tg.Tool_Group_Code,ca.Tool_Life,
-		tb.Quantity_Required,tb.QuantityPerCuttingEdge,t.NumberOfCuttingEdges,t.Price,
-		t.price/t.NumberOfCuttingEdges Price_Per_Cutting_Edge,
-		tb.Quantity_Required*(t.price/t.NumberOfCuttingEdges) Price_Per_Tool_Change
-		from CNC_Part_Operation_Assembly ca 
-		inner join CNC c 
-		on ca.CNC_Key=c.CNC_Key -- 1 to 1
-		inner join Part p 
-		on ca.Part_Key = p.Part_Key 
-		inner join Operation o 
-		on ca.Operation_Key = o.Operation_Key 
-		inner join Tool_Assembly ta 
-		on ca.Assembly_Key=ta.Assembly_Key   -- 1 to 1
-		inner join Tool_BOM tb 
-		on ca.Assembly_Key = tb.Assembly_Key  -- 1 to many
-		inner join Tool t 
-		on tb.Tool_Key=t.Tool_Key -- 1 to many
-		inner join Tool_Type tt 
-		on t.Tool_Type_Key=tt.Tool_Type_Key  -- 1 to 1
-		inner join Tool_Group tg 
-		on t.Tool_Group_Key=tg.Tool_Group_key  -- 1 to 1
-	)a1
-	on mQ.CNC_Part_Operation_Assembly_Key=a1.CNC_Part_Operation_Assembly_Key
-)r
-group by r.CNC,r.Part_No,r.Operation_Code,r.Assembly_No,r.Description,r.Tool_Life
 
 
 -- select * from Tool_Assembly ta2 
@@ -736,29 +665,41 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 
 
 -- 5 * 60 = 300
-select * from CNC_Part_Operation_Assembly
+select 
+ta.Assembly_No Tool_No,
+ca.Tool_Life
+from CNC_Part_Operation_Assembly ca 
+inner join Tool_Assembly ta  
+on ca.Assembly_Key = ta.Assembly_Key 
+where ca.CNC_Key = 3
 
 
 set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Part_Operation_Assembly (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Increment_By,Tool_Life,Current_Value,Fastest_Cycle_Time,Last_Update)
 -- P558 LH Knuckles, CNC120
--- values (13,3,2794706,51168,13,2,198,-1,600,@Last_Update )  -- vc1
--- values (14,3,2794706,51168,14,2,198,-1,600,@Last_Update )  -- vc21
--- values (15,3,2794706,51168,15,2,2498,-1,600,@Last_Update )  -- vc22
--- values (16,3,2794706,51168,16,2,2998,-1,600,@Last_Update )  -- vc23
--- values (17,3,2794706,51168,17,2,1798,-1,600,@Last_Update )  -- vc72
--- values (18,3,2794706,51168,18,2,198,-1,600,@Last_Update )  -- vc33
--- values (19,3,2794706,51168,19,2,348,-1,600,@Last_Update )  -- vc30
--- values (20,3,2794706,51168,20,2,798,-1,600,@Last_Update )  -- vc4
--- values (21,3,2794706,51168,21,2,298,-1,600,@Last_Update )  -- vc15
--- values (22,3,2794706,51168,22,2,2498,-1,600,@Last_Update )  -- vc7
--- values (23,3,2794706,51168,23,2,198,-1,600,@Last_Update )  -- vc6
--- values (24,3,2794706,51168,24,2,3498,-1,600,@Last_Update )  -- vc9
--- values (25,3,2794706,51168,25,2,3498,-1,600,@Last_Update )  -- vc8
--- values (26,3,2794706,51168,26,2,17998,-1,600,@Last_Update )  -- vc12
--- values (27,3,2794706,51168,27,2,798,-1,600,@Last_Update )  -- vc13
--- values (28,3,2794706,51168,28,2,4998,-1,600,@Last_Update )  -- vc14
+-- values (13,3,2794706,51168,13,2,200,-1,600,@Last_Update )  -- vc1
+-- values (14,3,2794706,51168,14,2,200,-1,600,@Last_Update )  -- vc21
+-- values (15,3,2794706,51168,15,2,2500,-1,600,@Last_Update )  -- vc22
+-- values (16,3,2794706,51168,16,2,3000,-1,600,@Last_Update )  -- vc23
+-- values (17,3,2794706,51168,17,2,1800,-1,600,@Last_Update )  -- vc72
+-- values (18,3,2794706,51168,18,2,200,-1,600,@Last_Update )  -- vc33
+-- values (19,3,2794706,51168,19,2,350,-1,600,@Last_Update )  -- vc30
+-- values (20,3,2794706,51168,20,2,3000,-1,600,@Last_Update )  -- vc4
+-- values (21,3,2794706,51168,21,2,300,-1,600,@Last_Update )  -- vc15
+-- values (22,3,2794706,51168,22,2,2500,-1,600,@Last_Update )  -- vc7
+-- values (23,3,2794706,51168,23,2,200,-1,600,@Last_Update )  -- vc6
+-- values (24,3,2794706,51168,24,2,3000,-1,600,@Last_Update )  -- vc9
+-- values (25,3,2794706,51168,25,2,3000,-1,600,@Last_Update )  -- vc8
+-- values (26,3,2794706,51168,26,2,18000,-1,600,@Last_Update )  -- vc12
+-- values (27,3,2794706,51168,27,2,800,-1,600,@Last_Update )  -- vc13
+-- values (28,3,2794706,51168,28,2,5000,-1,600,@Last_Update )  -- vc14
+-- update CNC_Part_Operation_Assembly 
+set Tool_Life = 5000
+where CNC_Part_Operation_Assembly_Key = 28
 
+/*
+ 
+ */
 
 -- RDX, CNC 103
 -- values (1,1,2809196,56409,1,2,80500,-1,300,@Last_Update )  -- vc10
