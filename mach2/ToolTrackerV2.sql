@@ -22,33 +22,37 @@ CREATE TABLE CNC_Part_Operation_Set_Block_V2 (
 -- delete from Tool_BOM where Tool_BOM_Key = 5;
 
 -- values (21,20,17,1,1800)
-
+-- truncate table CNC_Part_Operation_Set_Block_V2
 insert into CNC_Part_Operation_Set_Block_V2 (CNC_Part_Operation_Set_Block_Key,CNC_Key,Part_Key,Operation_Key,Set_No,Block_No,Assembly_Key,Tool_Key)
-
+-- select * from CNC_Part_Operation_Set_Block_V2
 -- P558 LH Knuckles
 -- values (13,3,2794706,51168,1,1,13,1)
 -- values (14,3,2794706,51168,1,2,14,14)
 -- values (15,3,2794706,51168,1,3,15,15)
 -- values (16,3,2794706,51168,1,4,16,16)
 -- values (17,3,2794706,51168,1,5,17,20)
--- values (18,3,2794706,51168,1,6,18,18)
--- values (19,3,2794706,51168,1,7,18,19)
+-- values (18,3,2794706,51168,1,6,18,19) -- VC33
+-- values (19,3,2794706,51168,1,7,18,18) -- different tool lifes. Not an alternate of VC33. tHIS IS VC34
 -- values (20,3,2794706,51168,1,8,19,17)
 -- values (21,3,2794706,51168,1,9,20,2)
 -- 100 bytes
--- values (22,3,2794706,51168,2,1,21,12)
--- values (23,3,2794706,51168,2,2,21,13)
--- values (24,3,2794706,51168,2,3,22,6)
--- values (25,3,2794706,51168,2,4,23,3)
--- values (26,3,2794706,51168,2,5,23,4)
+-- values (22,3,2794706,51168,2,1,21,13)
+-- values (23,3,2794706,51168,2,2,22,6)
+-- values (24,3,2794706,51168,2,3,23,3)  
+-- values (25,3,2794706,51168,2,4,23,5) -- 2 cutters but the same tool life; send the same common variable twice.
+-- values (26,3,2794706,51168,2,5,24,7)
 -- 160 bytes now start over
--- values (27,3,2794706,51168,3,1,24,7)
--- values (28,3,2794706,51168,3,2,25,7)
--- values (29,3,2794706,51168,3,3,26,8)
--- values (30,3,2794706,51168,3,4,26,9)
--- values (31,3,2794706,51168,3,5,27,10)
--- values (32,3,2794706,51168,3,6,28,11)
+-- values (27,3,2794706,51168,3,1,25,7)
+-- values (28,3,2794706,51168,3,2,26,8)
+-- values (29,3,2794706,51168,3,3,27,10)
+ values (30,3,2794706,51168,3,4,28,11)
 -- 60/100 bytes
+
+-- delete from CNC_Part_Operation_Set_Block_V2 where CNC_Part_Operation_Set_Block_Key = 32 
+
+-- DELETED VALUES
+-- values (22,3,2794706,51168,2,1,21,12)  -- THIS IS AN ALTERNATE SO DELETE IT
+-- values (30,3,2794706,51168,3,4,26,9) -- THIS IS AN ALTERNATE SO DELETE IT
 
 /*
 13|T01        |3IN FACEMILL             

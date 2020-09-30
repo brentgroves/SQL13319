@@ -143,10 +143,9 @@ CREATE TABLE Part (
 	PRIMARY KEY (Part_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_part view';
 insert into Part (Part_Key,Part_No,Revision,Name,Part_Type)
--- values (2809196,'51393 TJB A040M1','40-M1-','RDX Right Hand','Bracket') 
-values (2794706,'10103355','A','P558 6K Knuckle Left Hand','Knuckle')
-select * from Part
-
+-- values (2809196,'51393TJB A040M1','40-M1-','RDX Right Hand','Bracket') 
+-- values (2794706,'10103355','A','P558 6K Knuckle Left Hand','Knuckle')
+-- select * from Part where Part_Key = 2809196
 /*
  * Corresponds to plex part_v_operation
  */
@@ -159,7 +158,8 @@ CREATE TABLE Operation (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_operation';
 insert into Operation (Operation_Key,Operation_Code)
 -- values (56409,'Machine Complete')
-values (51168,'Machine A - WIP')
+-- values (51168,'Machine A - WIP')
+-- values (56400,'Final')
 
 select * from Operation
 
@@ -176,10 +176,21 @@ CREATE TABLE Part_Operation (
 	PRIMARY KEY (Part_Operation_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_part_operation';
 insert into Part_Operation (Part_Operation_Key,Part_Key,Operation_Key)
--- values (7914696,2809196,56409)
-values (7874404,2794706,51168)
-select * from Part_Operation
+-- values (7914696,2809196,56409)  -- Delete. Added this before knowing that the tooling operation number must be of type production.
+-- delete from Part_Operation where Part_Operation_Key = 7914696  -- NOT DONE.
+-- values (7874404,2794706,51168)  -- LH Knuckles, CNC120, Machine A -WIP,  Operation 10 in Tool List.
+values (7917723,2809196,56400)  -- RDX AVILLA
 
+select * from Part_Operation
+/*
+select 
+-- p.plant,
+n.*,tm.* 
+FROM [ToolList Master] tm 
+left outer join [ToolList PartNumbers] n 
+on tm.processid=n.processid
+where tm.PartFamily like '%558%6K%LH%'  --TL = THERE ARE 3 OPERATIONS IN THE TOOL LIST
+ */
 
 -- drop table CNC_Part_Operation
 -- truncate table CNC_Part_Operation
@@ -191,8 +202,10 @@ CREATE TABLE CNC_Part_Operation (
 	PRIMARY KEY (CNC_Part_Operation_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Links CNC to a part operation';
 insert into CNC_Part_Operation (CNC_Part_Operation_Key,CNC_Key,Part_Key,Operation_Key)
--- values(1,1,2809196,56409)
-values(2,3,2794706,51168)
+-- values(1,1,2809196,56409) -- Delete. Added this before knowing that the tooling operation number must be of type production.
+-- delete from CNC_Part_Operation where CNC_Part_Operation_Key = 1  -- NOT DONE.
+-- values(2,3,2794706,51168)  -- CNC120, LH Knuckles
+values(3,1,2809196,56400)  -- CNC103, RH RDX
 select * from CNC_Part_Operation 
 
 /*
@@ -380,15 +393,21 @@ insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Cons
 -- values (1,'009196',30048,1,'ONMU 090520ANTN-M15 MK2050',1,16,14.380000)  --insert
 -- values (2,'17100',30016,1,'CCC-34231',1,1,276.000000)  -- drill
 -- values (3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,4,8.770000) -- 3 inserts are shown for this tool so I'm listing them all.
--- values (4,'15721',30048,1,'SHLT140516N-FS IN2005',1,4,12.570000) -- 3 inserts are shown for this tool so I'm listing them all.
------ values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- 3 inserts are shown for this tool so I'm listing them all.  -- This one is obsolete  Delete it
+-- values (4,'15721',30048,1,'SHLT140516N-FS IN2005',1,4,12.570000) -- 3 inserts are shown for this tool so I'm listing them all.  This is the Alternate for LH P558 Knuckles
+-- values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- 3 inserts are shown for this tool so I'm listing them all. 
+/*
+Issue 15721 is annotated as an alternate in the Tool list but 008318 is marked as obsolete so we are not bying it.
+009240    |                   200|                   
+008318    |                   200|                   
+15721     |                   200|ALTERNATE INSERT FO
+*/
 -- values (6,'008485',30048,1,'CDE323L022 IN2530',1,2,9.820000)  -- insert 
 -- values (7,'007864',30048,1,'TCMT 21.51-F1 TP1501',1,3,5.950000)  -- insert 
 -- values (8,'010338',1,1,'CCC-23575 REV A',1,1,506.000000)  -- Reamer 
 -- values (9,'008410',1,1,'CCC-21216 REV B',1,1,198.000000)  -- Reamer 
 -- values (10,'0003396',30048,1,'APFT1604PDTL-D15 MP1500 Insert',1,2,9.810000)  -- insert
 -- values (11,'008435',30048,1,'TCMT 110202 LC225T',1,3,10.370000)  -- insert
--- values (12,'009155',30048,1,'SPLT140512N-PH IN2005',1,4,9.980000)  -- insert
+-- values (12,'009155',30048,1,'SPLT140512N-PH IN2005',1,4,9.980000)  -- insert  -- Alternate in P558 Knuckles LH
 -- values (13,'13753',30048,1,'WDXT 156012-H ACK300',1,4,6.952000)  -- insert
 -- values (14,'17022',30048,1,'SNMX1407ZNTR-M16 MK2050',1,8,12.510000)  -- insert
 -- values (15,'14710',30016,1,'CCC-27629 REV 0',1,1,93.000000)  -- drill
@@ -398,7 +417,8 @@ insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Cons
 -- values (19,'15843',30048,1,'CCMT 432MT TT7015 INSERT',1,2,5.800000)  -- insert
 values (20,'14855',30016,1,'CCC-28434 REV 1',1,1,212.000000)  -- drill
 
-delete from Tool where Tool_Key = 5
+
+
 
 select * from Tool
 
@@ -421,19 +441,22 @@ insert into Tool_BOM (Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Quant
 -- values (1,1,13,9,200)
 -- values (2,2,20,1,3000)
 -- values (3,3,23,2,200)
--- values (4,4,23,2,200)
--- values (5,5,23,2,200)  -- Alternate Tool; Obsolete in Plex so delete it; If there are more of these tools they could be used.
--- delete from Tool_BOM where Tool_BOM_Key = 5;
+-- values (4,4,23,2,200) -- Alternate Tool; 
+-- delete from Tool_BOM where Tool_BOM_Key = 4;
+-- values (5,5,23,2,200)  
 -- values (6,6,22,7,2500)
 
 -- values (7,7,24,1,3000)
 -- values (8,7,25,1,3000)
 
 -- values (9,8,26,1,18000)
--- values (10,9,26,1,18000)
+-- values (10,9,26,1,18000)  -- Do not add this to the BOM.  It is an Alternate.
+-- delete from Tool_BOM where Tool_BOM_Key = 10;
+
 -- values (11,10,27,2,800)
 -- values (12,11,28,2,5000)
--- values (13,12,21,2,300)
+-- values (13,12,21,2,300)  -- Do not add this to the BOM.  It is an Alternate.
+-- delete from Tool_BOM where Tool_BOM_Key = 13
 -- values (14,13,21,2,300)
 -- values (15,14,14,6,200)
 -- values (16,15,15,1,2500)
