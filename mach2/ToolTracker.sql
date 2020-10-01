@@ -339,7 +339,7 @@ select * from Tool_Assembly_Part
 
 
 /*
- * This corresponds to a Plex tool_type table.
+ * This corresponds to a Plex tool_type table for Albion.
  */
 -- drop table Tool_Type
 -- truncate table Tool_Type
@@ -351,9 +351,28 @@ CREATE TABLE Tool_Type (
 insert into Tool_Type (Tool_Type_Key,Tool_Type_Code)
 -- values (30048,'Insert')
 -- values (30016,'Drill')
--- values (1,'Reamer')  -- Just added this get real number
--- values (2,'Tap')  -- Just added this get real number
+-- values (30800,'Reamer')  -- Just added this get real number  was 1
+-- values (30801,'Tap')  -- Just added this get real number was 2
 select * from Tool_Type
+delete from Tool_Type where Tool_Type_Key in (1,2)
+
+/*
+ * This corresponds to a Plex tool_type table.
+ */
+-- drop table Tool_Type_Avilla
+-- truncate table Tool_Type_Avill
+CREATE TABLE Tool_Type_Avilla (
+	Tool_Type_Key int,
+	Tool_Type_Code	varchar (20),
+  	PRIMARY KEY (Tool_Type_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Type';
+insert into Tool_Type_Avilla (Tool_Type_Key,Tool_Type_Code)
+-- values (25115,'Insert')
+-- values (25118,'Drill')
+-- values (30760,'Drill Tip')
+
+select * from Tool_Type_Avilla
+
 
 /*
  * This corresponds to a Plex Tool_Group table.
@@ -390,6 +409,7 @@ CREATE TABLE Tool (
   	PRIMARY KEY (Tool_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
 insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Consumable,NumberOfCuttingEdges,Price)  
+
 -- values (1,'009196',30048,1,'ONMU 090520ANTN-M15 MK2050',1,16,14.380000)  --insert
 -- values (2,'17100',30016,1,'CCC-34231',1,1,276.000000)  -- drill
 -- values (3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,4,8.770000) -- 3 inserts are shown for this tool so I'm listing them all.
@@ -664,7 +684,7 @@ insert into CNC_Part_Operation_Set_Block (CNC_Part_Operation_Set_Block_Key,CNC_K
 -- values (12,1,2809196,56409,2,3,12)
 select * from CNC_Part_Operation_Set_Block
 /*
- * CNC tool life for assembly from TLM.SSB
+ * Maintain data specific to CNC part operation 
  */
 -- drop table CNC_Part_Operation_Assembly 
 -- truncate table CNC_Part_Operation_Assembly
@@ -686,15 +706,17 @@ CREATE TABLE CNC_Part_Operation_Assembly (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC Part operation assembly info';
 
 
-
+CNC_Part_Operation_Cycle_Time
 -- 5 * 60 = 300
 select 
+ta.Assembly_Key, 
 ta.Assembly_No Tool_No,
-ca.Tool_Life
+ta.Description 
+-- ca.Tool_Life
 from CNC_Part_Operation_Assembly ca 
 inner join Tool_Assembly ta  
 on ca.Assembly_Key = ta.Assembly_Key 
-where ca.CNC_Key = 3
+where ca.CNC_Key = 1
 
 
 set @Last_Update = '2020-08-15 00:00:00';
