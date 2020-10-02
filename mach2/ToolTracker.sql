@@ -370,7 +370,10 @@ insert into Tool_Type_Avilla (Tool_Type_Key,Tool_Type_Code)
 -- values (25115,'Insert')
 -- values (25118,'Drill')
 -- values (30760,'Drill Tip')
-
+-- values (25116,'End Mill')
+-- values(30740,'Boring Bar')
+-- values (30762,'Engraving')
+values(30758,'Disc Mill')
 select * from Tool_Type_Avilla
 
 
@@ -409,6 +412,19 @@ CREATE TABLE Tool (
   	PRIMARY KEY (Tool_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
 insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Consumable,NumberOfCuttingEdges,Price)  
+-- values (21,'008431',25115,1,'TCGT 32.52 FL K10',1,3,6.690000)  -- insert
+-- values (22,'007221',25115,1,'XOEX120408FR-E06 H15',1,2,10.310000)  -- insert
+-- values (23,'16405',25115,1,'CCC-32503-010/PCD',1,1,92.000000)  -- insert
+-- values (24,'16406',30760,1,'HH-32503-21-AL',1,1,79.000000)  --
+-- values (25,'16461',25116,1,'A345M-100-D2-S.0-Z3',1,1,33.700000)  --
+-- values (26,'16110',25116,1,'CCC-30083 REV 1',1,1,101.000000)  --
+-- values (27,'16111',25118,1,'CCC-30082',1,1,163.1600000)  --
+-- values (28,'16130',25118,1,'CCC-30082',1,1,163.1600000)  --
+-- values (29,'16680',30740,1,'CCC-33146',1,1,103.000000)  -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
+-- values (30,'12623',30762,1,'C-1875-2.0-60-.020-G',1,1,14.980000)  --
+-- values (31,'16409',30740,1,'CCC-32506-100',1,1,103.000000)  -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
+-- values (32,'16407',30758,1,'CCC-32508-100',1,1,200.000000)   -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $200.
+-- values (33,'16408',30758,1,'CCC-32507-100',1,1,1320.000000)  
 
 -- values (1,'009196',30048,1,'ONMU 090520ANTN-M15 MK2050',1,16,14.380000)  --insert
 -- values (2,'17100',30016,1,'CCC-34231',1,1,276.000000)  -- drill
