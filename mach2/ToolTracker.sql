@@ -428,11 +428,11 @@ insert into Tool (Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Cons
 
 -- values (1,'009196',30048,1,'ONMU 090520ANTN-M15 MK2050',1,16,14.380000)  --insert
 -- values (2,'17100',30016,1,'CCC-34231',1,1,276.000000)  -- drill
--- values (3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,4,8.770000) -- 3 inserts are shown for this tool so I'm listing them all.
--- values (4,'15721',30048,1,'SHLT140516N-FS IN2005',1,4,12.570000) -- 3 inserts are shown for this tool so I'm listing them all.  This is the Alternate for LH P558 Knuckles
--- values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- 3 inserts are shown for this tool so I'm listing them all. 
+-- values (3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,4,8.770000) -- 
+-- values (4,'15721',30048,1,'SHLT140516N-FS IN2005',1,4,12.570000) -- Shown as an alternate in the Tool List for 008318
+-- values (5,'008318',30048,1,'SHLT140516N-FS IN1030',1,4,10.950000) -- Shown as replacing 15721 in Plex 
 /*
-Issue 15721 is annotated as an alternate in the Tool list but 008318 is marked as obsolete so we are not bying it.
+Cliff 008318 replaced 15721. Assembly takes both an inboard and outboard insert.
 009240    |                   200|                   
 008318    |                   200|                   
 15721     |                   200|ALTERNATE INSERT FO
