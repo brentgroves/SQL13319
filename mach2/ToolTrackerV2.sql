@@ -636,54 +636,63 @@ select * from CNC_Part_Operation_Set_Block
 -- drop table CNC_Part_Operation_Assembly 
 -- truncate table CNC_Part_Operation_Assembly
 CREATE TABLE CNC_Part_Operation_Assembly_V2 (
+	Plexus_Customer_No int,
 	CNC_Part_Operation_Assembly_Key int NOT NULL,
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL,  -- This is the Plex production operation number and not the CNC operation.
 	Assembly_Key int NOT NULL, 
-  	PRIMARY KEY (CNC_Part_Operation_Assembly_Key)
+  	PRIMARY KEY (Plexus_Customer_No,CNC_Part_Operation_Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maintain data specific to a tool assembly of a CNC part operation';
 
 set @Last_Update = '2020-08-15 00:00:00';
-insert into CNC_Part_Operation_Assembly_V2 (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
+insert into CNC_Part_Operation_Assembly_V2 (Plexus_Customer_No,CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
+-- Albion
 -- P558 LH Knuckles, CNC120
--- values (13,3,2794706,51168,13)  -- vc1
--- values (14,3,2794706,51168,14)  -- vc21
--- values (15,3,2794706,51168,15)  -- vc22
--- values (16,3,2794706,51168,16)  -- vc23
--- values (17,3,2794706,51168,17)  -- vc72
--- values (18,3,2794706,51168,18)  -- vc33
--- values (19,3,2794706,51168,19)  -- vc30
--- values (20,3,2794706,51168,20)  -- vc4
--- values (21,3,2794706,51168,21)  -- vc15
--- values (22,3,2794706,51168,22)  -- vc7
--- values (23,3,2794706,51168,23)  -- vc6
--- values (24,3,2794706,51168,24)  -- vc9
--- values (25,3,2794706,51168,25)  -- vc8
--- values (26,3,2794706,51168,26)  -- vc12
--- values (27,3,2794706,51168,27)  -- vc13
--- values (28,3,2794706,51168,28)  -- vc14
+-- values (300758,13,3,2794706,51168,13)  -- vc1
+-- values (300758,14,3,2794706,51168,14)  -- vc21
+-- values (300758,15,3,2794706,51168,15)  -- vc22
+-- values (300758,16,3,2794706,51168,16)  -- vc23
+-- values (300758,17,3,2794706,51168,17)  -- vc72
+-- values (300758,18,3,2794706,51168,18)  -- vc33
+-- values (300758,19,3,2794706,51168,19)  -- vc30
+-- values (300758,20,3,2794706,51168,20)  -- vc4
+-- values (300758,21,3,2794706,51168,21)  -- vc15
+-- values (300758,22,3,2794706,51168,22)  -- vc7
+-- values (300758,23,3,2794706,51168,23)  -- vc6
+-- values (300758,24,3,2794706,51168,24)  -- vc9
+-- values (300758,25,3,2794706,51168,25)  -- vc8
+-- values (300758,26,3,2794706,51168,26)  -- vc12
+-- values (300758,27,3,2794706,51168,27)  -- vc13
+-- values (300758,28,3,2794706,51168,28)  -- vc14
 -- update CNC_Part_Operation_Assembly_V2 
 set Tool_Life = 5000
 where CNC_Part_Operation_Assembly_Key = 28
 select * from CNC_Part_Operation_Assembly_V2
+select * from Part_V2 
+select * from Operation_V2 
+select * from Tool_Assembly_V2 
 
 insert into CNC_Part_Operation_Assembly_V2 (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
 -- RDX, CNC 103
--- values (1,1,2809196,56409,1)  -- vc10
--- values (2,1,2809196,56409,2)  -- vc11
--- values (3,1,2809196,56409,3)
--- values (4,1,2809196,56409,4)  -- vc12
--- values (5,1,2809196,56409,5)
--- values (6,1,2809196,56409,6)
--- values (7,1,2809196,56409,7)
--- values (8,1,2809196,56409,8)
--- values (9,1,2809196,56409,9)
--- values (10,1,2809196,56409,10)
--- values (11,1,2809196,56409,11)
--- values (12,1,2809196,56409,12)
+-- Avilla
+-- values (310507,1,1,2809196,56400,1)  -- vc10
+-- values (310507,2,1,2809196,56400,2)  -- vc11
+-- values (310507,3,1,2809196,56400,3)
+-- values (310507,4,1,2809196,56400,4)  -- vc12
+-- values (310507,5,1,2809196,56400,5)
+-- values (310507,6,1,2809196,56400,6)
+-- values (310507,7,1,2809196,56400,7)
+-- values (310507,8,1,2809196,56400,8)
+-- values (310507,9,1,2809196,56400,9)
+-- values (310507,10,1,2809196,56400,10)
+-- values (310507,11,1,2809196,56400,11)
+-- values (310507,12,1,2809196,56400,12)
 -- delete from CNC_Part_Operation_Assembly_V2 where CNC_Part_Operation_Assembly_Key in (2,4)
 select * from CNC_Part_Operation_Assembly_V2
+select * from Part_V2 
+select * from Operation_V2 
+select * from Tool_Assembly_V2 
 
 
 
