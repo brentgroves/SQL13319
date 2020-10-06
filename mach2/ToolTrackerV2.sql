@@ -603,6 +603,8 @@ insert into CNC_Part_Operation_Set_Block_V2 (Plexus_Customer_No,CNC_Part_Operati
 -- values (310507,11,1,2809196,56400,2,2,10,26)
 -- values (310507,12,1,2809196,56400,2,3,11,27)
 -- values (310507,13,1,2809196,56400,2,4,12,28)
+
+
 select * from CNC_Part_Operation_Set_Block_V2
 -- delete from CNC_Part_Operation_Set_Block_V2 where CNC_Part_Operation_Set_Block_Key = 32 
 
@@ -633,49 +635,22 @@ select * from CNC_Part_Operation_Set_Block
 /*
  * Maintain data specific to a tool assembly of a CNC part operation 
  */
--- drop table CNC_Part_Operation_Assembly 
--- truncate table CNC_Part_Operation_Assembly
+-- drop table CNC_Part_Operation_Assembly_V2 
+-- truncate table CNC_Part_Operation_Assembly_V2
 CREATE TABLE CNC_Part_Operation_Assembly_V2 (
 	Plexus_Customer_No int,
 	CNC_Part_Operation_Assembly_Key int NOT NULL,
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL,  -- This is the Plex production operation number and not the CNC operation.
-	Assembly_Key int NOT NULL, 
-  	PRIMARY KEY (Plexus_Customer_No,CNC_Part_Operation_Assembly_Key)
+	Assembly_Key int NOT NULL
+	Tool_Life int NOT NULL,  -- Tool list QuantityPerCuttingEdge.  The Tool Life can also be set per CNC in the CNC_Part_Operation_Assembly_Tool table.
+	PRIMARY KEY (Plexus_Customer_No,CNC_Part_Operation_Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maintain data specific to a tool assembly of a CNC part operation';
 
-set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Part_Operation_Assembly_V2 (Plexus_Customer_No,CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
--- Albion
--- P558 LH Knuckles, CNC120
--- values (300758,13,3,2794706,51168,13)  -- vc1
--- values (300758,14,3,2794706,51168,14)  -- vc21
--- values (300758,15,3,2794706,51168,15)  -- vc22
--- values (300758,16,3,2794706,51168,16)  -- vc23
--- values (300758,17,3,2794706,51168,17)  -- vc72
--- values (300758,18,3,2794706,51168,18)  -- vc33
--- values (300758,19,3,2794706,51168,19)  -- vc30
--- values (300758,20,3,2794706,51168,20)  -- vc4
--- values (300758,21,3,2794706,51168,21)  -- vc15
--- values (300758,22,3,2794706,51168,22)  -- vc7
--- values (300758,23,3,2794706,51168,23)  -- vc6
--- values (300758,24,3,2794706,51168,24)  -- vc9
--- values (300758,25,3,2794706,51168,25)  -- vc8
--- values (300758,26,3,2794706,51168,26)  -- vc12
--- values (300758,27,3,2794706,51168,27)  -- vc13
--- values (300758,28,3,2794706,51168,28)  -- vc14
--- update CNC_Part_Operation_Assembly_V2 
-set Tool_Life = 5000
-where CNC_Part_Operation_Assembly_Key = 28
-select * from CNC_Part_Operation_Assembly_V2
-select * from Part_V2 
-select * from Operation_V2 
-select * from Tool_Assembly_V2 
-
-insert into CNC_Part_Operation_Assembly_V2 (CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
--- RDX, CNC 103
 -- Avilla
+-- RDX, CNC 103
 -- values (310507,1,1,2809196,56400,1)  -- vc10
 -- values (310507,2,1,2809196,56400,2)  -- vc11
 -- values (310507,3,1,2809196,56400,3)
@@ -694,20 +669,50 @@ select * from Part_V2
 select * from Operation_V2 
 select * from Tool_Assembly_V2 
 
+insert into CNC_Part_Operation_Assembly_V2 (Plexus_Customer_No,CNC_Part_Operation_Assembly_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
+-- Albion
+-- P558 LH Knuckles, CNC120
+-- values (300758,13,3,2794706,51168,13)  -- vc1
+-- values (300758,14,3,2794706,51168,14)  -- vc21
+-- values (300758,15,3,2794706,51168,15)  -- vc22
+-- values (300758,16,3,2794706,51168,16)  -- vc23
+-- values (300758,17,3,2794706,51168,17,)  -- vc72
+-- values (300758,18,3,2794706,51168,18)  -- vc33
+-- values (300758,19,3,2794706,51168,19)  -- vc30
+-- values (300758,20,3,2794706,51168,20)  -- vc4
+-- values (300758,21,3,2794706,51168,21)  -- vc15
+-- values (300758,22,3,2794706,51168,22)  -- vc7
+-- values (300758,23,3,2794706,51168,23)  -- vc6
+-- values (300758,24,3,2794706,51168,24)  -- vc9
+-- values (300758,25,3,2794706,51168,25)  -- vc8
+-- values (300758,26,3,2794706,51168,26)  -- vc12
+-- values (300758,27,3,2794706,51168,27)  -- vc13
+-- values (300758,28,3,2794706,51168,28)  -- vc14
+
+
+-- update CNC_Part_Operation_Assembly_V2 
+set Tool_Life = 5000
+where CNC_Part_Operation_Assembly_Key = 28
+select * from CNC_Part_Operation_Assembly_V2
+select * from Part_V2 
+select * from Operation_V2 
+select * from Tool_Assembly_V2 
+
+
 
 
 /*
- * Maintain data specific to tool cutters for tool assemblies. 
+ * Maintain tool assemblies tool cutter info. 
  */
 1. The Plex Tool_Life is associated with a part operation but we have multiple assemblies 
 that use the same tool for a part_operation.  
 2. It is also associated with a work center but our work centers are associated with multiple 
 CNC so we dont have a place to keep track of every CNCs Tool_Life.
-
 of every CNCs Tool life. 
--- drop table CNC_Part_Operation_Assembly_Tool 
--- truncate table CNC_Part_Operation_Assembly_Tool
-CREATE TABLE CNC_Part_Operation_Assembly_Tool (
+-- drop table CNC_Part_Operation_Assembly_Tool_V2 
+-- truncate table CNC_Part_Operation_Assembly_Tool_V2
+CREATE TABLE CNC_Part_Operation_Assembly_Tool_V2 (
+	Plexus_Customer_No int,
 	CNC_Part_Operation_Assembly_Tool_Key int NOT NULL,
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
@@ -715,37 +720,59 @@ CREATE TABLE CNC_Part_Operation_Assembly_Tool (
 	Assembly_Key int NOT NULL, 
 	Tool_Key int NOT NULL, 
 	Increment_By int NOT NULL,
-	Tool_Life int NOT NULL,  -- Tool list QuantityPerCuttingEdge 
+	Tool_Life int NOT NULL,  -- Initially this is the same for all CNC from the Tool List QuantityPerCuttingEdge, but we may want to change this value per CNC.  
   	Current_Value int NOT NULL,
   	Last_Update datetime NOT NULL,
-  	PRIMARY KEY (CNC_Part_Operation_Assembly_Tool_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maintain data specific to tool cutters for tool assemblies.';
+  	PRIMARY KEY (Plexus_Customer_No,CNC_Part_Operation_Assembly_Tool_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maintain tool assemblies tool cutter info.';
 
 set @Last_Update = '2020-08-15 00:00:00';
-insert into CNC_Part_Operation_Assembly_Tool (CNC_Part_Operation_Assembly_Tool_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Tool_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
+insert into CNC_Part_Operation_Assembly_Tool_V2 (Plexus_Customer_No,CNC_Part_Operation_Assembly_Tool_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Tool_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
+-- Albion
 -- P558 LH Knuckles, CNC120
--- values (13,3,2794706,51168,13,1,2,200,-1,@Last_Update )  -- vc1
--- values (14,3,2794706,51168,14,14,2,200,-1,@Last_Update )  -- vc21
--- values (15,3,2794706,51168,15,15,2,2500,-1,@Last_Update )  -- vc22
--- values (16,3,2794706,51168,16,16,2,3000,-1,@Last_Update )  -- vc23
--- values (17,3,2794706,51168,17,20,2,1800,-1,@Last_Update )  -- vc72
--- values (18,3,2794706,51168,18,19,2,200,-1,@Last_Update )  -- vc33
--- values (19,3,2794706,51168,18,18,2,1000,-1,@Last_Update )  -- different tool lives. Not an alternate of VC33. tHIS IS VC34
--- values (20,3,2794706,51168,19,17,2,350,-1,@Last_Update )  -- vc30
--- values (21,3,2794706,51168,20,2,2,3000,-1,@Last_Update )  -- vc4
--- values (22,3,2794706,51168,21,13,2,300,-1,@Last_Update )  -- vc15
--- values (23,3,2794706,51168,22,6,2,2500,-1,@Last_Update )  -- vc7
--- values (24,3,2794706,51168,23,3,2,200,-1,@Last_Update )  -- vc6
--- values (25,3,2794706,51168,23,5,2,200,-1,@Last_Update )  -- vc6
--- values (26,3,2794706,51168,24,7,2,3000,-1,@Last_Update )  -- vc9
--- values (27,3,2794706,51168,25,7,2,3000,-1,@Last_Update )  -- vc8
--- values (28,3,2794706,51168,26,8,2,18000,-1,@Last_Update )  -- vc12
--- values (29,3,2794706,51168,27,10,2,800,-1,@Last_Update )  -- vc13
- values (30,3,2794706,51168,28,11,2,5000,-1,@Last_Update )  -- vc14
+-- values (300758,20,3,2794706,51168,13,1,2,200,-1,@Last_Update )  -- vc1
+-- values (300758,21,3,2794706,51168,14,14,2,200,-1,@Last_Update )  -- vc21
+-- values (300758,22,3,2794706,51168,15,15,2,2500,-1,@Last_Update )  -- vc22
+-- values (300758,23,3,2794706,51168,16,16,2,3000,-1,@Last_Update )  -- vc23
+-- values (300758,24,3,2794706,51168,17,20,2,1800,-1,@Last_Update )  -- vc72
+-- values (300758,25,3,2794706,51168,18,19,2,200,-1,@Last_Update )  -- Multiple tools cutters for T33,VC33
+-- values (300758,26,3,2794706,51168,18,18,2,1000,-1,@Last_Update )  -- Multiple tools cutters for T33,VC34
+-- values (300758,27,3,2794706,51168,19,17,2,350,-1,@Last_Update )  -- vc30
+-- values (300758,28,3,2794706,51168,20,2,2,3000,-1,@Last_Update )  -- vc4
+-- values (300758,29,3,2794706,51168,21,13,2,300,-1,@Last_Update )  -- vc15
+-- values (300758,30,3,2794706,51168,22,6,2,2500,-1,@Last_Update )  -- vc7
+-- values (300758,31,3,2794706,51168,23,3,2,200,-1,@Last_Update )  -- Multiple tools cutters for T6,vc6
+-- values (300758,32,3,2794706,51168,23,5,2,200,-1,@Last_Update )  -- Multiple tools cutters for T6,vc66
+-- values (300758,33,3,2794706,51168,24,7,2,3000,-1,@Last_Update )  -- vc9
+-- values (300758,34,3,2794706,51168,25,7,2,3000,-1,@Last_Update )  -- vc8
+-- values (300758,35,3,2794706,51168,26,8,2,18000,-1,@Last_Update )  -- vc12
+-- values (300758,36,3,2794706,51168,27,10,2,800,-1,@Last_Update )  -- vc13
+-- values (300758,37,3,2794706,51168,28,11,2,5000,-1,@Last_Update )  -- vc14
+ 
+
+-- Avilla
+-- RDX, CNC 103
+set @Last_Update = '2020-08-15 00:00:00';
+insert into CNC_Part_Operation_Assembly_Tool_V2 (Plexus_Customer_No,CNC_Part_Operation_Assembly_Tool_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Tool_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
+-- values (310507,1,1,2809196,56400,1,29,2,40000,-1,@Last_Update)
+-- values (310507,2,1,2809196,56400,2,30,2,5000,-1,@Last_Update)
+-- values (310507,3,1,2809196,56400,3,21,2,5000,-1,@Last_Update)
+-- values (310507,4,1,2809196,56400,4,31,2,40000,-1,@Last_Update)
+-- values (310507,5,1,2809196,56400,5,22,2,5000,-1,@Last_Update)
+-- values (310507,6,1,2809196,56400,6,32,2,40000,-1,@Last_Update)
+-- values (310507,7,1,2809196,56400,7,23,2,5000,-1,@Last_Update)
+-- values (310507,8,1,2809196,56400,7,24,2,5000,-1,@Last_Update)
+-- values (310507,9,1,2809196,56400,8,25,2,10000,-1,@Last_Update)
+-- values (310507,10,1,2809196,56400,9,33,2,40000,-1,@Last_Update)
+-- values (310507,11,1,2809196,56400,10,26,2,10000,-1,@Last_Update)
+-- values (310507,12,1,2809196,56400,11,27,2,10000,-1,@Last_Update)
+-- values (310507,13,1,2809196,56400,12,28,2,10000,-1,@Last_Update)
+select * from CNC_Part_Operation_Assembly_Tool_V2
+ 
+ select * from Tool_V2 tv 
 -- update CNC_Part_Operation_Assembly 
 set Tool_Life = 5000
 where CNC_Part_Operation_Assembly_Key = 28
-select * from CNC_Part_Operation_Assembly_Tool
 
 
 /*
