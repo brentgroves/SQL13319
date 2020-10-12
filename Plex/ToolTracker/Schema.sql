@@ -235,6 +235,7 @@ values
 (310507,10,'T07','8.2MM DRILL'),
 (310507,11,'T08','14.3MM DRILL/CHAMFER'),
 (310507,12,'T09','15.5MM DRILL/CHAMFER'),
+
 -- Albion
 -- P558 LH Knuckles
 (300758,13,'T01','3IN FACE MILL'),
@@ -286,24 +287,27 @@ select * from Part_v_Tool_Type
 
 /*
  * This corresponds to a Plex Tool_Group table.
- * Albion’s ExportMasterToolList Tool_Group looks like a tool_type where as Alabama and now Edon are set to Mill.
- * ADDED MILL TOOL GROUP LOOKUP TOOL_GROUP_KEY LATER AND CHANGE FROM 1
+ * This is NOT used unless used to distinguish reworks.
  */
--- drop table Tool_Group
--- truncate table Tool_Group
-CREATE TABLE Tool_Group (
+-- drop table Part_v_Tool_Group
+-- truncate table Part_v_Tool_Group
+CREATE TABLE Part_v_Tool_Group (
 	Plexus_Customer_No int NOT NULL,
 	Tool_Group_Key int,
-	Tool_Group_Code	varchar (20),
+	Description	varchar (50),
+	Tool_Group_Code	varchar (5),
   	PRIMARY KEY (Tool_Group_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Group';
-insert into Tool_Group (Tool_Group_Key,Tool_Group_Code)
+insert into Part_v_Tool_Group (Plexus_Customer_No,Tool_Group_Key,Description,Tool_Group_Code)
 values
+-- Albion
+(300758,3570,'Mill','Mill'),
+-- Avilla
+(310507,3571,'Mill','Mill');
+select * from Part_v_Tool_Group 
 
-(1,'Mill')
-select * from Tool_Group 
 
-
+-- select * from Part_v_Tool
 -- drop table Part_v_Tool
 -- truncate table Part_v_Tool
 CREATE TABLE Part_v_Tool (
@@ -311,50 +315,51 @@ CREATE TABLE Part_v_Tool (
 	Tool_Key int,
 	Tool_No	varchar (50),
 	Tool_Type_Key	int,
-	Tool_Group_Key	int,  -- Regrindable here
+	-- Tool_Group_Key	int,  -- Regrindable may be here
 	Description	varchar (50),
 	Perishable	bit, -- Maps to Busche Tool List consumable column
+	Standard_Reworks int,  -- Expected number of reworks
 	Price	decimal (18,4),
   	PRIMARY KEY (Plexus_Customer_No,Tool_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool';
-insert into Part_v_Tool (Plexus_Customer_No,Tool_Key,Tool_No,Tool_Type_Key,Description,Perishable,Price)  
+insert into Part_v_Tool (Plexus_Customer_No,Tool_Key,Tool_No,Tool_Type_Key,Description,Perishable,Standard_Reworks,Price)  
 values
 -- Avilla
-(310507,21,'008431',25115,'TCGT 32.52 FL K10',1,6.690000),  -- insert
-(310507,22,'007221',25115,'XOEX120408FR-E06 H15',1,10.310000),  -- insert
-(310507,23,'16405',25115,'CCC-32503-010/PCD',1,92.000000),   -- vc44, spot face insert for 21 mm drill
-(310507,24,'16406',30760,'HH-32503-21-AL',1,79.000000),   -- VC4, Drill tip for 21 mm drill
-(310507,25,'16461',25116,'A345M-100-D2-S.0-Z3',1,33.700000),  --
-(310507,26,'16110',25116,'CCC-30083 REV 1',1,101.000000),  --
-(310507,27,'16111',25118,'CCC-30082',1,163.1600000),  --
-(310507,28,'16130',25118,'CCC-30081',1,163.1600000),  --
-(310507,29,'16680',30740,'CCC-33146',1,103.000000),  -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
-(310507,30,'12623',30762,'C-1875-2.0-60-.020-G',1,14.980000),  --
-(310507,31,'16409',30740,'CCC-32506-100',1,103.000000),  -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
-(310507,32,'16407',30758,'CCC-32508-100',1,200.000000),   -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $200.
-(310507,33,'16408',30758,'CCC-32507-100',1,1320.000000),  
-(310507,34,'16410',30740,'CCC-32505-100',1,525.000000),  -- insert
+(310507,21,'008431',25115,'TCGT 32.52 FL K10',1,0,6.690000),  -- insert
+(310507,22,'007221',25115,'XOEX120408FR-E06 H15',1,0,10.310000),  -- insert
+(310507,23,'16405',25115,'CCC-32503-010/PCD',1,0,92.000000),   -- vc44, spot face insert for 21 mm drill
+(310507,24,'16406',30760,'HH-32503-21-AL',1,0,79.000000),   -- VC4, Drill tip for 21 mm drill
+(310507,25,'16461',25116,'A345M-100-D2-S.0-Z3',1,0,33.700000),  --
+(310507,26,'16110',25116,'CCC-30083 REV 1',1,0,101.000000),  --
+(310507,27,'16111',25118,'CCC-30082',1,0,163.1600000),  --
+(310507,28,'16130',25118,'CCC-30081',1,0,163.1600000),  --
+(310507,29,'16680',30740,'CCC-33146',1,0,103.000000),  -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
+(310507,30,'12623',30762,'C-1875-2.0-60-.020-G',1,0,14.980000),  --
+(310507,31,'16409',30740,'CCC-32506-100',1,0,103.000000),  -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
+(310507,32,'16407',30758,'CCC-32508-100',1,0,200.000000),   -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $200.
+(310507,33,'16408',30758,'CCC-32507-100',1,0,1320.000000),  
+(310507,34,'16410',30740,'CCC-32505-100',1,0,525.000000),  -- insert
 -- Albion
-(300758,1,'009196',30048,1,'ONMU 090520ANTN-M15 MK2050',1,14.380000),  -- insert
-(300758,2,'17100',30016,1,'CCC-34231',1,276.000000),  -- drill
-(300758,3,'009240',30048,1,'SHLT110408N-PH1 IN2005',1,8.780000), -- 
-(300758,4,'15721',30048,1,'SHLT140516N-FS IN2005',1,12.570000), -- Shown as an alternate in the Tool List for 008318
-(300758,5,'008318',30048,1,'SHLT140516N-FS IN1030',1,10.950000), -- Shown as replacing 15721 in Plex 
-(300758,6,'008485',30048,1,'CDE323L022 IN2530',1,9.820000),  -- insert 
-(300758,7,'007864',30048,1,'TCMT 21.51-F1 TP1501',1,5.950000),  -- insert 
-(300758,8,'010338',30800,1,'CCC-23575 REV A',1,456.00000),  -- Reamer 
-(300758,9,'008410',30800,1,'CCC-21216 REV B',1,198.000000),  -- Reamer. -- Alternate in P558 Knuckles LH 
-(300758,10,'0003396',30048,1,'APFT1604PDTL-D15 MP1500 Insert',1,9.810000),  -- insert
-(300758,11,'008435',30048,1,'TCMT 110202 LC225T',1,10.370000),  -- insert
-(300758,12,'009155',30048,1,'SPLT140512N-PH IN2005',1,9.980000),  -- insert  -- Alternate in P558 Knuckles LH
-(300758,13,'13753',30048,1,'WDXT 156012-H ACK300',1,6.952000),  -- insert
-(300758,14,'17022',30048,1,'SNMX1407ZNTR-M16 MK2050',1,12.510000),  -- insert
-(300758,15,'14710',30016,1,'CCC-27629 REV 0',1,93.000000),  -- drill
-(300758,16,'0000951',30801,1,'23910-05',1,32.350000),  -- Tap
-(300758,17,'16547',30048,1,'CCMT21.52MK MC5015',1,6.640000),  -- insert
-(300758,18,'010559',30048,1,'CCMT 32.52 -M3 TK1501',1,6.030000),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
-(300758,19,'15843',30048,1,'CCMT 432MT TT7015 INSERT',1,5.650000),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
-(300758,20,'14855',30016,1,'CCC-28434 REV 1',1,212.000000);  -- drill
+(300758,1,'009196',30048,'ONMU 090520ANTN-M15 MK2050',1,0,14.380000),  -- insert
+(300758,2,'17100',30016,'CCC-34231',1,1,276.000000),  -- drill
+(300758,3,'009240',30048,'SHLT110408N-PH1 IN2005',1,0,8.780000), -- 
+(300758,4,'15721',30048,'SHLT140516N-FS IN2005',1,0,12.570000), -- Shown as an alternate in the Tool List for 008318
+(300758,5,'008318',30048,'SHLT140516N-FS IN1030',1,0,10.950000), -- Shown as replacing 15721 in Plex 
+(300758,6,'008485',30048,'CDE323L022 IN2530',1,0,9.820000),  -- insert 
+(300758,7,'007864',30048,'TCMT 21.51-F1 TP1501',1,0,5.950000),  -- insert 
+(300758,8,'010338',30800,'CCC-23575 REV A',1,1,456.00000),  -- Reamer 
+(300758,9,'008410',30800,'CCC-21216 REV B',1,1,198.000000),  -- Reamer. -- Alternate in P558 Knuckles LH 
+(300758,10,'0003396',30048,'APFT1604PDTL-D15 MP1500 Insert',1,0,9.810000),  -- insert
+(300758,11,'008435',30048,'TCMT 110202 LC225T',1,0,10.370000),  -- insert
+(300758,12,'009155',30048,'SPLT140512N-PH IN2005',1,0,9.980000),  -- insert  -- Alternate in P558 Knuckles LH
+(300758,13,'13753',30048,'WDXT 156012-H ACK300',1,0,6.952000),  -- insert
+(300758,14,'17022',30048,'SNMX1407ZNTR-M16 MK2050',1,0,12.510000),  -- insert
+(300758,15,'14710',30016,'CCC-27629 REV 0',1,1,93.000000),  -- drill
+(300758,16,'0000951',30801,'23910-05',1,0,32.350000),  -- Tap
+(300758,17,'16547',30048,'CCMT21.52MK MC5015',1,0,6.640000),  -- insert
+(300758,18,'010559',30048,'CCMT 32.52 -M3 TK1501',1,0,6.030000),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
+(300758,19,'15843',30048,'CCMT 432MT TT7015 INSERT',1,0,5.650000),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
+(300758,20,'14855',30016,'CCC-28434 REV 1',1,1,212.000000);  -- drill
 
 /*
 Cliff 008318 replaced 15721. Assembly takes both an inboard and outboard insert.
@@ -380,22 +385,61 @@ CREATE TABLE Tool_X (
 insert into Tool_Plx (Plexus_Customer_No,Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Consumable,NumberOfCuttingEdges,Price)  
 -- Avilla
 */
-CREATE TABLE Tool_Attributes_Plx
+-- drop table Part_v_Tool_Attributes
+CREATE TABLE Part_v_Tool_Attributes
 ( 
+	Plexus_Customer_No int NOT NULL,
 	Tool_Attributes_Key	int NOT NULL,	
 	Tool_Key int NOT NULL,
 	Output_Per_Cycle int NOT NULL,  -- This maps to Busche Tool List NumberOfCuttingEdges column	
   	PRIMARY KEY (Plexus_Customer_No,Tool_Attributes_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Attributes';
-insert into Tool_Attributes_Plx (Plexus_Customer_No,Tool_Key,Tool_No,Tool_Type_Key,Tool_Group_Key,Description,Consumable,NumberOfCuttingEdges,Price)  
-
+insert into Part_v_Tool_Attributes (Plexus_Customer_No,Tool_Attributes_Key,Tool_Key,Output_Per_Cycle)
+values
+-- Avilla
+(310507,21,21,3),  -- insert
+(310507,22,22,2),  -- insert
+(310507,23,23,1),   -- vc44, spot face insert for 21 mm drill
+(310507,24,24,1),   -- VC4, Drill tip for 21 mm drill
+(310507,25,25,1),  --
+(310507,26,26,1),  --
+(310507,27,27,1),  --
+(310507,28,28,1),  --
+(310507,29,29,1),  -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
+(310507,30,30,1),  --
+(310507,31,31,1),  -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $103.
+(310507,32,32,1),   -- -- Can't find price anywhere in MSC,CM,Plex, Best guess from searching the web is $200.
+(310507,33,33,1),  
+(310507,34,34,1),  -- insert
+-- Albion
+(300758,1,1,16),  -- insert
+(300758,2,2,1),  -- drill
+(300758,3,3,4), -- 
+(300758,4,4,4), -- Shown as an alternate in the Tool List for 008318
+(300758,5,5,4), -- Shown as replacing 15721 in Plex 
+(300758,6,6,2),  -- insert 
+(300758,7,7,3),  -- insert 
+(300758,8,8,1),  -- Reamer 
+(300758,9,9,1),  -- Reamer. -- Alternate in P558 Knuckles LH 
+(300758,10,10,2),  -- insert
+(300758,11,11,3),  -- insert
+(300758,12,12,4),  -- insert  -- Alternate in P558 Knuckles LH
+(300758,13,13,4),  -- insert
+(300758,14,14,8),  -- insert
+(300758,15,15,1),  -- drill
+(300758,16,16,1),  -- Tap
+(300758,17,17,2),  -- insert
+(300758,18,18,2),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
+(300758,19,19,2),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
+(300758,20,20,1);  -- drill
+select * from Part_v_Tool_Attributes
 /*
  * This corresponds to a Plex tool_bom table.
  * -- THIS WILL NEED TO BE UPDATED AFTER TOOLING MODULE UPLOAD
  */
--- drop table Tool_BOM_Plx
--- truncate table Tool_BOM_Plx
-CREATE TABLE Tool_BOM_Plx (
+-- drop table Part_v_Tool_BOM
+-- truncate table Part_v_Tool_BOM
+CREATE TABLE Part_v_Tool_BOM (
 	Plexus_Customer_No int,
 	Tool_BOM_Key int,
 	Tool_Key int,
@@ -404,51 +448,52 @@ CREATE TABLE Tool_BOM_Plx (
 	Optional bit(1), -- Use this Plex column to indicate if it is an alternate
   	PRIMARY KEY (Plexus_Customer_No,Tool_BOM_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
-insert into Tool_BOM_Plx (Plexus_Customer_No,Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Alternate) 
+insert into Part_v_Tool_BOM (Plexus_Customer_No,Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Optional) 
+values
 -- RDX Brackets
--- values (310507,25,29,1,1,0)
--- values (310507,26,30,2,1,0)
--- values (310507,27,21,3,3,0)
--- values (310507,28,31,4,1,0)
--- values (310507,29,22,5,12,0)
--- values (310507,30,32,6,1,0)
--- values (310507,31,23,7,2,0)
--- values (310507,32,24,7,1,0)
--- values (310507,33,25,8,1,0)
--- values (310507,34,33,9,1,0)
--- values (310507,35,26,10,1,0)
--- values (310507,36,27,11,1,0)
--- values (310507,37,28,12,1,0)
-
+(310507,25,29,1,1,0),
+(310507,26,30,2,1,0),
+(310507,27,21,3,3,0),
+(310507,28,34,3,1,0),
+(310507,29,31,4,1,0),
+(310507,30,22,5,12,0),
+(310507,31,32,6,1,0),
+(310507,32,23,7,2,0),
+(310507,33,24,7,1,0),
+(310507,34,25,8,1,0),
+(310507,35,33,9,1,0),
+(310507,36,26,10,1,0),
+(310507,37,27,11,1,0),
+(310507,38,28,12,1,0),
 -- P558 Knuckles
--- values (300758,1,1,13,9,0)
--- values (300758,2,2,20,1,0)
--- values (300758,3,3,23,2,0)
--- values (300758,4,4,23,2,1) -- Alternate Tool; 
--- values (300758,5,5,23,2,0)  
--- values (300758,6,6,22,7,0)
--- values (300758,7,7,24,1,0)
--- values (300758,8,7,25,1,0)
--- values (300758,9,8,26,1,0)
--- values (300758,10,9,26,1,1)  -- Alternate Tool; 
--- values (300758,11,10,27,2,0)
--- values (300758,12,11,28,2,0)
--- values (300758,13,12,21,2,1) -- Alternate Tool;
--- values (300758,14,13,21,2,0)
--- values (300758,15,14,14,6,0)
--- values (300758,16,15,15,1,0)
--- values (300758,17,16,16,1,0)
--- values (300758,18,17,19,1,0)
--- values (300758,19,18,18,1,0)
--- values (300758,20,19,18,9,0)
--- values (300758,21,20,17,1,0)
-select * from Tool_BOM_Plx  order by Plexus_Customer_No,Assembly_Key 
+(300758,1,1,13,9,0),
+(300758,2,14,14,6,0),
+(300758,3,15,15,1,0),
+(300758,4,16,16,1,0),
+(300758,5,20,17,1,0),
+(300758,6,18,18,1,0), -- VC34
+(300758,7,19,18,9,0),  -- VC33,CCMT 432MT TT7015 INSERT,INBOARD
+(300758,8,17,19,2,0),
+(300758,9,2,20,1,0),
+(300758,10,12,21,2,1), -- Alternate Tool;
+(300758,11,13,21,2,0),
+(300758,12,6,22,7,0),
+(300758,13,3,23,2,0),  -- VC6,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE
+(300758,14,4,23,2,1), -- Alternate Tool; 
+(300758,15,5,23,2,0),  -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
+(300758,16,7,24,1,0),
+(300758,17,7,25,1,0),
+(300758,18,8,26,1,0),
+(300758,19,9,26,1,1),  -- Alternate Tool; 
+(300758,20,10,27,2,0),
+(300758,21,11,28,2,0)
+select * from Part_v_Tool_BOM  order by Plexus_Customer_No,Tool_BOM_Key 
 
 
--- drop table Tool_Assembly_Part_Plx
--- truncate table Tool_Assembly_Part_Plx
+-- drop table Part_v_Tool_Assembly_Part
+-- truncate table Part_v_Tool_Assembly_Part
 -- NEEDS UPDATED AFTER PLEX TOOLING MODULE UPLOAD
-CREATE TABLE Tool_Assembly_Part_Plx (
+CREATE TABLE Part_v_Tool_Assembly_Part (
 	Plexus_Customer_No int NOT NULL,
 	Tool_Assembly_Part_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
@@ -456,43 +501,44 @@ CREATE TABLE Tool_Assembly_Part_Plx (
 	Operation_Key int NOT NULL,
   	PRIMARY KEY (Plexus_Customer_No,Tool_Assembly_Part_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly_Part';
-insert into Tool_Assembly_Part_Plx (Plexus_Customer_No,Tool_Assembly_Part_Key,Assembly_Key,Part_Key,Operation_Key)
+insert into Part_v_Tool_Assembly_Part (Plexus_Customer_No,Tool_Assembly_Part_Key,Assembly_Key,Part_Key,Operation_Key)
+values
 -- Avilla
--- values (310507,1,1,2809196,56400)
--- values (310507,2,2,2809196,56400)
--- values (310507,3,3,2809196,56400)
--- values (310507,4,4,2809196,56400)
--- values (310507,5,5,2809196,56400)
--- values (310507,6,6,2809196,56400)
--- values (310507,7,7,2809196,56400)
--- values (310507,8,8,2809196,56400)
--- values (310507,9,9,2809196,56400)
--- values (310507,10,10,2809196,56400)
--- values (310507,11,11,2809196,56400)
--- values (310507,12,12,2809196,56400)
--- select * from Tool_Assembly_Part_Plx 
+(310507,1,1,2809196,56400),
+(310507,2,2,2809196,56400),
+(310507,3,3,2809196,56400),
+(310507,4,4,2809196,56400),
+(310507,5,5,2809196,56400),
+(310507,6,6,2809196,56400),
+(310507,7,7,2809196,56400),
+(310507,8,8,2809196,56400),
+(310507,9,9,2809196,56400),
+(310507,10,10,2809196,56400),
+(310507,11,11,2809196,56400),
+(310507,12,12,2809196,56400),
+-- select * from Part_v_Tool_Assembly_Part 
 -- Albion
--- values (300758,13,13,2794706,51168)
--- values (300758,14,14,2794706,51168)
--- values (300758,15,15,2794706,51168)
--- values (300758,16,16,2794706,51168)
--- values (300758,17,17,2794706,51168)
--- values (300758,18,18,2794706,51168)
--- values (300758,19,19,2794706,51168)
--- values (300758,20,20,2794706,51168)
--- values (300758,21,21,2794706,51168)
--- values (300758,22,22,2794706,51168)
--- values (300758,23,23,2794706,51168)
--- values (300758,24,24,2794706,51168)
--- values (300758,25,25,2794706,51168)
--- values (300758,26,26,2794706,51168)
--- values (300758,27,27,2794706,51168)
--- values (300758,28,28,2794706,51168)
-select * from Tool_Assembly_Part_Plx
+(300758,13,13,2794706,51168),
+(300758,14,14,2794706,51168),
+(300758,15,15,2794706,51168),
+(300758,16,16,2794706,51168),
+(300758,17,17,2794706,51168),
+(300758,18,18,2794706,51168),
+(300758,19,19,2794706,51168),
+(300758,20,20,2794706,51168),
+(300758,21,21,2794706,51168),
+(300758,22,22,2794706,51168),
+(300758,23,23,2794706,51168),
+(300758,24,24,2794706,51168),
+(300758,25,25,2794706,51168),
+(300758,26,26,2794706,51168),
+(300758,27,27,2794706,51168),
+(300758,28,28,2794706,51168)
+select * from Part_v_Tool_Assembly_Part
 
--- drop table Tool_Op_Part_Life_Plx 
--- truncate table Tool_Op_Part_Life_Plx
-CREATE TABLE Tool_Op_Part_Life_Plx
+-- drop table Part_v_Tool_Op_Part_Life 
+-- truncate table Part_v_Tool_Op_Part_Life
+CREATE TABLE Part_v_Tool_Op_Part_Life
 (
 	PCN	int NOT NULL,
 	Tool_Op_Part_Life_Key int NOT NULL,	
@@ -500,32 +546,87 @@ CREATE TABLE Tool_Op_Part_Life_Plx
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL,
 	Standard_Tool_Life	int NOT NULL,  -- Tool list value
-	Assembly_Key int NOT NULL,
-  	PRIMARY KEY (Plexus_Customer_No,Tool_Op_Part_Life_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Plex table';
-
--- drop table Tool_Op_Part_Life_X 
--- truncate table Tool_Op_Part_Life_X
-CREATE TABLE Tool_Op_Part_Life_X
-(
-	PCN	int NOT NULL,
-	Tool_Op_Part_Life_X_Key int NOT NULL,	
 	Rework_Tool_Life int NOT NULL,  -- Plex table did not have this column
-  	PRIMARY KEY (Plexus_Customer_No,Tool_Op_Part_Life_X_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='PlexX table';
+	Assembly_Key int NOT NULL,
+  	PRIMARY KEY (PCN,Tool_Op_Part_Life_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Plex table';
+insert into Part_v_Tool_Op_Part_Life (PCN,Tool_Op_Part_Life_Key,Tool_Key,Part_Key,Operation_Key,Standard_Tool_Life,Rework_Tool_Life,Assembly_Key)
+values
+-- Albion
+-- P558 LH Knuckles, CNC120
+(300758,20,1,2794706,51168,200,200,13),  -- vc1
+(300758,21,14,2794706,51168,200,200,14),  -- vc21
+(300758,22,15,2794706,51168,2500,2500,15),  -- vc22
+(300758,23,16,2794706,51168,3000,3000,16),  -- vc23
+(300758,24,20,2794706,51168,1800,1800,17),  -- vc72
+(300758,25,19,2794706,51168,200,200,18),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
+(300758,26,18,2794706,51168,1000,1000,18),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
+(300758,27,17,2794706,51168,350,350,19),  -- vc30
+(300758,28,2,2794706,51168,3000,3000,20),  -- vc4
+(300758,29,12,2794706,51168,300,300,21),  -- vc15
+(300758,30,13,2794706,51168,300,300,21),  -- vc15
+(300758,31,6,2794706,51168,2500,2500,22),  -- vc7
+(300758,32,3,2794706,51168,200,200,23),  -- VC6,SHLT110408N-PH1 IN2005 INSERT,DATUM L ROUGH BORE & C'BORE
+(300758,33,4,2794706,51168,200,200,23),  -- Alternate, Don't know if it is an alternate for vc6 or vc66.
+(300758,34,5,2794706,51168,200,200,23),  -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
+(300758,35,7,2794706,51168,3000,3000,24),  -- vc9
+(300758,36,7,2794706,51168,3000,3000,25),  -- vc8
+(300758,37,8,2794706,51168,18000,18000,26),  -- vc12
+(300758,38,9,2794706,51168,18000,18000,26),  -- Alternate tool
+(300758,39,10,2794706,51168,800,800,27),  -- vc13
+(300758,40,11,2794706,51168,5000,5000,28),  -- vc14
+-- Avilla
+-- RDX, CNC 103
+(310507,1,29,2809196,56400,40000,40000,1),
+(310507,2,30,2809196,56400,5000,5000,2),
+(310507,3,21,2809196,56400,5000,5000,3), -- VC1,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
+(310507,3,34,2809196,56400,40000,40000,3), -- VC21, Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
+(310507,4,31,2809196,56400,40000,40000,4),
+(310507,5,22,2809196,56400,5000,5000,5),
+(310507,6,32,2809196,56400,40000,40000,6),
+(310507,7,23,2809196,56400,5000,5000,7),  --  VC44,CCC-32503-010/PCD spotface insert for 21mm drill.
+(310507,8,24,2809196,56400,5000,5000,7),  -- VC4,HH-32503-21-AL drill tip for 21mm drill
+(310507,9,25,2809196,56400,10000,10000,8),
+(310507,10,33,2809196,56400,40000,40000,9),
+(310507,11,26,2809196,56400,10000,10000,10),
+(310507,12,27,2809196,56400,10000,10000,11),
+(310507,13,28,2809196,56400,10000,10000,12)
 
-CREATE TABLE Tool_Op_Part_Life_CNC_X
+
+set @Last_Update = '2020-08-15 00:00:00';
+insert into Tool_Op_Part_Life_CNC_X (Plexus_Customer_No,CNC_Part_Operation_Assembly_Tool_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Tool_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
+-- values (310507,1,1,2809196,56400,1,29,2,40000,-1,@Last_Update)
+-- values (310507,2,1,2809196,56400,2,30,2,5000,-1,@Last_Update)
+-- values (310507,3,1,2809196,56400,3,21,2,5000,-1,@Last_Update)
+-- values (310507,4,1,2809196,56400,4,31,2,40000,-1,@Last_Update)
+-- values (310507,5,1,2809196,56400,5,22,2,5000,-1,@Last_Update)
+-- values (310507,6,1,2809196,56400,6,32,2,40000,-1,@Last_Update)
+-- values (310507,7,1,2809196,56400,7,23,2,5000,-1,@Last_Update)  -- VC44,CCC-32503-010/PCD spotface insert for 21mm drill
+-- values (310507,8,1,2809196,56400,7,24,2,5000,-1,@Last_Update)  -- VC4,HH-32503-21-AL drill tip for 21mm drill
+-- values (310507,9,1,2809196,56400,8,25,2,10000,-1,@Last_Update)
+-- values (310507,10,1,2809196,56400,9,33,2,40000,-1,@Last_Update)
+-- values (310507,11,1,2809196,56400,10,26,2,10000,-1,@Last_Update)
+-- values (310507,12,1,2809196,56400,11,27,2,10000,-1,@Last_Update)
+-- values (310507,13,1,2809196,56400,12,28,2,10000,-1,@Last_Update)
+select * from CNC_Part_Operation_Assembly_Tool_V2
+
+-- NOT A PLEX TABLE
+-- drop table Tool_Op_Part_Life_CNC
+-- Tool_Op_Part_Life_CNC
+CREATE TABLE Tool_Op_Part_Life_CNC
 (
 	PCN	int NOT NULL,
-	Tool_Op_Part_Life_CNC_X_Key int NOT NULL,	
+	Tool_Op_Part_Life_CNC_Key int NOT NULL,	
+	Tool_Op_Part_Life_Key int NOT NULL,	-- foriegn key,
+	CNC_Key int NOT NULL, -- foriegn key,
 	Increment_By int NOT NULL,   -- How much to increment the tool counter every cycle
 	Standard_Tool_Life int NOT NULL,  -- Initially this is the same for all CNC from the Tool List QuantityPerCuttingEdge, but we may want to change this value per CNC.  
 	Rework_Tool_Life int NOT NULL,  -- Initially this is the same for all CNC from the Tool List QuantityPerCuttingEdge, but we may want to change this value per CNC.  
   	Current_Value int NOT NULL,
   	Last_Update datetime NOT NULL,
-  	PRIMARY KEY (Plexus_Customer_No,Tool_Op_Part_Life_CNC_X_Key)
+  	PRIMARY KEY (PCN,Tool_Op_Part_Life_CNC_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='PlexX table';
-
+insert into Tool_Op_Part_Life_CNC (PCN,Tool_Op_Part_Life_CNC_Key,Tool_Op_Part_Life_Key,CNC_Key,Increment_By,Standard_Tool_Life,Rework_Tool_Life,Current_Value,Last_Update)
 
 set @Last_Update = '2020-08-15 00:00:00';
 insert into Tool_Op_Part_Life_CNC_X (Plexus_Customer_No,CNC_Part_Operation_Assembly_Tool_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key,Tool_Key,Increment_By,Tool_Life,Current_Value,Last_Update)
