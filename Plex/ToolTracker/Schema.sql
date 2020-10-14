@@ -111,6 +111,7 @@ select * from CNC_Type
 
 /*
  * Subset of Part_v_Approved_Workcenter
+ * Note: Part operation to workcenter mapping
  */
 -- drop table Part_v_Approved_Workcenter
 -- truncate table Part_v_Approved_Workcenter
@@ -132,6 +133,8 @@ select * from Part_v_Approved_Workcenter
 /*
  * Plex extension table.
  * In Plex many CNC can be assigned to 1 work center, but there is not a 1 to many table for this.
+ * There is also not a simple primary key for Approved_Workcenter so we have to include Part_key,Operation_Key, and Workcenter_Key
+ * instead of a single foriegn key pointing to the Approved_Workcenter table..
  */
 -- drop table CNC_Approved_Workcenter
 -- truncate table CNC_Approved_Workcenter
@@ -187,9 +190,11 @@ values
 (300758,51168,'Machine A - WIP'),
 -- Avilla
 (310507,56400,'Final');
-select * from Operation_V2
+select * from Part_v_Operation
 
 /*
+ * This table records valid part and operation combinations.
+ * There are many part operations in the process routing table.
  */
 -- drop table Plex_v_Part_Operation
 -- truncate table Plex_v_Part_Operation
@@ -258,6 +263,7 @@ select * from Part_v_Tool_Assembly where Assembly_Key > 12
 
 /*
  * This corresponds to a Plex tool_type table for Albion.
+ * We need it so that we can have a good description of the tools in the BOM.
  */
 -- drop table Part_v_Tool_Type
 -- truncate table Part_v_Tool_Type
@@ -287,7 +293,9 @@ select * from Part_v_Tool_Type
 
 /*
  * This corresponds to a Plex Tool_Group table.
- * This is NOT used unless used to distinguish reworks.
+ * This table does not currently contain usefull info.
+ * It can be used to distinguished between tools that are used on a Mill or Lathe.
+ * Should we use it to distinguish between regrind-able and non-regrind-able tools?
  */
 -- drop table Part_v_Tool_Group
 -- truncate table Part_v_Tool_Group
@@ -306,7 +314,9 @@ values
 (310507,3571,'Mill','Mill');
 select * from Part_v_Tool_Group 
 
-
+/*
+ * 
+ */
 -- select * from Part_v_Tool
 -- drop table Part_v_Tool
 -- truncate table Part_v_Tool
@@ -315,10 +325,10 @@ CREATE TABLE Part_v_Tool (
 	Tool_Key int,
 	Tool_No	varchar (50),
 	Tool_Type_Key	int,
-	-- Tool_Group_Key	int,  -- Regrindable may be here
+	-- Tool_Group_Key	int,  -- Not very useful information at this time.  Should we use it to distinguish between regrind-able and non-regrind-able tools
 	Description	varchar (50),
 	Perishable	bit, -- Maps to Busche Tool List consumable column
-	Standard_Reworks int,  -- Expected number of reworks
+	Standard_Reworks int,  -- Expected number of regrinds. Although this number may vary for different part operations. 
 	Price	decimal (18,4),
   	PRIMARY KEY (Plexus_Customer_No,Tool_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool';
@@ -447,7 +457,8 @@ CREATE TABLE Part_v_Tool_BOM (
 	Tool_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
 	Quantity_Required decimal(18,2) NOT NULL,
-	Optional bit(1), -- Not needed. Use this Plex column to indicate if it is an alternate
+	Optional bit(1), -- Use this Plex column to indicate if it is an alternate
+	-- This may be helpful in determining CPU for the primary tooling set.
   	PRIMARY KEY (Plexus_Customer_No,Tool_BOM_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_BOM';
 insert into Part_v_Tool_BOM (Plexus_Customer_No,Tool_BOM_Key,Tool_Key,Assembly_Key,Quantity_Required,Optional) 
@@ -474,20 +485,19 @@ values
 (300758,4,16,16,1,0),
 (300758,5,20,17,1,0),
 (300758,6,18,18,1,0), -- VC34
-(300758,7,19,18,9,0),  -- VC33,CCMT 432MT TT7015 INSERT,INBOARD
+(300758,7,19,18,9,0), -- VC33,CCMT 432MT TT7015 INSERT,INBOARD
 (300758,8,17,19,2,0),
 (300758,9,2,20,1,0),
-(300758,10,12,21,2,1), -- Alternate Tool;
+(300758,10,12,21,2,1), -- Alternate Tool for T15;
 (300758,11,13,21,2,0),
 (300758,12,6,22,7,0),
-(300758,13,3,23,2,0),  -- VC6,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE
-(300758,14,4,23,2,1), -- Alternate Tool; 
-(300758,15,5,23,2,0),  -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
-(300758,14,4,23,2,1), -- Alternate Tool; 
+(300758,13,3,23,2,0), -- VC6,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE
+(300758,14,4,23,2,1), -- Alternate Tool for one of the T6 inserts. Don't know which one 
+(300758,15,5,23,2,0), -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
 (300758,16,7,24,1,0),
 (300758,17,7,25,1,0),
 (300758,18,8,26,1,0),
-(300758,19,9,26,1,1),  -- Alternate Tool; 
+(300758,19,9,26,1,1),  -- Alternate Tool for T12; 
 (300758,20,10,27,2,0),
 (300758,21,11,28,2,0)
 select * from Part_v_Tool_BOM  order by Plexus_Customer_No,Tool_BOM_Key 
@@ -502,13 +512,15 @@ CREATE TABLE Tool_BOM_Alternate (
 	Plexus_Customer_No int NOT NULL,
 	Tool_BOM_Alternate_Key int NOT NULL,
 	Tool_BOM_Key int NOT NULL,
-	Primary_Tool_Key int NOT NULL, -- NOT IN PLEX.  
-	Alternate_Tool_Key int NOT NULL, -- NOT IN PLEX.  
+	Alternate_Tool_Key int NOT NULL, -- NOT IN PLEX.  Maybe this should be Alternate_Tool_BOM_Key
   	PRIMARY KEY (Plexus_Customer_No,Tool_BOM_Alternate_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Primary to Alternate tool_key mapping for Tool_BOM';
-insert into Part_v_Tool_BOM (Plexus_Customer_No,Tool_BOM_Alternate_Key,Tool_BOM_Key,Primary_Tool_Key,Alternate_Tool_Key) 
+insert into Tool_BOM_Alternate (Plexus_Customer_No,Tool_BOM_Alternate_Key,Tool_BOM_Key,Alternate_Tool_Key) 
 values
-
+(300758,1,11,12), -- Alternate Tool for T15;
+(300758,2,13,4), -- Alternate Tool for one of T6 inserts
+(300758,3,18,9) -- Alternate Tool for T12;
+select * from Tool_BOM_Alternate
 /*
  * This will have to be entered by the tool setter through a Mach2 or Moto screen.
  */
@@ -518,14 +530,17 @@ CREATE TABLE Tool_BOM_Alternate_In_Use (
 	Plexus_Customer_No int NOT NULL,
 	Tool_BOM_Alternate_In_Use_Key int NOT NULL,
 	Tool_BOM_Alternate_Key int NOT NULL,
-	Tool_Op_Part_Life_CNC_Key int NOT NULL,	
+	Tool_Op_Part_Life_CNC_Key int NOT NULL,	-- Where is it being used. Need the assembly and CNC from the UI.
 	Quantity_In_Use int NOT NULL, -- How many are currently being used.	
   	PRIMARY KEY (Plexus_Customer_No,Tool_BOM_Alternate_In_Use_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Indicates if an Alternate is currently being used';
 insert into Part_v_Tool_BOM (Plexus_Customer_No,Tool_BOM_Alternate_Key,Tool_BOM_Key,Primary_Tool_Key,Alternate_Tool_Key) 
 values
+(300758,1,3,38) -- Alternate Tool for T12 is in use;
 
-
+/*
+ * One tool assembly can be used for many part operations.
+ */
 -- drop table Part_v_Tool_Assembly_Part
 -- truncate table Part_v_Tool_Assembly_Part
 -- NEEDS UPDATED AFTER PLEX TOOLING MODULE UPLOAD
@@ -608,7 +623,7 @@ values
 (300758,35,7,2794706,51168,3000,3000,24),  -- vc9
 (300758,36,7,2794706,51168,3000,3000,25),  -- vc8
 (300758,37,8,2794706,51168,18000,18000,26),  -- vc12
-(300758,38,9,2794706,51168,18000,18000,26),  -- Alternate tool
+(300758,38,9,2794706,51168,18000,18000,26),  -- vc12 Alternate tool
 (300758,39,10,2794706,51168,800,800,27),  -- vc13
 (300758,40,11,2794706,51168,5000,5000,28),  -- vc14
 -- Avilla
@@ -629,6 +644,9 @@ values
 (310507,14,28,2809196,56400,10000,10000,12)
 select * from Part_v_Tool_Op_Part_Life
 
+/*
+ * Tracks CNC specific tool life info
+ */
 -- NOT A PLEX TABLE
 -- drop table Tool_Op_Part_Life_CNC
 -- truncate table Tool_Op_Part_Life_CNC
@@ -670,7 +688,7 @@ values
 (300758,35,35,3,2,3000,3000,-1,@Last_Update),  -- vc9
 (300758,36,36,3,2,3000,3000,-1,@Last_Update),  -- vc8
 (300758,37,37,3,2,18000,18000,-1,@Last_Update),  -- vc12
-(300758,38,38,3,2,18000,18000,-1,@Last_Update),  -- Alternate tool
+(300758,38,38,3,2,18000,18000,-1,@Last_Update),  -- vc12 Alternate tool
 (300758,39,39,3,2,800,800,-1,@Last_Update),  -- vc13
 (300758,40,40,3,2,5000,5000,-1,@Last_Update),  -- vc14
 -- Avilla
@@ -700,7 +718,7 @@ select * from Tool_Op_Part_Life_CNC
 -- truncate table Tool_Op_Part_Life_CNC_Set_Block 
 CREATE TABLE Tool_Op_Part_Life_CNC_Set_Block (
 	Plexus_Customer_No int,
-	Tool_Op_Part_Life_Set_Block_Key int NOT NULL,   -- each CNC_Part_Operation_Key, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
+	Tool_Op_Part_Life_Set_Block_Key int NOT NULL, -- each CNC,Part,Operation, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
 	CNC_Key int NOT NULL,
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL, 
@@ -754,7 +772,7 @@ values
 select * from Tool_Op_Part_Life_CNC_Set_Block
 
 /*
- * These records get inserted by ?
+ * Keep track of specific info on each regrind-able tool
  */
 -- drop table Part_v_Tool_Inventory
 -- truncate table Part_v_Tool_Inventory
@@ -764,36 +782,60 @@ CREATE TABLE Part_v_Tool_Inventory
 	Tool_Serial_Key	int,
 	Tool_Serial_No	varchar (50),
 	Tool_Key int,  -- 1 tool_key to many tool_serial_key
+	Regrind_Count int, -- How many times it has been reground
   	PRIMARY KEY (Plexus_Customer_No,Tool_Serial_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of plex part_v_tool_inventory view';
-insert into Part_v_Tool_Inventory (Plexus_Customer_No,Tool_Serial_Key,Tool_Serial_No,Tool_Key)
+insert into Part_v_Tool_Inventory (Plexus_Customer_No,Tool_Serial_Key,Tool_Serial_No,Tool_Key,Regrind_Count)
 values
 -- Albion P558 Knuckles
 -- Part_v_Tool.Standard_Reworks
-(300758,1,'17100-001',2),  -- drill
-(300758,2,'010338-001',8),  -- Reamer 
-(300758,3,'008410-001',9),  -- Reamer. -- Alternate in P558 Knuckles LH 
-(300758,4,'14710-001',15),  -- drill
-(300758,5,'14855-001',20);  -- drill
+(300758,1,'17100-001',2,0),  -- drill
+(300758,2,'010338-001',8,0),  -- Reamer 
+(300758,3,'008410-001',9,0),  -- Reamer. -- Alternate in P558 Knuckles LH 
+(300758,4,'14710-001',15,0),  -- drill
+(300758,5,'14855-001',20,0);  -- drill
 
 /*
  * Not a Plex table.
  * Assign a regrind-able tool to a CNC. When a tool setter loads a regrind-able tool into a CNC
  * he accesses a Mach2 or Moto screen to map the tool to a CNC.
  */
-CREATE TABLE Tool_Inventory_CNC 
+CREATE TABLE Tool_Inventory_In_Use 
 (
 	Plexus_Customer_No int,
-	Tool_Inventory_CNC_Key int NOT NULL,
-	Tool_Serial_Key int,  -- Optional, ADDED: Plex Part_v_Tool_Inventory column.
-	Workcenter_Key	int NOT NULL,  -- This will allow us to group all CNC in a work area.  Technically not needed but it is a Plex column.
-	CNC_Key int NOT NULL, -- needed because our Workcenters have multiple CNC. NOT A PLEX COLUMN.							
+	Tool_Inventory_In_Use_Key int NOT NULL,
+	Tool_Serial_Key int,  
+	CNC_Key int NOT NULL, 							
 	Part_Key int NOT NULL,							
-	Part_Operation_Key int NOT NULL,	-- I had the operation_key here but this will give access to more information as well as the operation_key.						
-	Assembly_Key int NOT NULL,  -- NOT A PLEX COLUMN
+	Operation_Key int NOT NULL,							
+	Assembly_Key int NOT NULL,  
   	PRIMARY KEY (Plexus_Customer_No,Tool_Inventory_CNC_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maps a regrind-able tool to a CNC assembly';
-
+insert into Part_v_Tool_Op_Part_Life (Plexus_Customer_No,Tool_Inventory_In_Use_Key,Tool_Serial_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
+values
+-- Albion
+-- P558 LH Knuckles, CNC120
+(300758,20,1,2794706,51168,200,200,13),  -- vc1
+(300758,21,14,2794706,51168,200,200,14),  -- vc21
+(300758,22,15,2794706,51168,2500,2500,15),  -- vc22
+(300758,23,16,2794706,51168,3000,3000,16),  -- vc23
+(300758,24,20,2794706,51168,1800,1800,17),  -- vc72
+(300758,25,19,2794706,51168,200,200,18),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
+(300758,26,18,2794706,51168,1000,1000,18),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
+(300758,27,17,2794706,51168,350,350,19),  -- vc30
+(300758,28,2,2794706,51168,3000,3000,20),  -- vc4
+(300758,29,12,2794706,51168,300,300,21),  -- vc15  Alternate tool
+(300758,30,13,2794706,51168,300,300,21),  -- vc15
+(300758,31,6,2794706,51168,2500,2500,22),  -- vc7
+(300758,32,3,2794706,51168,200,200,23),  -- VC6,SHLT110408N-PH1 IN2005 INSERT,DATUM L ROUGH BORE & C'BORE
+(300758,33,4,2794706,51168,200,200,23),  -- Alternate, Don't know if it is an alternate for vc6 or vc66.
+(300758,34,5,2794706,51168,200,200,23),  -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
+(300758,35,7,2794706,51168,3000,3000,24),  -- vc9
+(300758,36,7,2794706,51168,3000,3000,25),  -- vc8
+(300758,37,8,2794706,51168,18000,18000,26),  -- vc12
+(300758,38,9,2794706,51168,18000,18000,26),  -- vc12 Alternate tool
+(300758,39,10,2794706,51168,800,800,27),  -- vc13
+(300758,40,11,2794706,51168,5000,5000,28),  -- vc14
 
 
 /*
@@ -811,7 +853,7 @@ CREATE TABLE Part_v_Tool_Life
 	Workcenter_Key	int NOT NULL,  -- This will allow us to group all CNC in a work area.  Technically not needed but it is a Plex column.
 	CNC_Key int NOT NULL, -- needed because our Workcenters have multiple CNC. NOT A PLEX COLUMN.							
 	Part_Key int NOT NULL,							
-	Part_Operation_Key int NOT NULL,	-- I had the operation_key here but this will give access to more information as well as the operation_key.						
+	Operation_Key int NOT NULL,							
 	Assembly_Key int NOT NULL,  -- NOT A PLEX COLUMN
 	Run_Date datetime NOT NULL,	-- Start date. Record created at time of tool change of previous tool set.				
 	Run_Quantity int NOT NULL,	-- Actual tool life for tool set if this is .					
