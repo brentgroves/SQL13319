@@ -80,6 +80,7 @@ select * from Part_v_Workcenter
  */
 -- drop table CNC 
 CREATE TABLE CNC (
+	Plexus_Customer_No int NOT NULL,
 	CNC_Key int NOT NULL,
 	CNC_TYPE_Key int NOT NULL, -- foreign key
   	Building_Key int NOT NULL, -- foreign key
@@ -88,25 +89,28 @@ CREATE TABLE CNC (
 	Networked bit(1) NOT NULL, 
   	PRIMARY KEY (CNC_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC info';
-insert into CNC (CNC_Key,CNC_Type_Key,Building_Key,CNC_Code,Serial_Port,Networked)
+insert into CNC (Plexus_Customer_No,CNC_Key,CNC_Type_Key,Building_Key,CNC_Code,Serial_Port,Networked)
 values
 -- Albion
-(3,1,5644,'120',true,false),
+(300758,3,1,5644,'120',true,false),
 -- Avilla
-(1,1,5680,'103',true,false),
-(2,2,5680,'362',false,true)
+(310507,1,1,5680,'103',true,false),
+(310507,2,2,5680,'362',false,true)
 select * from CNC
 
 -- drop table CNC_Type 
 CREATE TABLE CNC_Type (
+	Plexus_Customer_No int NOT NULL,
 	CNC_Type_Key int NOT NULL,
 	CNC_Type_Code varchar(50) NOT NULL,
-  	PRIMARY KEY (CNC_Type_Key)
+  	PRIMARY KEY (Plexus_Customer_No,CNC_Type_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='CNC types such as Makino, Okuma, Welles, etc.';
-insert into CNC_Type (CNC_Type_key,CNC_Type_Code)
+insert into CNC_Type (Plexus_Customer_No,CNC_Type_key,CNC_Type_Code)
 values
-(1,'Okuma'),
-(2,'Makino')
+(300758,1,'Okuma'),
+(300758,2,'Makino'),
+(310507,1,'Okuma'),
+(310507,2,'Makino')
 select * from CNC_Type
 
 /*
@@ -116,42 +120,50 @@ select * from CNC_Type
 -- drop table Part_v_Approved_Workcenter
 -- truncate table Part_v_Approved_Workcenter
 CREATE TABLE Part_v_Approved_Workcenter (
-	Approved_Workcenter_Key int NOT NULL,  -- Primary key, NOT A PLEX COLUMN. It is unique throughout all PCN.
 	Plexus_Customer_No int NOT NULL,
   	Part_Key int NOT NULL,
-  	Operation_Key int NOT NULL,
+  	Part_Operation_Key int NOT NULL,
   	Workcenter_Key int NOT NULL,
-  	PRIMARY KEY (Approved_Workcenter_Key)  
+  	PRIMARY KEY (Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key)  
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of Part_v_Approved_Workcenter.';
-insert into Part_v_Approved_Workcenter (Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,Operation_Key,Workcenter_Key)
+insert into Part_v_Approved_Workcenter (Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key)
 values
 -- Albion
-(1,300758,2794706,51168,61090), -- Kunckles 6K LH
+(300758,2794706,7874404,61090), -- Kunckles 6K LH
 -- Avilla
-(2,310507,2809196,56400,61324)  -- RDX AVILLA
+(310507,2809196,7917723,61324)  -- RDX AVILLA
 select * from Part_v_Approved_Workcenter
 
 /*
  * Plex extension table.
  * The CNC_Approved_Workcenter is used to get the key values needed to update the 
  * tool life table records.  
+ * There can be many part_operation records for a single part,operation and we need
+ * to know which part_operation is running on the CNC when inserting Tool_Life records
+ * so stick with the part_operation_key here instead of just linking to the individual 
+ * part_Key and operation_key pair through the Approved_Workcenter table. By looking
+ * at the Tool_Life record we will be able to know which part_operation_no the tool
+ * life is being recorded for.
  */
 -- drop table CNC_Approved_Workcenter
 -- truncate table CNC_Approved_Workcenter
 CREATE TABLE CNC_Approved_Workcenter (
-	CNC_Approved_Workcenter int NOT NULL, -- primary key unique over all PCN
-	Approved_Workcenter_Key int NOT NULL, -- foreign key
+-- No single primary key because we need to know that each set of keys are unique
+	CNC_Approved_Workcenter_Key int NOT NULL,
+	Plexus_Customer_No int NOT NULL,
+  	Part_Key int NOT NULL,
+  	Part_Operation_Key int NOT NULL,
+  	Workcenter_Key int NOT NULL,
 	CNC_Key int NOT NULL,
-	PRIMARY KEY (CNC_Approved_Workcenter )
+  	PRIMARY KEY (CNC_Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key)  
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Links CNC to a part operation';
-
-insert into CNC_Approved_Workcenter (CNC_Approved_Workcenter,Approved_Workcenter_Key,CNC_Key)
-values  -- CNC_Approved_Workcenter maps to the same info as the CNC_Part_Operation_Key 
+insert into CNC_Approved_Workcenter (CNC_Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key)
+values
 -- Albion
-(2,1,3), -- Kunckles 6K LH
+(2,300758,2794706,7874404,61090,3), -- Kunckles 6K LH
 -- Avilla
-(3,2,1)  -- RDX AVILLA
-select * from CNC_Approved_Workcenter 
+(3,310507,2809196,7917723,61324,1)  -- RDX AVILLA
+select * from CNC_Approved_Workcenter
 
 /*
  * Corresponds to Plex part_v_part
@@ -531,17 +543,22 @@ select * from Tool_BOM_Alternate
 -- drop table Tool_BOM_Alternate_In_Use
 -- truncate table Tool_BOM_Alternate_In_Use
 CREATE TABLE Tool_BOM_Alternate_In_Use (
-	Plexus_Customer_No int NOT NULL,
-	Tool_BOM_Alternate_In_Use_Key int NOT NULL,
-	Tool_BOM_Alternate_Key int NOT NULL,  -- Which alternate tool is being used for a tool assembly.
-	CNC_Approved_Workcenter_Key int NOT NULL,	-- What CNC and part operation is it being used on.
-	Quantity_In_Use int NOT NULL, -- How many are currently being used.	
-  	PRIMARY KEY (Plexus_Customer_No,Tool_BOM_Alternate_In_Use_Key)
+	Plexus_Customer_No int,
+	Primary_Tool_Key int NOT NULL,  
+	Alternate_Tool_Key int NOT NULL,  
+	CNC_Key int NOT NULL, -- Where is it being used 							
+	Part_Key int NOT NULL,							
+	Part_Operation_Key int NOT NULL,							
+	Assembly_Key int NOT NULL,  
+	Quantity_In_Use int NOT NULL,
+  	PRIMARY KEY (Plexus_Customer_No,Primary_Tool_Key,Alternate_Tool_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Indicates if an Alternate is currently being used';
-insert into Part_v_Tool_BOM (Plexus_Customer_No,Tool_BOM_Alternate_Key,Tool_BOM_Key,Primary_Tool_Key,Alternate_Tool_Key) 
+insert into Tool_BOM_Alternate_In_Use (Plexus_Customer_No,Primary_Tool_Key,Alternate_Tool_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Quantity_In_Use) 
 values
-(300758,1,13,12) -- Alternate Tool for T15 is in use;
-
+(300758,13,12,3,2794706,7874404,21,1) -- Alternate Tool for T15 is in use;
+select * from Tool_BOM_Alternate_In_Use
+-- select * from CNC_Approved_Workcenter 
+-- select * from CNC 
 /*
  * One tool assembly can be used for many part operations.
  */
@@ -724,6 +741,7 @@ values
 (310507,13,13,1,2,10000,10000,-1,@Last_Update),
 (310507,14,14,1,2,10000,10000,-1,@Last_Update)
 select * from Tool_Op_Part_Life_CNC
+select * from CNC
 /*
  * UDP Datagrams sent from Moxa units.
  * Common variables used as counters are identified by an CNC_Part_Operation_Key, Set_No, and Block_No 
@@ -736,6 +754,7 @@ CREATE TABLE Tool_Op_Part_Life_CNC_Set_Block (
 	Plexus_Customer_No int,
 	Tool_Op_Part_Life_Set_Block_Key int NOT NULL, -- each CNC,Part,Operation, Set_No, Block_No combination maps to 1 CNC, Part, Part_Operation, Assembly_Key pair.
 	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL, -- Since plex tool_life table uses part_operation_key i will also.  there could be multiple part_operation_keys for a part_key,operation_key pair.
 	Part_Operation_Key int NOT NULL, -- Since plex tool_life table uses part_operation_key i will also.  there could be multiple part_operation_keys for a part_key,operation_key pair.
 	Set_No int NOT NULL,  -- Can't avoid this Set_No because of the way the Moxa receives messages from the Okuma's serial port.
 	Block_No int NOT NULL,  -- This is just an index to identify which 10-byte block in a datagram set. 
@@ -743,46 +762,46 @@ CREATE TABLE Tool_Op_Part_Life_CNC_Set_Block (
 	Tool_Key int NOT NULL, -- foreign key  -- This is the primary tool key if there are alternates.
   	PRIMARY KEY (Plexus_Customer_No,Tool_Op_Part_Life_Set_Block_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='UDP Datagrams sent from Moxa units';
-insert into Tool_Op_Part_Life_CNC_Set_Block (Plexus_Customer_No,Tool_Op_Part_Life_Set_Block_Key,CNC_Key,Part_Operation_Key,Set_No,Block_No,Assembly_Key,Tool_Key)
+insert into Tool_Op_Part_Life_CNC_Set_Block (Plexus_Customer_No,Tool_Op_Part_Life_Set_Block_Key,CNC_Key,Part_Key,Part_Operation_Key,Set_No,Block_No,Assembly_Key,Tool_Key)
 values
 -- Avilla
-(310507,1,1,7917723,1,1,1,29),
-(310507,2,1,7917723,1,2,2,30),
-(310507,3,1,7917723,1,3,3,21),  -- VC1,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
-(310507,4,1,7917723,1,4,3,34),  -- VC21,Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
-(310507,5,1,7917723,1,5,4,31),
-(310507,6,1,7917723,1,6,5,22),
-(310507,7,1,7917723,1,7,6,32),
-(310507,8,1,7917723,1,8,7,24),  -- VC4,HH-32503-21-AL, helmet heat insert,drill tip, for 21mm drill
+(310507,1,1,2809196,7917723,1,1,1,29),
+(310507,2,1,2809196,7917723,1,2,2,30),
+(310507,3,1,2809196,7917723,1,3,3,21),  -- VC1,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
+(310507,4,1,2809196,7917723,1,4,3,34),  -- VC21,Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
+(310507,5,1,2809196,7917723,1,5,4,31),
+(310507,6,1,2809196,7917723,1,6,5,22),
+(310507,7,1,2809196,7917723,1,7,6,32),
+(310507,8,1,2809196,7917723,1,8,7,24),  -- VC4,HH-32503-21-AL, helmet heat insert,drill tip, for 21mm drill
 
-(310507,9,1,7917723,1,9,7,23),  -- VC44,CCC-32503-010/PCD,spotface insert for 21mm drill
-(310507,10,1,7917723,2,1,8,25),
-(310507,11,1,7917723,2,2,9,33),
-(310507,12,1,7917723,2,3,10,26),
-(310507,13,1,7917723,2,4,11,27),
-(310507,14,1,7917723,2,5,12,28),
+(310507,9,1,2809196,7917723,1,9,7,23),  -- VC44,CCC-32503-010/PCD,spotface insert for 21mm drill
+(310507,10,1,2809196,7917723,2,1,8,25),
+(310507,11,1,2809196,7917723,2,2,9,33),
+(310507,12,1,2809196,7917723,2,3,10,26),
+(310507,13,1,2809196,7917723,2,4,11,27),
+(310507,14,1,2809196,7917723,2,5,12,28),
 -- Albion
 -- P558 LH Knuckles
- (300758,20,3,7874404,1,1,13,1),
- (300758,21,3,7874404,1,2,14,14),
- (300758,22,3,7874404,1,3,15,15),
- (300758,23,3,7874404,1,4,16,16),
- (300758,24,3,7874404,1,5,17,20),
- (300758,25,3,7874404,1,6,18,19), -- VC33,15843,CCMT 432MT TT7015 INSERT
- (300758,26,3,7874404,1,7,18,18), -- VC34,010559,CCMT 32.52 -M3 TK1501,different tool lifes. Not an alternate of VC33. tHIS IS VC34
- (300758,27,3,7874404,1,8,19,17),
- (300758,28,3,7874404,1,9,20,2),
+ (300758,20,3,2794706,7874404,1,1,13,1),
+ (300758,21,3,2794706,7874404,1,2,14,14),
+ (300758,22,3,2794706,7874404,1,3,15,15),
+ (300758,23,3,2794706,7874404,1,4,16,16),
+ (300758,24,3,2794706,7874404,1,5,17,20),
+ (300758,25,3,2794706,7874404,1,6,18,19), -- VC33,15843,CCMT 432MT TT7015 INSERT
+ (300758,26,3,2794706,7874404,1,7,18,18), -- VC34,010559,CCMT 32.52 -M3 TK1501,different tool lifes. Not an alternate of VC33. tHIS IS VC34
+ (300758,27,3,2794706,7874404,1,8,19,17),
+ (300758,28,3,2794706,7874404,1,9,20,2),
 -- 100 bytes
- (300758,29,3,7874404,2,1,21,13),
- (300758,30,3,7874404,2,2,22,6),
- (300758,31,3,7874404,2,3,23,3), -- VC6,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE 
- (300758,32,3,7874404,2,4,23,5), -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
- (300758,33,3,7874404,2,5,24,7),
+ (300758,29,3,2794706,7874404,2,1,21,13),
+ (300758,30,3,2794706,7874404,2,2,22,6),
+ (300758,31,3,2794706,7874404,2,3,23,3), -- VC6,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE 
+ (300758,32,3,2794706,7874404,2,4,23,5), -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
+ (300758,33,3,2794706,7874404,2,5,24,7),
 -- 160 bytes now start over
- (300758,34,3,7874404,3,1,25,7),
- (300758,35,3,7874404,3,2,26,8), -- 010338,'CCC-23575 REV A'
- (300758,36,3,7874404,3,3,27,10),
- (300758,37,3,7874404,3,4,28,11)
+ (300758,34,3,2794706,7874404,3,1,25,7),
+ (300758,35,3,2794706,7874404,3,2,26,8), -- 010338,'CCC-23575 REV A'
+ (300758,36,3,2794706,7874404,3,3,27,10),
+ (300758,37,3,2794706,7874404,3,4,28,11)
 -- 60/100 bytes
 select * from Tool_Op_Part_Life_CNC_Set_Block
 
@@ -819,25 +838,27 @@ select * from Part_v_Tool_Inventory
  * Since the program will know the tool_key being used by the assembly it will not be necessary
  * to add an alternate in use record for regrind-able tools.
  */
+-- drop table Tool_Inventory_In_Use
 CREATE TABLE Tool_Inventory_In_Use 
 (
-	Tool_Inventory_In_Use_Key int NOT NULL,  -- primary key unique for all PCN
 	Plexus_Customer_No int,
-	Tool_Serial_Key int,  
+	Tool_Serial_Key int,
+	Primary_Tool_Key int,
+	Tool_Key int,
 	CNC_Key int NOT NULL, 							
 	Part_Key int NOT NULL,							
-	Operation_Key int NOT NULL,							
+	Part_Operation_Key int NOT NULL,							
 	Assembly_Key int NOT NULL,  
-  	PRIMARY KEY (Tool_Inventory_In_Use_Key)
+  	PRIMARY KEY (Plexus_Customer_No,Tool_Serial_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maps a regrind-able tool to a CNC assembly';
-insert into Tool_Inventory_In_Use (Tool_Inventory_In_Use_Key,Plexus_Customer_No,Tool_Serial_Key,CNC_Key,Part_Key,Operation_Key,Assembly_Key)
+insert into Tool_Inventory_In_Use (Plexus_Customer_No,Tool_Serial_Key,Primary_Tool_Key,Tool_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key)
 values
 -- Albion
 -- P558 LH Knuckles, CNC120
-(1,300758,1,3,2794706,51168,20),-- T04
-(2,300758,3,3,2794706,51168,26),-- This is an alternate tool for T12
-(3,300758,4,3,2794706,51168,15), -- T22
-(4,300758,5,3,2794706,51168,17) -- T72
+(300758,1,2,2,3,2794706,7874404,20),-- T04
+(300758,3,8,9,3,2794706,7874404,26),-- This is an alternate tool for T12
+(300758,4,15,15,3,2794706,7874404,15), -- T22
+(300758,5,20,20,3,2794706,7874404,17) -- T72
 select * from Tool_Inventory_In_Use 
 
 /*
@@ -865,9 +886,18 @@ CREATE TABLE Part_v_Tool_Life
 select * from Part_v_Tool_Life 
 
 
+-- truncate table Tool_Assembly_Change_History
+set @CNC_Approved_Workcenter_Key = 2;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Run_Date = '2020-09-05 09:50:00';
+set @Run_Quantity = 100;
+CALL InsToolLifeHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Run_Date,@Run_Quantity,@Tool_Life_Key,@Return_Value);
+SELECT @Tool_Life_Key,@Return_Value;
 
+select * from CNC_Approved_Workcenter
 /*
- * The only information we get from the CNC is a Tool_Op_Part_Life_Set_Block_Key,Set_No, and Block_No,
+ * The only information we get from the CNC is a CNC_Approved_Workcenter_Key,Set_No, and Block_No,
  * so we have to use this info to link to get enough info to insert records into the Part_v_Tool_Life table.
  * The tool setter will have updated PlexX with the CNC,part,operation,assembly_no, and serial number of the
  * currently running tool.
@@ -884,21 +914,77 @@ CREATE PROCEDURE InsToolLifeHistory(
 	OUT pReturnValue INT 
 )
 BEGIN
--- truncate table Tool_Assembly_Change_History	
-/*
-	set @CNC_Key = 1;
-set @Part_Key = 1;
-set @Operation_Key = 1;
-set @Assembly_Key = 1;
-set @Actual_Tool_Life = 2;
-set @Trans_Date = '2020-08-18 00:00:01';	
-	set @pCNC_Part_Operation_Key = 1;
-	set @pSet_No = 1;
-	set @pBlock_No = 1;
-    set @pActual_Tool_Life = 12;
-	set @pTrans_Date = '2020-08-18 00:00:01';	
-  */ 
 
+-- truncate table Tool_Assembly_Change_History
+set @CNC_Approved_Workcenter_Key = 2;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Run_Date = '2020-09-05 09:50:00';
+set @Run_Quantity = 100;
+
+select 
+caw.Plexus_Customer_No,
+caw.Workcenter_Key,
+caw.CNC_Key,
+caw.Part_Key,
+caw.Part_Operation_Key, 
+bl.Assembly_Key, 
+-- ti.Tool_Serial_Key, 
+bl.Tool_Key primary_tool_key,
+iu.Alternate_Tool_Key,
+riu.Tool_Serial_Key,
+ti.Regrind_Count
+
+from CNC_Approved_Workcenter caw -- list all of the CNC / part_operation possibilites
+inner join Tool_Op_Part_Life_CNC_Set_Block bl -- All of the primary tooling for each assembly for each part_operation
+-- using the CNC_Approved_Workcenter_Key and the set and block number passed by the CNC
+-- we can get the tool_key,assembly_key, and part operation.
+on caw.Plexus_Customer_No=bl.Plexus_Customer_No
+and caw.CNC_Key = bl.CNC_Key 
+and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to many
+
+/*
+inner join Part_v_Tool_BOM tb -- Get the primary tools only
+on bl.Plexus_Customer_No = tb.Plexus_Customer_No
+and bl.Assembly_Key = tb.Assembly_Key
+and bl.Tool_Key = tb.Tool_Key  -- 1 to 1, This will give us the link to the alt table then the alt_in_use table.
+*/ 
+left outer join Tool_BOM_Alternate_In_Use iu -- An alt that is currently in the CNC
+on bl.Plexus_Customer_No=iu.Plexus_Customer_No
+and bl.Tool_Key = iu.Primary_Tool_Key -- This tells us what alt is currently being used.
+and bl.CNC_Key = iu.CNC_Key
+and bl.Part_Key = iu.Part_Key
+and bl.Part_Operation_Key = iu.Part_Operation_Key
+and bl.Assembly_Key = iu.Assembly_Key
+-- select * from Tool_Op_Part_Life_CNC_Set_Block
+-- select * from Tool_BOM_Alternate_In_Use
+left outer join Tool_Inventory_In_Use riu 
+on bl.Plexus_Customer_No=riu.Plexus_Customer_No
+and bl.Tool_Key = riu.Primary_Tool_Key 
+and bl.CNC_Key = riu.CNC_Key
+and bl.Part_Key = riu.Part_Key
+and bl.Part_Operation_Key = riu.Part_Operation_Key
+and bl.Assembly_Key = riu.Assembly_Key
+left outer join Part_v_Tool_Inventory ti 
+on riu.Tool_Serial_Key = ti.Tool_Serial_Key -- 1 to 1
+-- order by caw.CNC_Key,bl.Assembly_Key,bl.Tool_Key 
+
+where caw.CNC_Approved_Workcenter_Key = @CNC_Approved_Workcenter_Key
+and bl.Set_No = @Set_No 
+and bl.Block_No = @Block_No
+-- START HERE
+
+
+/*
+select 
+c.CNC_Key,l.Part_Key,l.Operation_Key,l.Assembly_Key 
+-- a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key
+from Part_v_Tool_Op_Part_Life l
+inner join  Tool_Op_Part_Life_CNC c
+on l.Tool_Op_Part_Life_Key = c.Tool_Op_Part_Life_Key  -- 1 to many
+
+select * from Tool_Op_Part_Life_CNC_Set_Block bl
+*/
 /*
 	select a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key,@Actual_Tool_Life,@Trans_Date
 	from 
