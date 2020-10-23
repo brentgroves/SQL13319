@@ -534,17 +534,18 @@ select * from Tool_BOM_Alternate
 CREATE TABLE Tool_BOM_Alternate_In_Use (
 	Plexus_Customer_No int,
 	Primary_Tool_Key int NOT NULL,  
-	Alternate_Tool_Key int NOT NULL,  
+	Alternate_Tool_Key int NOT NULL, 
+	Workcenter_Key int NOT NULL, 
 	CNC_Key int NOT NULL, -- Where is it being used 							
 	Part_Key int NOT NULL,							
 	Part_Operation_Key int NOT NULL,							
 	Assembly_Key int NOT NULL,  
 	Quantity_In_Use int NOT NULL,
-  	PRIMARY KEY (Plexus_Customer_No,Primary_Tool_Key,Alternate_Tool_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key)
+  	PRIMARY KEY (Plexus_Customer_No,Primary_Tool_Key,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Indicates if an Alternate is currently being used';
-insert into Tool_BOM_Alternate_In_Use (Plexus_Customer_No,Primary_Tool_Key,Alternate_Tool_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Quantity_In_Use) 
+insert into Tool_BOM_Alternate_In_Use (Plexus_Customer_No,Primary_Tool_Key,Alternate_Tool_Key,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Quantity_In_Use) 
 values
-(300758,13,12,3,2794706,7874404,21,1) -- Alternate Tool for T15 is in use;
+(300758,13,12,61090,3,2794706,7874404,21,1) -- Alternate Tool for T15 is in use;
 select * from Tool_BOM_Alternate_In_Use
 -- select * from CNC_Approved_Workcenter 
 -- select * from CNC 
@@ -684,6 +685,8 @@ CREATE TABLE CNC_Tool_Op_Part_Life
 	CNC_Tool_Op_Part_Life_Key int NOT NULL,	-- This for easy access to a record and must be unique but is not the primary key
 	-- PCN	int NOT NULL,  -- Tool_Op_Part_Life contains the PCN.
 	Tool_Op_Part_Life_Key int NOT NULL,	-- foriegn key,  This record contains the PCN
+	Workcenter_Key int,
+	Part_Operation_Key int NOT NULL, -- Tool_Life uses Part_Operation_Key but Tool_Op_Part_Life uses only the Operation_Key in Plex.
 	CNC_Key int NOT NULL, -- foriegn key,
 	Increment_By int NOT NULL,   -- How much to increment the tool counter every cycle
 	Standard_Tool_Life int NOT NULL,  -- Initially this is the same for all CNC from the Tool List QuantityPerCuttingEdge, but we may want to change this value per CNC.  
@@ -694,9 +697,11 @@ CREATE TABLE CNC_Tool_Op_Part_Life
 set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Tool_Op_Part_Life (CNC_Tool_Op_Part_Life_Key,Tool_Op_Part_Life_Key,CNC_Key,Increment_By,Standard_Tool_Life,Current_Value,Last_Update)
 values
+-- select * from Part_v_Approved_Workcenter
+-- select * from Part_v_Part_Operation
 -- Albion
 -- P558 LH Knuckles, CNC120
-(20,20,3,2,200,-1,@Last_Update),  -- vc1
+(20,61090,7874404,20,3,2,200,-1,@Last_Update),  -- vc1
 (21,21,3,2,200,-1,@Last_Update),  -- vc21
 (22,22,3,2,2500,-1,@Last_Update),  -- vc22
 (23,23,3,2,3000,-1,@Last_Update),  -- vc23
@@ -719,7 +724,7 @@ values
 (40,40,3,2,5000,-1,@Last_Update),  -- vc14
 -- Avilla
 -- RDX, CNC 103
-(1,1,1,2,40000,-1,@Last_Update),
+(1,61324,7917723,1,1,2,40000,-1,@Last_Update),
 (2,2,1,2,5000,-1,@Last_Update),
 (3,3,1,2,5000,-1,@Last_Update),  -- VC1,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
 (4,4,1,2,40000,-1,@Last_Update), --  VC21, Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
@@ -855,20 +860,21 @@ CREATE TABLE Tool_Inventory_In_Use
 	Tool_Serial_Key int,
 	Primary_Tool_Key int,
 	Tool_Key int,
+	Workcenter_Key	int NOT NULL,  
 	CNC_Key int NOT NULL, 							
 	Part_Key int NOT NULL,							
 	Part_Operation_Key int NOT NULL,							
 	Assembly_Key int NOT NULL,  
   	PRIMARY KEY (Plexus_Customer_No,Tool_Serial_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Maps a regrind-able tool to a CNC assembly';
-insert into Tool_Inventory_In_Use (Plexus_Customer_No,Tool_Serial_Key,Primary_Tool_Key,Tool_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key)
+insert into Tool_Inventory_In_Use (Plexus_Customer_No,Tool_Serial_Key,Primary_Tool_Key,Tool_Key,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key)
 values
 -- Albion
 -- P558 LH Knuckles, CNC120
-(300758,1,2,2,3,2794706,7874404,20),-- T04
-(300758,3,8,9,3,2794706,7874404,26),-- This is an alternate tool for T12
-(300758,4,15,15,3,2794706,7874404,15), -- T22
-(300758,5,20,20,3,2794706,7874404,17) -- T72
+(300758,1,2,2,61090,3,2794706,7874404,20),-- T04
+(300758,3,8,9,61090,3,2794706,7874404,26),-- This is an alternate tool for T12
+(300758,4,15,15,61090,3,2794706,7874404,15), -- T22
+(300758,5,20,20,61090,3,2794706,7874404,17) -- T72
 select * from Tool_Inventory_In_Use 
 
 /*
@@ -879,8 +885,8 @@ select * from Tool_Inventory_In_Use
 -- truncate table Part_v_Tool_Life
 CREATE TABLE Part_v_Tool_Life 
 (
+	Tool_Life_Key int NOT NULL AUTO_INCREMENT,  -- not a PLEX COLUMN
 	PCN int NOT NULL,
-	Tool_Life_Key int NOT NULL,
 	Tool_Key int NOT NULL,	
 	Tool_Serial_Key int,  -- Optional, ADDED: Plex Part_v_Tool_Inventory column.
 	Workcenter_Key	int NOT NULL,  -- This will allow us to group all CNC in a work area.  Technically not needed but it is a Plex column.
@@ -891,7 +897,7 @@ CREATE TABLE Part_v_Tool_Life
 	Run_Date datetime NOT NULL,	-- Start date. Record created at time of tool change of previous tool set.				
 	Run_Quantity int NOT NULL,	-- Actual tool life for tool set if this is .					
 	Regrind_Count int,	-- The number of times the tool has been reground.  NOT A PLEX COLUMN.
-  	PRIMARY KEY (PCN,Tool_Life_Key)
+  	PRIMARY KEY (Tool_Life_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of plex part_v_tool_life table';
 select * from Part_v_Tool_Life 
 
@@ -919,35 +925,47 @@ CREATE PROCEDURE InsToolLifeHistory(
 	IN pCNC_Approved_Workcenter_Key INT,  
 	IN pSet_No INT,
 	IN pBlock_No INT,
-  	IN pRun_Date,
+  	IN pRun_Date datetime,
 	IN pRun_Quantity INT,
   	OUT pTool_Life_Key INT,
 	OUT pReturnValue INT 
 )
 BEGIN
-
+/*
 set @CNC_Approved_Workcenter_Key = 2;
 set @Set_No = 1;
 set @Block_No = 1;
 set @Run_Date = '2020-09-05 09:50:00';
 set @Run_Quantity = 100;
-
+*/
 -- START HERE
 -- VERIFY WE CAN GET ENOUGH INFO TO UPDATE THE Tool_Life record including the serial_key for regrinds and the alternate tool key for alts.
 -- VERIFY WE CAN GET ENOUGH INFO TO UPDATE THE CNC_Tool_Op_Part_Life record with the current running total and last update columns.
 -- Insert a Tool_Life record with these values
+insert into Part_v_Tool_Life (PCN,Tool_Key,Tool_Serial_Key,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Run_Date,Run_Quantity,Regrind_Count)
 select 
-caw.Plexus_Customer_No,
+caw.Plexus_Customer_No PCN,
+-- bl.Tool_Key bl_Tool_Key,
+case 
+when riu.Tool_Key is not NULL then riu.Tool_Key 
+when iu.Alternate_Tool_Key is not NULL then iu.Alternate_Tool_Key 
+else bl.Tool_Key
+end Tool_Key,
+
+-- riu.Tool_Key,
+riu.Tool_Serial_Key,
 caw.Workcenter_Key,
 caw.CNC_Key,
 caw.Part_Key,
 caw.Part_Operation_Key, 
 bl.Assembly_Key, 
--- ti.Tool_Serial_Key, 
-bl.Tool_Key primary_tool_key,
-iu.Alternate_Tool_Key,
-riu.Tool_Serial_Key,
+@Run_Date,
+@Run_Quantity,
 ti.Regrind_Count
+-- ti.Tool_Serial_Key, 
+-- bl.Tool_Key primary_tool_key,
+-- iu.Alternate_Tool_Key,
+-- riu.Primary_Tool_Key,
 -- select * from CNC_Approved_Workcenter
 -- select * from Datagram_Set_Block
 -- select bl.*
@@ -956,10 +974,10 @@ inner join Datagram_Set_Block bl -- All of the primary tooling for each assembly
 -- using the CNC_Approved_Workcenter_Key and the set and block number passed by the CNC
 -- we can get the tool_key,assembly_key, and part operation.
 on caw.Plexus_Customer_No=bl.Plexus_Customer_No
+and caw.Workcenter_Key = bl.Workcenter_Key 
 and caw.CNC_Key = bl.CNC_Key 
 and caw.Part_Key = caw.Part_Key -- Don't know if both of these keys will ever be necessary but Plex uses them both
 and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to many  --32 recs
-
 /*
 inner join Part_v_Tool_BOM tb -- Get the primary tools only
 on bl.Plexus_Customer_No = tb.Plexus_Customer_No
@@ -969,6 +987,7 @@ and bl.Tool_Key = tb.Tool_Key  -- 1 to 1, This will give us the link to the alt 
 left outer join Tool_BOM_Alternate_In_Use iu -- An alt that is currently in the CNC
 on bl.Plexus_Customer_No=iu.Plexus_Customer_No
 and bl.Tool_Key = iu.Primary_Tool_Key -- For now the Datagram_Set_Block always contains the primay tool key.
+and bl.Workcenter_Key = iu.Workcenter_Key
 and bl.CNC_Key = iu.CNC_Key
 and bl.Part_Key = iu.Part_Key -- Don't know if both the Part and Part_Operation keys will ever be necessary but Plex uses them both
 and bl.Part_Operation_Key = iu.Part_Operation_Key
@@ -978,6 +997,7 @@ and bl.Assembly_Key = iu.Assembly_Key  -- 32 recs
 left outer join Tool_Inventory_In_Use riu 
 on bl.Plexus_Customer_No=riu.Plexus_Customer_No
 and bl.Tool_Key = riu.Primary_Tool_Key 
+and bl.Workcenter_Key = bl.Workcenter_Key 
 and bl.CNC_Key = riu.CNC_Key
 and bl.Part_Key = riu.Part_Key -- Don't know if both the Part and Part_Operation keys will ever be necessary but Plex uses them both
 and bl.Part_Operation_Key = riu.Part_Operation_Key
@@ -985,112 +1005,55 @@ and bl.Assembly_Key = riu.Assembly_Key
 left outer join Part_v_Tool_Inventory ti 
 on riu.Tool_Serial_Key = ti.Tool_Serial_Key -- 1 to 1
 -- order by caw.CNC_Key,bl.Assembly_Key,bl.Tool_Key 
-
 where caw.CNC_Approved_Workcenter_Key = @CNC_Approved_Workcenter_Key
 and bl.Set_No = @Set_No 
-and bl.Block_No = @Block_No
-
-
-set @CNC_Approved_Workcenter_Key = 2;
-set @Set_No = 1;
-set @Block_No = 1;
-set @Run_Date = '2020-09-05 09:50:00';
-set @Run_Quantity = 100;
-
-select cpl.Current_Value,cpl.Last_Update  -- UPDATE THESE VALUES
-from CNC_Approved_Workcenter caw -- list all of the CNC / part_operation possibilites
-inner join Datagram_Set_Block bl -- All of the primary tooling for each assembly for each part_operation
--- there are 32 primary tools currently 
--- using the CNC_Approved_Workcenter_Key and the set and block number passed by the CNC
--- we can get the tool_key,assembly_key, and part operation.
-on caw.Plexus_Customer_No=bl.Plexus_Customer_No
-and caw.CNC_Key = bl.CNC_Key 
-and caw.Part_Key = caw.Part_Key -- Don't know if both of these keys will ever be necessary but Plex uses them both
-and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to many  --32 recs
-inner join Part_v_Tool_Op_Part_Life opl  
-on bl.Plexus_Customer_No = opl.PCN 
-and bl.Tool_Key = opl.Tool_Key 
-and bl.Part_Key = opl.Part_Key 
-and bl.Operation_Key = opl.Operation_Key -- 
-and bl.Assembly_Key = opl.Assembly_Key -- 1 to 1, 32 recs
-inner join CNC_Tool_Op_Part_Life cpl 
-on opl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key  -- 1 to 1, 32 recs
-where caw.CNC_Approved_Workcenter_Key = @CNC_Approved_Workcenter_Key
-and bl.Set_No = @Set_No 
-and bl.Block_No = @Block_No
-
-
-select * from CNC_Tool_Op_Part_Life
-select * from Part_v_Tool_Op_Part_Life  -- There are currently 35 tools total of which 32 are primary tools and 3 are alts.
-/*
-select 
-c.CNC_Key,l.Part_Key,l.Operation_Key,l.Assembly_Key 
--- a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key
-from Part_v_Tool_Op_Part_Life l
-inner join  Tool_Op_Part_Life_CNC c
-on l.Tool_Op_Part_Life_Key = c.Tool_Op_Part_Life_Key  -- 1 to many
-
-select * from Tool_Op_Part_Life_CNC_Set_Block bl
-*/
-/*
-	select a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key,@Actual_Tool_Life,@Trans_Date
-	from 
-   	CNC_Part_Operation p
-	inner join CNC_Part_Operation_Set_Block b 
-	on p.CNC_Key = b.CNC_Key
-	and p.Part_Key = b.Part_Key
-	and p.Operation_Key = b.Operation_Key  -- 1 to many
-	inner join CNC_Part_Operation_Assembly a
-	on b.CNC_Key = a.CNC_Key
-	and b.Part_Key = a.Part_Key 
-	and b.Operation_Key = a.Operation_Key 
-	and b.Assembly_Key = a.Assembly_Key 
-	where p.CNC_Part_Operation_Key=@pCNC_Part_Operation_Key 
-    and b.Set_No = @pSet_No and b.Block_No = @pBlock_No;
-*/
-INSERT INTO Tool_Assembly_Change_History
-(CNC_Key,Part_Key,Operation_Key,Assembly_Key,Actual_Tool_Assembly_Life,Trans_Date)
-	select a.CNC_Key,a.Part_Key,a.Operation_Key,a.Assembly_Key,pActual_Tool_Assembly_Life,pTrans_Date
-	from 
-   	CNC_Part_Operation p
-	inner join CNC_Part_Operation_Set_Block b 
-	on p.CNC_Key = b.CNC_Key
-	and p.Part_Key = b.Part_Key
-	and p.Operation_Key = b.Operation_Key  -- 1 to many
-	inner join CNC_Part_Operation_Assembly a
-	on b.CNC_Key = a.CNC_Key
-	and b.Part_Key = a.Part_Key 
-	and b.Operation_Key = a.Operation_Key 
-	and b.Assembly_Key = a.Assembly_Key 
-	where p.CNC_Part_Operation_Key=pCNC_Part_Operation_Key 
-    and b.Set_No = pSet_No and b.Block_No = pBlock_No;
-
-
--- VALUES(pCNC_Key,pPart_Key,pOperation_Key,pAssembly_Key,pActual_Tool_Life,pTrans_Date);
--- VALUES(@CNC_Key,@Part_Key,@Operation_Key,Assembly_Key,@Actual_Tool_Life,@Trans_Date);
+and bl.Block_No = @Block_No;
 
 -- Display the last inserted row.
-set pTool_Assembly_Change_History_Key = (select Tool_Assembly_Change_History_Key from Tool_Assembly_Change_History where Tool_Assembly_Change_History_Key =(SELECT LAST_INSERT_ID()));
+set pTool_Life_Key = (select Tool_Life_Key from Part_v_Tool_Life where Tool_Life_Key =(SELECT LAST_INSERT_ID()));
 -- select pTool_Assembly_Change_History_Key;
 -- SET @total_tax = (SELECT SUM(tax) FROM taxable_transactions);
 set pReturnValue = 0;
 END;
 
+select * from CNC_Tool_Op_Part_Life;
+select * from Part_v_Tool_Op_Part_Life;
 
-select * from Tool_Assembly_Change_History where assembly_key = 10;
+DROP PROCEDURE UpdateCNCToolOpPartLife;
+CREATE PROCEDURE UpdateCNCToolOpPartLife
+(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pSet_No INT,
+	IN pBlock_No INT,
+	IN pCurrent_Value INT,
+	IN pLast_Update datetime,
+	OUT pReturnValue INT 
+)
+BEGIN
+    update
+    select pl.*
+    from CNC_Tool_Op_Part_Life cpl
+    inner join Part_v_Tool_Op_Part_Life pl
+    on cpl.Tool_Op_Part_Life_Key = pl.Tool_Op_Part_Life_Key
+	inner join Datagram_Set_Block bl 
+	on p.CNC_Key = b.CNC_Key
+	and p.Part_Key = b.Part_Key
+	and p.Operation_Key = b.Operation_Key  -- 1 to many
+	inner join CNC_Part_Operation_Assembly a
+	on b.CNC_Key = a.CNC_Key
+	and b.Part_Key = a.Part_Key 
+	and b.Operation_Key = a.Operation_Key 
+	and b.Assembly_Key = a.Assembly_Key 
+  	set a.Current_Value = pCurrent_Value,
+  	a.Last_Update = pLast_Update
+	where p.CNC_Part_Operation_Key=pCNC_Part_Operation_Key 
+    and b.Set_No = pSet_No and b.Block_No = pBlock_No;
 
-set @CNC_Part_Operation_Key = 1;
-set @Set_No = 1;
-set @Block_No = 10;
-set @Actual_Tool_Life = 2;
-set @Trans_Date = '2020-08-18 00:00:01';
--- select * from Tool_Assembly_Change_History
-CALL Tool_Assembly_Change_History(@CNC_Part_Operation_Key,@Set_No,@Block_No,@Actual_Tool_Life,@Trans_Date,@Return_Value);
-	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
-SELECT @Return_Value;
+   
+-- SELECT ROW_COUNT(); -- 0
+   	-- set pRecordCount = FOUND_ROWS();
+   	set pReturnValue = 0;
 
-
-select * from Tool_Assembly_Change_History where assembly_key = 10;
 
 */
 /*
