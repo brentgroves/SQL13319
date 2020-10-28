@@ -386,7 +386,7 @@ values
 (300758,19,'15843',30048,'CCMT 432MT TT7015 INSERT',1,0,5.650000),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
 (300758,20,'14855',30016,'CCC-28434 REV 1',1,1,212.000000);  -- drill
 
-
+select * from Part_v_Tool pvt 
 
 /*
 Cliff 008318 replaced 15721. Assembly takes both an inboard and outboard insert.
@@ -562,10 +562,10 @@ CREATE TABLE Part_v_Tool_Assembly_Part (
 	Part_Key int NOT NULL,
 	Part_Operation_Key int NOT NULL, -- NOT A Plex column.  This is part of the standard information we collect for all Times and Tool Lifes.
 	Operation_Key int NOT NULL,
-  	Run_Time int NOT NULL, -- NOT A Plex Column. In seconds. How long to finish the the Assemply operation
+  	Machining_Time int NOT NULL, -- NOT A Plex Column. In seconds. How long to finish the the Assemply operation
   	PRIMARY KEY (Plexus_Customer_No,Tool_Assembly_Part_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly_Part';
-insert into Part_v_Tool_Assembly_Part (Plexus_Customer_No,Tool_Assembly_Part_Key,Assembly_Key,Part_Key,Part_Operation_Key,Operation_Key,Run_Time)
+insert into Part_v_Tool_Assembly_Part (Plexus_Customer_No,Tool_Assembly_Part_Key,Assembly_Key,Part_Key,Part_Operation_Key,Operation_Key,Machining_Time)
 values
 -- Avilla
 (310507,1,1,2809196,7917723,56400,-1),
@@ -881,6 +881,7 @@ values
 (300758,4,15,15,61090,3,2794706,7874404,15), -- T22
 (300758,5,20,20,61090,3,2794706,7874404,17) -- T72
 select * from Tool_Inventory_In_Use 
+
 
 /*
  * subset of Plex Tool_Life table
@@ -1334,5 +1335,62 @@ END;
 
 
 	select * from Assembly_Machining_History amh
-	
+set @CNC_Approved_Workcenter_Key = 2;
+set @Set_No = 1;
+set @Block_No = 1;
+
+CALL GetIncrementBy(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@IncrementBy,@Return_Value);
+
+SELECT @IncrementBy,@Return_Value;
+
+/*
+ * So that we don't have to maintain a configuration file for UDP13319 we have
+ * stored assembly counter increment values in a table. 
+ */
+-- DROP PROCEDURE GetIncrementBy;
+CREATE PROCEDURE GetIncrementBy
+(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pSet_No INT,
+	IN pBlock_No INT,
+	OUT pIncrementBy INT,
+	OUT pReturnValue INT 
+)
+BEGIN
+	/*
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pSet_No = 1;
+	set @pBlock_No = 1;
+	*/
+
+	select 
+	-- p.CNC_Key,p.Part_Key,p.Operation_Key,b.Set_No,b.Block_No,b.Assembly_Key,
+	cpl.Increment_By into pIncrementBy
+   	from CNC_Approved_Workcenter caw 
+	inner join Datagram_Set_Block bl 
+	on caw.Plexus_Customer_No = bl.Plexus_Customer_No 
+	and caw.Workcenter_Key = bl.Workcenter_Key 
+	and caw.CNC_Key = bl.CNC_Key
+	and caw.Part_Key = bl.Part_Key
+	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
+    inner join Part_v_Tool_Op_Part_Life pl
+    -- SELECT * from Part_v_Tool_Op_Part_Life 
+    -- SELECT * from CNC_Tool_Op_Part_Life 
+	on bl.Plexus_Customer_No = pl.PCN 
+	and bl.Part_Key = pl.Part_Key 
+	and bl.Operation_Key = pl.Operation_Key 
+	and bl.Assembly_Key = pl.Assembly_Key 
+	and bl.Tool_Key = pl.Tool_Key -- 1 to 1
+	inner join CNC_Tool_Op_Part_Life cpl
+	on bl.CNC_Key = cpl.CNC_Key  -- This key is not in Part_v_Tool_Op_Part_Life 
+	and pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
+   	-- SELECT ROW_COUNT(); -- 0
+   	-- set pRecordCount = FOUND_ROWS();
+   	set pReturnValue = 0;
+end;	
+
 
