@@ -1040,7 +1040,8 @@ set @Last_Update = '2020-10-15 10:15:49';
 CALL UpdateCNCToolOpPartLife(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Current_Value,@Running_Total,@Last_Update,@Return_Value);
 	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
 SELECT @Return_Value;
-select * from CNC_Tool_Op_Part_Life cpl where CNC_Key = 3
+select * from CNC_Tool_Op_Part_Life cpl where CNC_Key = 3 
+select * from Part_v_Tool_Life pvtl 
 select * from Part_v_Tool_Op_Part_Life cpl
 
 DROP PROCEDURE UpdateCNCToolOpPartLife;
