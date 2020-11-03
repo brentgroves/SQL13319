@@ -918,6 +918,7 @@ set @Run_Date = '2020-09-05 09:50:00';
 CALL InsToolLifeHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Run_Quantity,@Run_Date,@Tool_Life_Key,@Return_Value);
 SELECT @Tool_Life_Key,@Return_Value;
 select * from Part_v_Tool_Life
+select * from CNC_Tool_Op_Part_Life
 select * from CNC_Approved_Workcenter
 /*
  * The only information we get from the CNC is a CNC_Approved_Workcenter_Key,Set_No, and Block_No,
@@ -1026,7 +1027,8 @@ END;
 select * from Part_v_Tool_Op_Part_Life;
 select * from CNC_Tool_Op_Part_Life  -- 35 = 32 primary tools plus 3 alts
 select * from CNC_Approved_Workcenter caw 
-
+select * from Part_v_Operation pvo 
+select Assembly_No,Description from Part_v_Tool_Assembly where Plexus_Customer_No = 300758 
 
 set @CNC_Approved_Workcenter_Key = 2;
 set @Set_No = 1;
@@ -1202,8 +1204,9 @@ BEGIN
 
  END;
 
-   select * from CNC_Tool_Op_Part_Life
-   
+   select * from CNC_Tool_Op_Part_Life where CNC_Key = 3
+   select * from Part_v_Tool_Life
+
 
    
 /*
@@ -1220,8 +1223,8 @@ CREATE TABLE Assembly_Machining_History (
 	Part_Key int NOT NULL,
 	Part_Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
-  	Start_Time datetime NOT NULL,  -- This will be updated when the Tool Assembly time starts
-  	Run_Time int, -- In seconds.  This will be updated whent the Tool Assembly finishes machining.
+  	Start_Time datetime NOT NULL,  
+  	Run_Time int NOT NULL, -- In seconds. 
   	PRIMARY KEY (Assembly_Machining_History_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of assembly Machining times';
 
@@ -1231,7 +1234,8 @@ set @CNC_Approved_Workcenter_Key = 2;
 set @Set_No = 1;
 set @Block_No = 1;
 set @Start_Time = '2020-10-25 09:50:00';
-CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Start_Time,@Assembly_Machining_History_Key,@Return_Value);
+set @End_Time = '2020-10-25 09:50:50';
+CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
 select * from Assembly_Machining_History
 
@@ -1243,18 +1247,20 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 	IN pSet_No INT,
 	IN pBlock_No INT,
 	IN pStart_Time datetime,
+	IN pEnd_Time datetime,
 	OUT pAssembly_Machining_History_Key INT,
 	OUT pReturnValue INT 
 )
 BEGIN
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time)
+	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,Run_Time)
 	/*
 	set @pCNC_Approved_Workcenter_Key = 2;
 	set @pSet_No = 1;
 	set @pBlock_No = 1;
-	set @pStart_Time = '2020-09-05 09:50:00';
-	*/
+	set @pStart_Time = '2020-09-05 09:48:00';
+	set @pEnd_Time = '2020-09-05 09:50:10';
+	 */
 	select 
 	caw.Plexus_Customer_No,
 	caw.Workcenter_Key,
@@ -1262,7 +1268,11 @@ BEGIN
 	caw.Part_Key,
 	caw.Part_Operation_Key,
 	bl.Assembly_Key,
-	@pStart_Time Start_Time
+	pStart_Time Start_Time,
+	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
+	-- @pStart_Time Start_Time,
+	-- TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
+
 	-- pStart_Time Start_Time
    	from CNC_Approved_Workcenter caw 
 	inner join Datagram_Set_Block bl 
@@ -1287,7 +1297,9 @@ set @End_Time = '2020-09-05 10:01:00.0';
 CALL UpdateAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@End_Time,@Return_Value);
 select @Return_Value;
 select * from Assembly_Machining_History
-
+/*
+ * DON'T THINK WE NEED THIS
+ */
 
 DROP PROCEDURE UpdateAssemblyMachiningHistory;
 CREATE PROCEDURE UpdateAssemblyMachiningHistory
