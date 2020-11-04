@@ -1238,8 +1238,6 @@ set @End_Time = '2020-10-25 09:50:50';
 CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
 select * from Assembly_Machining_History
-
-
 DROP PROCEDURE InsAssemblyMachiningHistory;
 CREATE PROCEDURE InsAssemblyMachiningHistory
 (
@@ -1282,6 +1280,69 @@ BEGIN
 	and caw.Part_Key = bl.Part_Key
 	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
 	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
+   
+	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
+   	set pReturnValue = 0;
+END;
+
+-- select * from Assembly_Machining_History
+set @CNC_Approved_Workcenter_Key = 2;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Start_Time = '2020-10-25 09:50:00';
+set @End_Time = '2020-10-25 09:50:50';
+CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
+select @Assembly_Machining_History_Key,@Return_Value;
+select * from Assembly_Machining_History
+
+DROP PROCEDURE InsAssemblyMachiningHistory;
+CREATE PROCEDURE InsAssemblyMachiningHistory
+(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pPallet_No INT,
+	IN pTool_No INT,
+	IN pStart_Time datetime,
+	IN pEnd_Time datetime,
+	OUT pAssembly_Machining_History_Key INT,
+	OUT pReturnValue INT 
+)
+BEGIN
+  	-- This will be inserted when the Tool Assembly time starts
+	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,Run_Time)
+	
+
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pPallet_No = 1;
+	set @pTool_No = 1;
+	set @pStart_Time = '2020-09-05 09:48:00';
+	set @pEnd_Time = '2020-09-05 09:50:10';
+	
+	select 
+	caw.Plexus_Customer_No,
+	caw.Workcenter_Key,
+	caw.CNC_Key,
+	caw.Part_Key,
+	caw.Part_Operation_Key,
+-- bl.Assembly_Key,
+	-- pStart_Time Start_Time,
+	-- TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
+	@pStart_Time Start_Time,
+	TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
+
+	-- pStart_Time Start_Time
+	-- select * 
+   	from CNC_Approved_Workcenter caw 
+   	inner join Part_v_Tool_Assembly_Part tap
+	on caw.Plexus_Customer_No = tap.Plexus_Customer_No 
+	and caw.Workcenter_Key = tap.Workcenter_Key 
+	and caw.CNC_Key = tap.CNC_Key
+	and caw.Part_Key = tap.Part_Key
+	and caw.Part_Operation_Key = tap.Part_Operation_Key -- 1 to 1
+	where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+	
     -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
 	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
     and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
