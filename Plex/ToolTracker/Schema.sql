@@ -169,6 +169,65 @@ values
 (3,310507,2809196,7917723,61324,1)  -- RDX AVILLA
 select * from CNC_Approved_Workcenter
 
+CREATE TABLE Tool_Var_Map 
+(
+	Tool_Var_Map_Key int NOT NULL, -- unique but not the primary key
+	Plexus_Customer_No int NOT NULL,
+	CNC_Approved_Workcenter_Key int NOT NULL,  -- Must be unique but is not the primary key.
+	Tool_Var int NOT NULL,
+	Assembly_Key int NOT NULL,
+	Tool_Key int NOT NULL,
+  	PRIMARY KEY (Plexus_Customer_No,CNC_Approved_Workcenter_Key,Tool_Var)  -- this must be unique
+)
+select Assembly_No,Assembly_Key from Part_v_Tool_Assembly where Plexus_Customer_No = 310507 order by Assembly_Key 
+insert into Tool_Var_Map (Tool_Var_Map_Key,Plexus_Customer_No,CNC_Approved_Workcenter_Key,Tool_Var,Assembly_Key,Tool_Key)
+values
+-- Avilla
+(1,310507,3,10,1,29),  -- T10,16680
+(2,310507,3,11,2,30),  -- T11,12623
+-- select awc.*,po.Operation_Key from CNC_Approved_Workcenter awc inner join Part_v_Part_Operation po on awc.Part_Operation_Key=po.Part_Operation_Key
+(3,310507,3,1,3,21),  -- VC1,008431,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
+(4,310507,3,21,3,34),  -- VC21,16410,Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
+
+(5,310507,3,12,4,31),  -- T12,16409
+(6,310507,3,2,5,22),  -- T2,007221
+(7,310507,3,13,6,32),  -- T13,16407
+
+(8,310507,3,4,7,24),  -- VC4,16406,HH-32503-21-AL, helmet heat insert,drill tip, for 21mm drill
+(9,310507,3,44,7,23),  -- VC44,16405,CCC-32503-010/PCD,spotface insert for 21mm drill
+
+(10,310507,3,5,8,25),  -- T5,16461
+(11,310507,3,16,9,33),  -- T16,16408
+(12,310507,3,7,10,26), -- T7,16110
+(13,310507,3,8,11,27), -- T8,16111
+(14,310507,3,9,12,28),  -- T9,16130
+-- select b.Assembly_Key,t.* from Part_v_Tool_BOM b inner join Part_v_Tool t on b.Tool_Key=t.Tool_Key where Tool_No = '008435'
+-- Albion
+-- P558 LH Knuckles
+ (20,300758,2,1,13,1),  -- T1,009196
+ (21,300758,2,21,14,14), -- T21,17022
+ (22,300758,2,22,15,15),  -- T22,14710 
+ (23,300758,2,23,16,16),  -- T23,0000951
+ (24,300758,2,72,17,20),  -- T72,14855
+ (25,300758,2,33,18,19),  -- VC33,15843,CCMT 432MT TT7015 INSERT
+ (26,300758,2,34,8,18),  -- VC34,010559,CCMT 32.52 -M3 TK1501,different tool lifes. Not an alternate of VC33. tHIS IS VC34
+ (27,300758,2,30,19,17),  -- T30,16547
+ (28,300758,2,4,20,2),   -- T4,17100
+-- 100 bytes
+ (29,300758,2,15,21,13),  -- T15,13753
+ (30,300758,2,7,22,6),  -- T7,008485
+ (31,300758,2,6,23,3),  -- VC6,009240,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE 
+ (32,300758,2,66,23,5),  -- VC66,008318,SHLT140516N-FS IN1030 INSERT,Alternate=15721,DATUM L ROUGH BORE & C'BORE
+ (33,300758,2,9,24,7),  -- T9,007864
+-- 160 bytes now start over
+ (34,300758,2,8,25,7),  -- T8,007864
+ (35,300758,2,12,26,8),  -- T12,010338,'CCC-23575 REV A'
+ (36,300758,2,13,27,10),  -- T13,0003396
+ (37,300758,2,14,28,11)  -- T14,008435
+-- 60/100 bytes
+select * from Tool_Var_Map
+
+
 /*
  * Corresponds to Plex part_v_part
  */
@@ -236,44 +295,45 @@ CREATE TABLE Part_v_Tool_Assembly (
 	Plexus_Customer_No int NOT NULL,
 	Assembly_Key int NOT NULL, 
 	Assembly_No	varchar (50) NOT NULL,
+	CNC_Tool_No int NOT NULL,  -- NOT IN PLEX, THIS IS THE NUMBER RETURN BY OKUMA VC31.
 	Description	varchar (100) NOT NULL,
   	PRIMARY KEY (Plexus_Customer_No,Assembly_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly';
-insert into Part_v_Tool_Assembly (Plexus_Customer_No,Assembly_Key,Assembly_No,Description)
+insert into Part_v_Tool_Assembly (Plexus_Customer_No,Assembly_Key,Assembly_No,CNC_Tool_No,Description)
 values
 -- Avilla
 -- RDX, cnc 103
-(310507,1,'T10','86.925MM FINISH BORE'),
-(310507,2,'T11','ETCHER'),
-(310507,3,'T01','85.24MM ROUGH BORE'),
-(310507,4,'T12','86.125MM PRE FINISH BORE'),
-(310507,5,'T02','1.25" HELICAL MILL'),
-(310507,6,'T13','180MM BACK CUTTER RH PART ONLY'),
-(310507,7,'T04','21MM DRILL/SPOTFACE'),
-(310507,8,'T05','10MM END MILL'),
-(310507,9,'T16','135MM BACK CUTTER RH ONLY'),
-(310507,10,'T07','8.2MM DRILL'),
-(310507,11,'T08','14.3MM DRILL/CHAMFER'),
-(310507,12,'T09','15.5MM DRILL/CHAMFER'),
+(310507,1,'T10',10,'86.925MM FINISH BORE'),
+(310507,2,'T11',11,'ETCHER'),
+(310507,3,'T01',1,'85.24MM ROUGH BORE'),
+(310507,4,'T12',12,'86.125MM PRE FINISH BORE'),
+(310507,5,'T02',2,'1.25" HELICAL MILL'),
+(310507,6,'T13',13,'180MM BACK CUTTER RH PART ONLY'),
+(310507,7,'T04',4,'21MM DRILL/SPOTFACE'),
+(310507,8,'T05',5,'10MM END MILL'),
+(310507,9,'T16',16,'135MM BACK CUTTER RH ONLY'),
+(310507,10,'T07',7,'8.2MM DRILL'),
+(310507,11,'T08',8,'14.3MM DRILL/CHAMFER'),
+(310507,12,'T09',9,'15.5MM DRILL/CHAMFER'),
 
 -- Albion
 -- P558 LH Knuckles
-(300758,13,'T01','3IN FACE MILL'),
-(300758,14,'T21','2.5IN FACE MILL'),
-(300758,15,'T22','M6 DRILL'),
-(300758,16,'T23','M6 X 1.0 TAP'),
-(300758,17,'T72','DRILL FACE HOLES'),
-(300758,18,'T33','ROUGH MULTI BORE'),
-(300758,19,'T30','FINISH CENTER BORE'),
-(300758,20,'T4','FACE & DRILL CALIPER HOLES'),
-(300758,21,'T15','1.937 ROUGH DRILL J BORE'),
-(300758,22,'T7','DATUM J BACK FACE'),
-(300758,23,'T6','DATUM L ROUGH BORE'),
-(300758,24,'T9','FINISH DATUM L'),
-(300758,25,'T8','FINISH DATUM J'),
-(300758,26,'T12','TAPER REAM ONE SIDE'),
-(300758,27,'T13','MILL PADS AND STOP'),
-(300758,28,'T14','CHAMFER HOLES');
+(300758,13,'T01',1,'3IN FACE MILL'),
+(300758,14,'T21',21,'2.5IN FACE MILL'),
+(300758,15,'T22',22,'M6 DRILL'),
+(300758,16,'T23',23,'M6 X 1.0 TAP'),
+(300758,17,'T72',72,'DRILL FACE HOLES'),
+(300758,18,'T33',33,'ROUGH MULTI BORE'),
+(300758,19,'T30',30,'FINISH CENTER BORE'),
+(300758,20,'T4',4,'FACE & DRILL CALIPER HOLES'),
+(300758,21,'T15',15,'1.937 ROUGH DRILL J BORE'),
+(300758,22,'T7',7,'DATUM J BACK FACE'),
+(300758,23,'T6',6,'DATUM L ROUGH BORE'),
+(300758,24,'T9',9,'FINISH DATUM L'),
+(300758,25,'T8',8,'FINISH DATUM J'),
+(300758,26,'T12',12,'TAPER REAM ONE SIDE'),
+(300758,27,'T13',13,'MILL PADS AND STOP'),
+(300758,28,'T14',14,'CHAMFER HOLES');
 select * from Part_v_Tool_Assembly where Assembly_Key > 12
 
 /*
@@ -915,6 +975,8 @@ set @Set_No = 1;
 set @Block_No = 1;
 set @Run_Quantity = 100;
 set @Run_Date = '2020-09-05 09:50:00';
+set @Tool_No = 1;
+
 CALL InsToolLifeHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Run_Quantity,@Run_Date,@Tool_Life_Key,@Return_Value);
 SELECT @Tool_Life_Key,@Return_Value;
 select * from Part_v_Tool_Life
@@ -986,6 +1048,151 @@ and caw.Workcenter_Key = bl.Workcenter_Key
 and caw.CNC_Key = bl.CNC_Key 
 and caw.Part_Key = caw.Part_Key -- Don't know if both of these keys will ever be necessary but Plex uses them both
 and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to many  --32 recs
+/*
+inner join Part_v_Tool_BOM tb -- Get the primary tools only
+on bl.Plexus_Customer_No = tb.Plexus_Customer_No
+and bl.Assembly_Key = tb.Assembly_Key
+and bl.Tool_Key = tb.Tool_Key  -- 1 to 1, This will give us the link to the alt table then the alt_in_use table.
+*/ 
+left outer join Tool_BOM_Alternate_In_Use iu -- An alt that is currently in the CNC
+on bl.Plexus_Customer_No=iu.Plexus_Customer_No
+and bl.Tool_Key = iu.Primary_Tool_Key -- The Datagram_Set_Block always contains the primay tool key.
+and bl.Workcenter_Key = iu.Workcenter_Key
+and bl.CNC_Key = iu.CNC_Key
+and bl.Part_Key = iu.Part_Key -- Don't know if both the Part and Part_Operation keys will ever be necessary but Plex uses them both
+and bl.Part_Operation_Key = iu.Part_Operation_Key
+and bl.Assembly_Key = iu.Assembly_Key  -- 32 recs
+-- select * from Tool_Op_Part_Life_CNC_Set_Block
+-- select * from Tool_BOM_Alternate_In_Use
+left outer join Tool_Inventory_In_Use riu 
+on bl.Plexus_Customer_No=riu.Plexus_Customer_No
+and bl.Tool_Key = riu.Primary_Tool_Key 
+and bl.Workcenter_Key = riu.Workcenter_Key 
+and bl.CNC_Key = riu.CNC_Key
+and bl.Part_Key = riu.Part_Key -- Don't know if both the Part and Part_Operation keys will ever be necessary but Plex uses them both
+and bl.Part_Operation_Key = riu.Part_Operation_Key
+and bl.Assembly_Key = riu.Assembly_Key
+left outer join Part_v_Tool_Inventory ti 
+on riu.Tool_Serial_Key = ti.Tool_Serial_Key -- 1 to 1
+-- order by caw.CNC_Key,bl.Assembly_Key,bl.Tool_Key 
+where caw.CNC_Approved_Workcenter_Key = pCNC_Approved_Workcenter_Key
+and bl.Set_No = pSet_No 
+and bl.Block_No = pBlock_No;
+
+-- Display the last inserted row.
+set pTool_Life_Key = (select Tool_Life_Key from Part_v_Tool_Life where Tool_Life_Key =(SELECT LAST_INSERT_ID()));
+-- select pTool_Assembly_Change_History_Key;
+-- SET @total_tax = (SELECT SUM(tax) FROM taxable_transactions);
+set pReturnValue = 0;
+END;
+	Plexus_Customer_No int,
+	CNC_Approved_Workcenter_Key int NOT NULL,
+	CNC_Tool_No int NOT NULL,
+	Tool_Key int NOT NULL
+	
+	select 
+	ta.CNC_Tool_No,
+	tb.Tool_Key 
+	from CNC_Approved_Workcenter caw -- list all of the CNC / part_operation possibilites
+   	inner join Part_v_Tool_Assembly_Part tap
+	on caw.Plexus_Customer_No = tap.Plexus_Customer_No 
+	and caw.Part_Key = tap.Part_Key
+	and caw.Part_Operation_Key = tap.Part_Operation_Key -- 1 to many
+	inner join Part_v_Tool_Assembly ta
+	on tap.Assembly_Key = ta.Assembly_Key -- 1 to 1
+	left outer join Part_v_Tool_BOM tb 
+	on caw.Plexus_Customer_No =tb.Plexus_Customer_No
+	and ta.Assembly_Key = tb.Assembly_Key
+	where caw.CNC_Approved_Workcenter_Key = 2;
+
+set @CNC_Approved_Workcenter_Key = 3;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Run_Quantity = 100;
+set @Run_Date = '2020-09-05 09:50:00';
+set @Tool_No = 1;
+
+CALL InsToolLifeHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Run_Quantity,@Run_Date,@Tool_Life_Key,@Return_Value);
+SELECT @Tool_Life_Key,@Return_Value;
+select * from Part_v_Tool_Life
+select * from CNC_Tool_Op_Part_Life
+select * from CNC_Approved_Workcenter
+/*
+ * The only information we get from the CNC is a CNC_Approved_Workcenter_Key,Set_No, and Block_No,
+ * so we have to use this info to link to get enough info to insert records into the Part_v_Tool_Life table
+ * and to update the current_value and Last_Update column of Tool_Op_Part_Life_CNC.
+ * The tool setter will have updated PlexX with the CNC,part,operation,assembly_no, and serial number of the
+ * currently running tool.
+ *
+ */
+-- drop procedure InsToolLifeHistory;
+CREATE PROCEDURE InsToolLifeHistory(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pCNC_Tool_No INT,
+	IN pRun_Quantity INT,
+  	IN pRun_Date datetime,
+  	OUT pTool_Life_Key INT,
+	OUT pReturnValue INT 
+)
+BEGIN
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pCNC_Tool_No = 1;
+	set @pRun_Date = '2020-09-05 09:50:00';
+	set @pRun_Quantity = 100;
+	-- START HERE
+	-- VERIFY WE CAN GET ENOUGH INFO TO UPDATE THE Tool_Life record including the serial_key for regrinds and the alternate tool key for alts.
+	-- VERIFY WE CAN GET ENOUGH INFO TO UPDATE THE CNC_Tool_Op_Part_Life record with the current running total and last update columns.
+	-- Insert a Tool_Life record with these values
+	-- insert into Part_v_Tool_Life (PCN,Tool_Key,Tool_Serial_Key,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Regrind_Count,Run_Quantity,Run_Date)
+	select 
+	caw.Plexus_Customer_No PCN,
+	-- bl.Tool_Key bl_Tool_Key,
+	/*
+	case 
+	when riu.Tool_Key is not NULL then riu.Tool_Key 
+	when iu.Alternate_Tool_Key is not NULL then iu.Alternate_Tool_Key 
+	else bl.Tool_Key
+	end Tool_Key,
+	*/
+	-- riu.Tool_Key,
+	-- riu.Tool_Serial_Key,
+	caw.Workcenter_Key,
+	caw.CNC_Key,
+	caw.Part_Key,
+	caw.Part_Operation_Key, 
+	ta.Assembly_Key, 
+	-- ti.Regrind_Count,
+	@pRun_Quantity,
+	@pRun_Date
+	-- pRun_Quantity,
+	-- pRun_Date
+	-- ti.Tool_Serial_Key, 
+	-- bl.Tool_Key primary_tool_key,
+	-- iu.Alternate_Tool_Key,
+	-- riu.Primary_Tool_Key,
+	-- select * from CNC_Approved_Workcenter
+	-- select * from Datagram_Set_Block
+	-- select bl.*
+	from CNC_Approved_Workcenter caw -- list all of the CNC / part_operation possibilites
+   	inner join Part_v_Tool_Assembly_Part tap
+	on caw.Plexus_Customer_No = tap.Plexus_Customer_No 
+	and caw.Part_Key = tap.Part_Key
+	and caw.Part_Operation_Key = tap.Part_Operation_Key -- 1 to many
+	inner join Part_v_Tool_Assembly ta
+	on tap.Assembly_Key = ta.Assembly_Key -- 1 to 1
+	left outer join Tool_BOM_Alternate_In_Use iu -- An alt that is currently in the CNC
+	on caw.PCN=iu.Plexus_Customer_No
+	and bl.Tool_Key = iu.Primary_Tool_Key -- The Datagram_Set_Block always contains the primay tool key.
+	and bl.Workcenter_Key = iu.Workcenter_Key
+	and bl.CNC_Key = iu.CNC_Key
+	and bl.Part_Key = iu.Part_Key -- Don't know if both the Part and Part_Operation keys will ever be necessary but Plex uses them both
+	and bl.Part_Operation_Key = iu.Part_Operation_Key
+	and bl.Assembly_Key = iu.Assembly_Key  -- 32 recs
+	
+	where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+	and ta.CNC_Tool_No = @pTool_No
+	-- where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+	-- and ta.CNC_Tool_No = pTool_No;
 /*
 inner join Part_v_Tool_BOM tb -- Get the primary tools only
 on bl.Plexus_Customer_No = tb.Plexus_Customer_No
@@ -1224,86 +1431,28 @@ CREATE TABLE Assembly_Machining_History (
 	Part_Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
   	Start_Time datetime NOT NULL,  
+  	End_Time datetime NOT NULL,  
   	Run_Time int NOT NULL, -- In seconds. 
   	PRIMARY KEY (Assembly_Machining_History_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of assembly Machining times';
 
--- select * from Part_v_Tool_Assembly_Part  -- Standard run time of the assembly to complete the operation
 -- select * from Assembly_Machining_History
 set @CNC_Approved_Workcenter_Key = 2;
-set @Set_No = 1;
-set @Block_No = 1;
+set @Pallet_No = 1;
+set @Tool_No = 1;
 set @Start_Time = '2020-10-25 09:50:00';
 set @End_Time = '2020-10-25 09:50:50';
-CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
-select @Assembly_Machining_History_Key,@Return_Value;
-select * from Assembly_Machining_History
-DROP PROCEDURE InsAssemblyMachiningHistory;
-CREATE PROCEDURE InsAssemblyMachiningHistory
-(
-	IN pCNC_Approved_Workcenter_Key INT,  
-	IN pSet_No INT,
-	IN pBlock_No INT,
-	IN pStart_Time datetime,
-	IN pEnd_Time datetime,
-	OUT pAssembly_Machining_History_Key INT,
-	OUT pReturnValue INT 
-)
-BEGIN
-  	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,Run_Time)
-	/*
-	set @pCNC_Approved_Workcenter_Key = 2;
-	set @pSet_No = 1;
-	set @pBlock_No = 1;
-	set @pStart_Time = '2020-09-05 09:48:00';
-	set @pEnd_Time = '2020-09-05 09:50:10';
-	 */
-	select 
-	caw.Plexus_Customer_No,
-	caw.Workcenter_Key,
-	caw.CNC_Key,
-	caw.Part_Key,
-	caw.Part_Operation_Key,
-	bl.Assembly_Key,
-	pStart_Time Start_Time,
-	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
-	-- @pStart_Time Start_Time,
-	-- TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
-
-	-- pStart_Time Start_Time
-   	from CNC_Approved_Workcenter caw 
-	inner join Datagram_Set_Block bl 
-	on caw.Plexus_Customer_No = bl.Plexus_Customer_No 
-	and caw.Workcenter_Key = bl.Workcenter_Key 
-	and caw.CNC_Key = bl.CNC_Key
-	and caw.Part_Key = bl.Part_Key
-	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
-	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
-	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
-    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
-   
-	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
-   	set pReturnValue = 0;
-END;
-
--- select * from Assembly_Machining_History
-set @CNC_Approved_Workcenter_Key = 2;
-set @Set_No = 1;
-set @Block_No = 1;
-set @Start_Time = '2020-10-25 09:50:00';
-set @End_Time = '2020-10-25 09:50:50';
-CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
+CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
 select * from Assembly_Machining_History
 
 DROP PROCEDURE InsAssemblyMachiningHistory;
+
 CREATE PROCEDURE InsAssemblyMachiningHistory
 (
 	IN pCNC_Approved_Workcenter_Key INT,  
 	IN pPallet_No INT,
-	IN pTool_No INT,
+	IN pTool_Var INT,
 	IN pStart_Time datetime,
 	IN pEnd_Time datetime,
 	OUT pAssembly_Machining_History_Key INT,
@@ -1311,41 +1460,46 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 )
 BEGIN
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,Run_Time)
+	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,End_Time,Run_Time)
 	
-
+/*
 	set @pCNC_Approved_Workcenter_Key = 2;
 	set @pPallet_No = 1;
-	set @pTool_No = 1;
+	set @pTool_Var = 1;
 	set @pStart_Time = '2020-09-05 09:48:00';
 	set @pEnd_Time = '2020-09-05 09:50:10';
-	
+*/
 	select 
 	caw.Plexus_Customer_No,
 	caw.Workcenter_Key,
 	caw.CNC_Key,
 	caw.Part_Key,
 	caw.Part_Operation_Key,
--- bl.Assembly_Key,
-	-- pStart_Time Start_Time,
-	-- TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
-	@pStart_Time Start_Time,
-	TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
-
-	-- pStart_Time Start_Time
-	-- select * 
+	tv.Assembly_Key,
+	pStart_Time Start_Time,
+	pEnd_Time End_Time,
+	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
+	--  @pStart_Time Start_Time,
+	-- @pEnd_Time End_Time,
+	-- TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
    	from CNC_Approved_Workcenter caw 
-   	inner join Part_v_Tool_Assembly_Part tap
-	on caw.Plexus_Customer_No = tap.Plexus_Customer_No 
-	and caw.Workcenter_Key = tap.Workcenter_Key 
-	and caw.CNC_Key = tap.CNC_Key
-	and caw.Part_Key = tap.Part_Key
-	and caw.Part_Operation_Key = tap.Part_Operation_Key -- 1 to 1
-	where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-	
-    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
+   	-- inner join Part_v_Part_Operation po 
+   	-- on caw.Plexus_Customer_No = po.Plexus_Customer_No 
+   	-- and caw.Part_Operation_Key = po.Part_Operation_Key -- 1 to 1
+   	-- inner join Part_v_Tool_Op_Part_Life pl   
+   	-- on po.Plexus_Customer_No = pl.PCN 
+   	-- and po.Part_Key = pl.Part_Key 
+   	-- and po.Operation_Key = pl.Operation_Key -- 1 to many
+   	-- inner join CNC_Tool_Op_Part_Life cpl 
+   	-- on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to many
+   	-- select * from Tool_Var_Map
+	inner join Tool_Var_Map tv 
+	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
+	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key  -- 1 to many
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+	-- and  tv.Tool_Var = @pTool_Var
 	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
-    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
+	and  tv.Tool_Var = pTool_Var;
    
 	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
    	set pReturnValue = 0;
