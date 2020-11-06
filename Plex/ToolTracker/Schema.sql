@@ -1579,16 +1579,34 @@ CREATE PROCEDURE GetCounterIncrement(
 	OUT pReturnValue INT 
 )
 BEGIN
+	
+	
 	-- set @pCNC_Approved_Workcenter_Key = 2;
 	-- set @pTool_Var = 1;
+		
 	select 
-	-- caw.CNC_Key, pl.Tool_Key,tv.Tool_Key,
-	pl.Increment_By into pIncrementBy
+	-- tv.Plexus_Customer_No,tv.CNC_Approved_Workcenter_Key,
+	tv.Tool_Key into @Tool_Key 
+	from CNC_Approved_Workcenter caw 
+	inner join Tool_Var_Map tv
+	on caw.Plexus_Customer_No = tv.Plexus_Customer_No 
+	-- where tv.CNC_Approved_Workcenter_Key = @pCNC_Approved_Workcenter_Key  -- this is unique for all PCN
+	-- and tv.Tool_Var = @pTool_Var;
+	-- select @Tool_Key;
+	where tv.CNC_Approved_Workcenter_Key = pCNC_Approved_Workcenter_Key
+	and tv.Tool_Var = pTool_Var; 
+
+	select 
+	-- pl.Increment_By into @pIncrementBy
+	 pl.Increment_By into pIncrementBy
+	-- set @pCNC_Approved_Workcenter_Key = 2;
+	-- select count(*)
 	from CNC_Approved_Workcenter caw 
 	-- select * from CNC_Tool_Op_Part_Life opl
 	inner join 
 	(
 		select opl.PCN Plexus_Customer_No,
+		cpl.Workcenter_Key,
 		cpl.CNC_Key,
 		opl.Part_Key,
 		cpl.Part_Operation_Key, 
@@ -1600,21 +1618,15 @@ BEGIN
 		-- where cpl.CNC_Key = 3 -- 21
 	) pl
 	on caw.Plexus_Customer_No = pl.Plexus_Customer_No
+	and caw.Workcenter_Key = pl.Workcenter_Key
 	and caw.CNC_Key = pl.CNC_Key
 	and caw.Part_Key = pl.Part_Key
 	and caw.Part_Operation_Key = pl.Part_Operation_Key  -- 1 to 1 -- 21
-	-- select * from Tool_Var_Map tvm 
-	inner join 
-	(
-		select tv.Plexus_Customer_No,tv.CNC_Approved_Workcenter_Key,tv.Tool_Key from Tool_Var_Map tv
-		where tv.Tool_Var = @pTool_Var 
-		-- where tv.Tool_Var = pTool_Var 
-	) tv
-	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
-	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key 
-	and pl.Tool_Key = tv.Tool_Key 
 	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-	 where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key; 
+	-- and pl.Tool_Key = @Tool_Key;
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+	and pl.Tool_Key = @Tool_Key;
+	-- select @pIncrementBy;
 	
    	-- SELECT ROW_COUNT(); -- 0
    	-- set pRecordCount = FOUND_ROWS();
