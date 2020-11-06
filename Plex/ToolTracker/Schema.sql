@@ -1427,6 +1427,7 @@ CREATE TABLE Assembly_Machining_History (
 	Plexus_Customer_No int,
 	Workcenter_Key	int NOT NULL,  
 	CNC_Key int NOT NULL,
+	Pallet_No int NOT NULL,
 	Part_Key int NOT NULL,
 	Part_Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
@@ -1439,15 +1440,14 @@ CREATE TABLE Assembly_Machining_History (
 -- select * from Assembly_Machining_History
 set @CNC_Approved_Workcenter_Key = 2;
 set @Pallet_No = 1;
-set @Tool_No = 1;
+set @Tool_Var = 1;
 set @Start_Time = '2020-10-25 09:50:00';
 set @End_Time = '2020-10-25 09:50:50';
-CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_No,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
+CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
 select * from Assembly_Machining_History
 
 DROP PROCEDURE InsAssemblyMachiningHistory;
-
 CREATE PROCEDURE InsAssemblyMachiningHistory
 (
 	IN pCNC_Approved_Workcenter_Key INT,  
@@ -1460,7 +1460,7 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 )
 BEGIN
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,End_Time,Run_Time)
+	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,End_Time,Run_Time)
 	
 /*
 	set @pCNC_Approved_Workcenter_Key = 2;
@@ -1473,6 +1473,8 @@ BEGIN
 	caw.Plexus_Customer_No,
 	caw.Workcenter_Key,
 	caw.CNC_Key,
+	pPallet_No Pallet_No,
+	-- @pPallet_No,
 	caw.Part_Key,
 	caw.Part_Operation_Key,
 	tv.Assembly_Key,
@@ -1483,16 +1485,6 @@ BEGIN
 	-- @pEnd_Time End_Time,
 	-- TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
    	from CNC_Approved_Workcenter caw 
-   	-- inner join Part_v_Part_Operation po 
-   	-- on caw.Plexus_Customer_No = po.Plexus_Customer_No 
-   	-- and caw.Part_Operation_Key = po.Part_Operation_Key -- 1 to 1
-   	-- inner join Part_v_Tool_Op_Part_Life pl   
-   	-- on po.Plexus_Customer_No = pl.PCN 
-   	-- and po.Part_Key = pl.Part_Key 
-   	-- and po.Operation_Key = pl.Operation_Key -- 1 to many
-   	-- inner join CNC_Tool_Op_Part_Life cpl 
-   	-- on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to many
-   	-- select * from Tool_Var_Map
 	inner join Tool_Var_Map tv 
 	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
 	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key  -- 1 to many
@@ -1568,10 +1560,9 @@ END;
 
 	select * from Assembly_Machining_History amh
 set @CNC_Approved_Workcenter_Key = 2;
-set @Set_No = 1;
-set @Block_No = 1;
+set @Tool_Var = 1;
 
-CALL GetIncrementBy(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@IncrementBy,@Return_Value);
+CALL GetCounterIncrement(@CNC_Approved_Workcenter_Key,@Tool_Var,@IncrementBy,@Return_Value);
 
 SELECT @IncrementBy,@Return_Value;
 
@@ -1579,50 +1570,91 @@ SELECT @IncrementBy,@Return_Value;
  * So that we don't have to maintain a configuration file for UDP13319 we have
  * stored assembly counter increment values in a table. 
  */
--- DROP PROCEDURE GetIncrementBy;
-CREATE PROCEDURE GetIncrementBy
-(
-	IN pCNC_Approved_Workcenter_Key INT,  
-	IN pSet_No INT,
-	IN pBlock_No INT,
+-- DROP PROCEDURE GetCounterIncrement;
+
+CREATE PROCEDURE GetCounterIncrement(
+	pCNC_Approved_Workcenter_Key INT,
+	pTool_Var INT,
 	OUT pIncrementBy INT,
 	OUT pReturnValue INT 
 )
 BEGIN
-	/*
-	set @pCNC_Approved_Workcenter_Key = 2;
-	set @pSet_No = 1;
-	set @pBlock_No = 1;
-	*/
-
+	-- set @pCNC_Approved_Workcenter_Key = 2;
+	-- set @pTool_Var = 1;
 	select 
-	-- p.CNC_Key,p.Part_Key,p.Operation_Key,b.Set_No,b.Block_No,b.Assembly_Key,
-	cpl.Increment_By into pIncrementBy
-   	from CNC_Approved_Workcenter caw 
-	inner join Datagram_Set_Block bl 
-	on caw.Plexus_Customer_No = bl.Plexus_Customer_No 
-	and caw.Workcenter_Key = bl.Workcenter_Key 
-	and caw.CNC_Key = bl.CNC_Key
-	and caw.Part_Key = bl.Part_Key
-	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
-    inner join Part_v_Tool_Op_Part_Life pl
-    -- SELECT * from Part_v_Tool_Op_Part_Life 
-    -- SELECT * from CNC_Tool_Op_Part_Life 
-	on bl.Plexus_Customer_No = pl.PCN 
-	and bl.Part_Key = pl.Part_Key 
-	and bl.Operation_Key = pl.Operation_Key 
-	and bl.Assembly_Key = pl.Assembly_Key 
-	and bl.Tool_Key = pl.Tool_Key -- 1 to 1
-	inner join CNC_Tool_Op_Part_Life cpl
-	on bl.CNC_Key = cpl.CNC_Key  -- This key is not in Part_v_Tool_Op_Part_Life 
-	and pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
+	-- caw.CNC_Key, pl.Tool_Key,tv.Tool_Key,
+	pl.Increment_By into pIncrementBy
+	from CNC_Approved_Workcenter caw 
+	-- select * from CNC_Tool_Op_Part_Life opl
+	inner join 
+	(
+		select opl.PCN Plexus_Customer_No,
+		cpl.CNC_Key,
+		opl.Part_Key,
+		cpl.Part_Operation_Key, 
+		opl.Tool_Key, 
+		cpl.Increment_By 
+		from Part_v_Tool_Op_Part_Life opl
+		inner join CNC_Tool_Op_Part_Life cpl
+		on opl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to many
+		-- where cpl.CNC_Key = 3 -- 21
+	) pl
+	on caw.Plexus_Customer_No = pl.Plexus_Customer_No
+	and caw.CNC_Key = pl.CNC_Key
+	and caw.Part_Key = pl.Part_Key
+	and caw.Part_Operation_Key = pl.Part_Operation_Key  -- 1 to 1 -- 21
+	-- select * from Tool_Var_Map tvm 
+	inner join 
+	(
+		select tv.Plexus_Customer_No,tv.CNC_Approved_Workcenter_Key,tv.Tool_Key from Tool_Var_Map tv
+		where tv.Tool_Var = @pTool_Var 
+		-- where tv.Tool_Var = pTool_Var 
+	) tv
+	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
+	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key 
+	and pl.Tool_Key = tv.Tool_Key 
 	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
-	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
-    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
+	 where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key; 
+	
    	-- SELECT ROW_COUNT(); -- 0
    	-- set pRecordCount = FOUND_ROWS();
    	set pReturnValue = 0;
-end;	
+end;
 
 
+
+/*
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pPallet_No = 1;
+	set @pTool_Var = 1;
+	set @pStart_Time = '2020-09-05 09:48:00';
+	set @pEnd_Time = '2020-09-05 09:50:10';
+*/
+/*
+	select 
+	caw.Plexus_Customer_No,
+	caw.Workcenter_Key,
+	caw.CNC_Key,
+	pPallet_No Pallet_No,
+	-- @pPallet_No,
+	caw.Part_Key,
+	caw.Part_Operation_Key,
+	tv.Assembly_Key,
+	pStart_Time Start_Time,
+	pEnd_Time End_Time,
+	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
+	--  @pStart_Time Start_Time,
+	-- @pEnd_Time End_Time,
+	-- TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
+   	from CNC_Approved_Workcenter caw 
+	inner join Tool_Var_Map tv 
+	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
+	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key  -- 1 to many
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+	-- and  tv.Tool_Var = @pTool_Var
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+	and  tv.Tool_Var = pTool_Var;
+   
+	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
+   	set pReturnValue = 0;
+*/
