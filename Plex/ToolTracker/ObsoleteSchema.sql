@@ -1,3 +1,136 @@
+	set @pCNC_Approved_Workcenter_Key = 2;
+	-- set @pTool_Var = 1;  -- Assembly_Key = 13, tool_Key = 1
+	 set @pTool_Var = 12; -- REWORK Primary_tool_key 8,Alternate_Tool_Key = 9
+	-- set @pTool_Var = 22; -- REWORK tool_key 15
+	-- set @pTool_Var = 15; -- alt in use  Alternate_Tool_Key=12,Primary_Tool_key 13
+	set @pCurrent_Value = 10;
+	set @pRunning_Total = 14;
+	set @pLast_Update = '2020-11-11 11:11:11';
+	set @pCNC_Approved_Workcenter_Key = 2;
+call Test(@pCNC_Approved_Workcenter_Key,@pTool_Var,@pCurrent_Value,@pRunning_Total,@pLast_Update,@pReturnValue);
+select @pReturnValue;
+select pl.Assembly_Key,pl.Tool_Key,cpl.*
+from  Part_v_Tool_Op_Part_Life pl
+inner join CNC_Tool_Op_Part_Life cpl
+on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
+-- where pl.Tool_Key = 1  -- @pTool_Var = 1
+ where pl.Tool_Key = 9  -- @pTool_Var = 12
+-- where pl.Tool_Key = 15  -- @pTool_Var = 22
+-- where pl.Tool_Key = 13  -- @pTool_Var = 15
+
+
+
+
+-- drop procedure UpdateCNCToolOpPartLifeV2;
+CREATE PROCEDURE UpdateCNCToolOpPartLifeV2(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pTool_Var INT,
+	IN pCurrent_Value INT,
+	IN pRunning_Total INT,
+	IN pLast_Update datetime,
+	OUT pReturnValue INT 
+)
+BEGIN
+	DECLARE Plexus_Customer_No INT DEFAULT 0;
+	DECLARE Workcenter_Key int DEFAULT 0;
+	DECLARE CNC_Key int DEFAULT 0;
+	DECLARE Part_Operation_Key int DEFAULT 0;
+	DECLARE Primary_Tool_Key int DEFAULT 0;
+	DECLARE Alternate_Tool_Key int DEFAULT 0;
+	DECLARE Regrind_Tool_Key int DEFAULT 0;
+	DECLARE Assembly_Key int DEFAULT 0;
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pTool_Var = 1;  -- Assembly_Key = 13
+	-- set @pTool_Var = 12; -- REWORK Primary_tool_key 8,Alternate_Tool_Key = 9
+	-- set @pTool_Var = 22; -- REWORK tool_key 15
+	-- set @pTool_Var = 15; -- alt in use  Alternate_Tool_Key=12,Primary_Tool_key 13
+	set @pCurrent_Value = 12;
+	set @pRunning_Total = 24;
+	set @pLast_Update = '2020-08-28 10:15:49';
+	set @pCNC_Approved_Workcenter_Key = 2;
+	-- select * from Tool_Var_Map tv 
+	-- select * from Part_v_Tool_BOM
+    -- select * from Tool_Inventory_In_Use_V2 
+    -- select * from Tool_BOM_Alternate_In_Use_V2
+	select caw.Plexus_Customer_No,caw.Workcenter_Key,caw.CNC_Key,caw.Part_Operation_Key,tv.Assembly_Key,tv.Tool_Key,aiu.Alternate_Tool_Key,tiu.In_Use_Tool_Key 
+	into Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Operation_Key,Assembly_Key,Primary_Tool_Key,Alternate_Tool_Key,Regrind_Tool_Key
+	from CNC_Approved_Workcenter caw 
+	inner join Tool_Var_Map tv 
+	on caw.Plexus_Customer_No = tv.Plexus_Customer_No  -- 
+	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key  -- 1 to many
+	left outer join Tool_BOM_Alternate_In_Use_V2 aiu 
+	on caw.Plexus_Customer_No = aiu.Plexus_Customer_No 
+	and caw.CNC_Approved_Workcenter_Key = aiu.CNC_Approved_Workcenter_Key 
+	and tv.Assembly_Key = aiu.Assembly_Key 
+	and tv.Tool_Key = aiu.Primary_Tool_Key -- 1 to 1/0
+	left outer join Tool_Inventory_In_Use_V2 tiu 
+	on caw.Plexus_Customer_No = tiu.Plexus_Customer_No 
+	and caw.CNC_Approved_Workcenter_Key = tiu.CNC_Approved_Workcenter_Key 
+	and tv.Assembly_Key = tiu.Assembly_Key 
+	and tv.Tool_Key = tiu.Primary_Tool_Key -- 1 to 1/0
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+    -- and tv.Tool_Var = @pTool_Var;
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+    and tv.Tool_Var = pTool_Var;
+   
+	-- select Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Operation_Key,Assembly_Key,Primary_Tool_Key,Alternate_Tool_Key,Regrind_Tool_Key;
+    UPDATE 
+    -- select  cpl.*
+      	-- set cpl.Current_Value = @pCurrent_Value,
+  	-- cpl.Last_Update = @pLast_Update
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
+    Part_v_Tool_Op_Part_Life pl
+	inner join CNC_Tool_Op_Part_Life cpl
+	on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
+  	-- set cpl.Current_Value = @pCurrent_Value,
+  	set cpl.Current_Value = pCurrent_Value,
+  	-- cpl.Alternate_Tool_Key = Alternate_Tool_Key,
+  	-- cpl.Regrind_Tool_Key = Regrind_Tool_Key,
+  	-- cpl.Running_Total = @pRunning_Total,
+  	-- cpl.Last_Update = @pLast_Update
+  	cpl.Running_Total = pRunning_Total,
+  	cpl.Last_Update = pLast_Update
+	where pl.PCN = Plexus_Customer_No
+	and cpl.Workcenter_Key = Workcenter_Key
+	and cpl.CNC_Key = CNC_Key
+	and cpl.Part_Operation_Key =  Part_Operation_Key
+	and pl.Assembly_Key = Assembly_Key
+	and pl.Tool_Key = Primary_Tool_Key; 
+
+
+    set pReturnValue = 0;
+
+end;   
+
+/*
+ * Part_Tool_Life history table can be used by Ben to set this value 
+ * when he grinds this tool.
+ */
+-- drop table Regrind_Tool_Life
+-- truncate table Regrind_Tool_Life
+CREATE TABLE Regrind_Tool_Life
+( 
+	Regrind_Tool_Life_Key int NOT NULL AUTO_INCREMENT,
+	Plexus_Customer_No int NOT NULL,
+	Tool_Serial_Key	int NOT NULL,
+	-- Regrind_Count int NOT NULL, -- Only 1 record per serial number that will show the currently recommended tool life for each tool.  
+	Recommended_Tool_Life int NOT NULL, -- NOT A PLEX COLUMN. Initially this is set to the Standard_Tool_Life, but then it is maintained by Ben Maynus.
+  	PRIMARY KEY (Plexus_Customer_No,Tool_Serial_Key),
+  	KEY (Regrind_Tool_Life_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool Life for each regrind';
+insert into Regrind_Tool_Life (Plexus_Customer_No,Tool_Serial_Key,Regrind_Count,Tool_Life)
+values
+-- Albion P558 Knuckles
+-- Part_v_Tool.Standard_Reworks
+(300758,1,0,3000),  -- drill
+(300758,2,0,18000),  -- Reamer 
+(300758,3,0,18000),  -- Reamer. -- Alternate in P558 Knuckles LH 
+(300758,4,0,2500),  -- drill
+(300758,5,0,1800);  -- drill
+select * from Regrind_Tool_Life
+
+
 -- drop table Tool_BOM_Alternate_In_Use
 -- truncate table Tool_BOM_Alternate_In_Use
 CREATE TABLE Tool_BOM_Alternate_In_Use (

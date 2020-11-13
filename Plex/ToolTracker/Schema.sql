@@ -605,7 +605,7 @@ CREATE TABLE Tool_BOM_Alternate_In_Use_V2 (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Indicates if an Alternate is currently being used';
 insert into Tool_BOM_Alternate_In_Use_V2 (Plexus_Customer_No,CNC_Approved_Workcenter_Key,Assembly_Key,Primary_Tool_Key,Alternate_Tool_Key,Quantity_In_Use) 
 values
-(300758,2,21,13,12,1) -- Alternate Tool for T15 is in use;
+-- (300758,2,21,13,12,1) -- Alternate Tool for T15 is in use;
 select * from Tool_BOM_Alternate_In_Use_V2
 -- select * from CNC_Approved_Workcenter 
 -- select * from CNC 
@@ -751,8 +751,6 @@ CREATE TABLE CNC_Tool_Op_Part_Life
 	Workcenter_Key int,  
 	Part_Operation_Key int NOT NULL, 
 	CNC_Key int NOT NULL, -- foriegn key,
-	Alternate_Tool_Key int ,  -- Alternate key in use
-	Regrind_Tool_Key int,  -- Regrind Tool key in use
 	Increment_By int NOT NULL,   -- How much to increment the tool counter every cycle
 	Standard_Tool_Life int NOT NULL,  -- Initially this is the same for all CNC from the Tool List QuantityPerCuttingEdge, but we may want to change this value per CNC.  
   	Current_Value int NOT NULL, -- The common variable value for tool change alerts.
@@ -762,65 +760,65 @@ CREATE TABLE CNC_Tool_Op_Part_Life
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='PlexX table';
 set @Last_Update = '2020-08-15 00:00:00';
 insert into CNC_Tool_Op_Part_Life (CNC_Tool_Op_Part_Life_Key,Tool_Op_Part_Life_Key,Workcenter_Key,Part_Operation_Key,CNC_Key,
-Alternate_Tool_Key,Regrind_Tool_Key,Increment_By,Standard_Tool_Life,Current_Value,Running_Total,Last_Update)
+Increment_By,Standard_Tool_Life,Current_Value,Running_Total,Last_Update)
 values
 -- select * from Part_v_Approved_Workcenter
 -- select * from Part_v_Part_Operation
 -- select * from Part_v_Tool_Op_Part_Life 
 -- Albion
 -- P558 LH Knuckles, CNC120
-(20,20,61090,7874404,3,-1,-1,2,200,-1,-1,@Last_Update),  -- vc1
-(21,21,61090,7874404,3,-1,-1,2,200,-1,-1,@Last_Update),  -- vc21
-(22,22,61090,7874404,3,-1,-1,2,2500,-1,-1,@Last_Update),  -- vc22
-(23,23,61090,7874404,3,-1,-1,2,3000,-1,-1,@Last_Update),  -- vc23
-(24,24,61090,7874404,3,-1,-1,2,1800,-1,-1,@Last_Update),  -- vc72
-(25,25,61090,7874404,3,-1,-1,2,200,-1,-1,@Last_Update),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
-(26,26,61090,7874404,3,-1,-1,2,1000,-1,-1,@Last_Update),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
-(27,27,61090,7874404,3,-1,-1,2,350,-1,-1,@Last_Update),  -- vc30
-(28,28,61090,7874404,3,-1,-1,2,3000,-1,-1,@Last_Update),  -- vc4
--- (29,29,61090,7874404,3,-1,-1,2,300,-1,-1,@Last_Update),  -- vc15  Alternate tool
-(30,30,61090,7874404,3,-1,-1,2,300,-1,-1,@Last_Update),  -- vc15
-(31,31,61090,7874404,3,-1,-1,2,2500,-1,-1,@Last_Update),  -- vc7
-(32,32,61090,7874404,3,-1,-1,2,200,-1,-1,@Last_Update),  -- VC6,SHLT110408N-PH1 IN2005 INSERT,DATUM L ROUGH BORE & C'BORE
--- (33,33,61090,7874404,3,-1,-1,2,200,-1,-1,@Last_Update),  -- Alternate, Don't know if it is an alternate for vc6 or vc66.
-(34,34,61090,7874404,3,-1,-1,2,200,-1,-1,@Last_Update),  -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
-(35,35,61090,7874404,3,-1,-1,2,3000,-1,-1,@Last_Update),  -- vc9
-(36,36,61090,7874404,3,-1,-1,2,3000,-1,-1,@Last_Update),  -- vc8
-(37,37,61090,7874404,3,-1,-1,2,18000,-1,-1,@Last_Update),  -- vc12
--- (38,38,61090,7874404,3,-1,-1,2,18000,-1,-1,@Last_Update),  -- vc12 Alternate tool
-(39,39,61090,7874404,3,-1,-1,2,800,-1,-1,@Last_Update),  -- vc13
-(40,40,61090,7874404,3,-1,-1,2,5000,-1,-1,@Last_Update),  -- vc14
+(20,20,61090,7874404,3,2,200,-1,-1,@Last_Update),  -- vc1
+(21,21,61090,7874404,3,2,200,-1,-1,@Last_Update),  -- vc21
+(22,22,61090,7874404,3,2,2500,-1,-1,@Last_Update),  -- vc22
+(23,23,61090,7874404,3,2,3000,-1,-1,@Last_Update),  -- vc23
+(24,24,61090,7874404,3,2,1800,-1,-1,@Last_Update),  -- vc72
+(25,25,61090,7874404,3,2,200,-1,-1,@Last_Update),  -- VC33,CCMT 432MT TT7015 INSERT,COMBO ROUGH BORE-P558
+(26,26,61090,7874404,3,2,1000,-1,-1,@Last_Update),  -- VC34, CCMT 32.52 -M3 TK1501,COMBO ROUGH BORE-P558
+(27,27,61090,7874404,3,2,350,-1,-1,@Last_Update),  -- vc30
+(28,28,61090,7874404,3,2,3000,-1,-1,@Last_Update),  -- vc4
+(29,29,61090,7874404,3,2,300,-1,-1,@Last_Update),  -- vc15  Alternate tool
+(30,30,61090,7874404,3,2,300,-1,-1,@Last_Update),  -- vc15
+(31,31,61090,7874404,3,2,2500,-1,-1,@Last_Update),  -- vc7
+(32,32,61090,7874404,3,2,200,-1,-1,@Last_Update),  -- VC6,SHLT110408N-PH1 IN2005 INSERT,DATUM L ROUGH BORE & C'BORE
+(33,33,61090,7874404,3,2,200,-1,-1,@Last_Update),  -- Alternate, Don't know if it is an alternate for vc6 or vc66.
+(34,34,61090,7874404,3,2,200,-1,-1,@Last_Update),  -- VC66,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
+(35,35,61090,7874404,3,2,3000,-1,-1,@Last_Update),  -- vc9
+(36,36,61090,7874404,3,2,3000,-1,-1,@Last_Update),  -- vc8
+(37,37,61090,7874404,3,2,18000,-1,-1,@Last_Update),  -- vc12
+(38,38,61090,7874404,3,2,18000,-1,-1,@Last_Update),  -- vc12 Alternate tool
+(39,39,61090,7874404,3,2,800,-1,-1,@Last_Update),  -- vc13
+(40,40,61090,7874404,3,2,5000,-1,-1,@Last_Update),  -- vc14
 -- Avilla
 -- RDX, CNC 103
 -- select * from Part_v_Approved_Workcenter
 -- select * from Part_v_Part_Operation
 
-(1,1,61324,7917723,1,-1,-1,2,40000,-1,-1,@Last_Update),
-(2,2,61324,7917723,1,-1,-1,2,5000,-1,-1,@Last_Update),
-(3,3,61324,7917723,1,-1,-1,2,5000,-1,-1,@Last_Update),  -- VC1,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
-(4,4,61324,7917723,1,-1,-1,2,40000,-1,-1,@Last_Update), --  VC21, Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
-(5,5,61324,7917723,1,-1,-1,2,40000,-1,-1,@Last_Update),
-(6,6,61324,7917723,1,-1,-1,2,5000,-1,-1,@Last_Update),
-(7,7,61324,7917723,1,-1,-1,2,40000,-1,-1,@Last_Update),
-(8,8,61324,7917723,1,-1,-1,2,5000,-1,-1,@Last_Update),  --  VC44,CCC-32503-010/PCD spotface insert for 21mm drill.
-(9,9,61324,7917723,1,-1,-1,2,5000,-1,-1,@Last_Update),  -- VC4,HH-32503-21-AL drill tip for 21mm drill
-(10,10,61324,7917723,1,-1,-1,2,10000,-1,-1,@Last_Update),
-(11,11,61324,7917723,1,-1,-1,2,40000,-1,-1,@Last_Update),
-(12,12,61324,7917723,1,-1,-1,2,10000,-1,-1,@Last_Update),
-(13,13,61324,7917723,1,-1,-1,2,10000,-1,-1,@Last_Update),
-(14,14,61324,7917723,1,-1,-1,2,10000,-1,-1,@Last_Update)
+(1,1,61324,7917723,1,2,40000,-1,-1,@Last_Update),
+(2,2,61324,7917723,1,2,5000,-1,-1,@Last_Update),
+(3,3,61324,7917723,1,2,5000,-1,-1,@Last_Update),  -- VC1,Insert,TCGT 32.52 FL K10, for 85.24MM ROUGH BORE 
+(4,4,61324,7917723,1,2,40000,-1,-1,@Last_Update), --  VC21, Boring Bar,CCC-32505-100, for 85.24MM ROUGH BORE
+(5,5,61324,7917723,1,2,40000,-1,-1,@Last_Update),
+(6,6,61324,7917723,1,2,5000,-1,-1,@Last_Update),
+(7,7,61324,7917723,1,2,40000,-1,-1,@Last_Update),
+(8,8,61324,7917723,1,2,5000,-1,-1,@Last_Update),  --  VC44,CCC-32503-010/PCD spotface insert for 21mm drill.
+(9,9,61324,7917723,1,2,5000,-1,-1,@Last_Update),  -- VC4,HH-32503-21-AL drill tip for 21mm drill
+(10,10,61324,7917723,1,2,10000,-1,-1,@Last_Update),
+(11,11,61324,7917723,1,2,40000,-1,-1,@Last_Update),
+(12,12,61324,7917723,1,2,10000,-1,-1,@Last_Update),
+(13,13,61324,7917723,1,2,10000,-1,-1,@Last_Update),
+(14,14,61324,7917723,1,2,10000,-1,-1,@Last_Update)
 
 select * from CNC_Tool_Op_Part_Life where CNC_Key = 3-- 35 = 32 primary tools plus 3 alts
 select * from CNC
 
 	set @pCNC_Approved_Workcenter_Key = 2;
 	-- set @pTool_Var = 1;  -- Assembly_Key = 13, tool_Key = 1
-	set @pTool_Var = 12; -- REWORK Primary_tool_key 8,Alternate_Tool_Key = 9
+	-- set @pTool_Var = 12; -- REWORK Primary_tool_key 8,Alternate_Tool_Key = 9
 	-- set @pTool_Var = 22; -- REWORK tool_key 15
-	-- set @pTool_Var = 15; -- alt in use  Alternate_Tool_Key=12,Primary_Tool_key 13
-	set @pCurrent_Value = 14;
-	set @pRunning_Total = 26;
-	set @pLast_Update = '2020-08-28 10:15:49';
+	set @pTool_Var = 15; -- alt in use  Alternate_Tool_Key=12,Primary_Tool_key 13
+	set @pCurrent_Value = 11;
+	set @pRunning_Total = 22;
+	set @pLast_Update = '2020-11-11 11:11:11';
 	set @pCNC_Approved_Workcenter_Key = 2;
 call UpdateCNCToolOpPartLifeV2(@pCNC_Approved_Workcenter_Key,@pTool_Var,@pCurrent_Value,@pRunning_Total,@pLast_Update,@pReturnValue);
 select @pReturnValue;
@@ -828,10 +826,10 @@ select pl.Assembly_Key,pl.Tool_Key,cpl.*
 from  Part_v_Tool_Op_Part_Life pl
 inner join CNC_Tool_Op_Part_Life cpl
 on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
-where pl.Tool_Key = 1  -- @pTool_Var = 1
--- where pl.Tool_Key = 8  -- @pTool_Var = 12
+-- where pl.Tool_Key = 1  -- @pTool_Var = 1
+-- where pl.Tool_Key = 9  -- @pTool_Var = 12
 -- where pl.Tool_Key = 15  -- @pTool_Var = 22
--- where pl.Tool_Key = 13  -- @pTool_Var = 15
+ where pl.Tool_Key = 12  -- @pTool_Var = 15
 
 
 -- truncate table Assembly_Machining_History
@@ -852,19 +850,20 @@ BEGIN
 	DECLARE Workcenter_Key int DEFAULT 0;
 	DECLARE CNC_Key int DEFAULT 0;
 	DECLARE Part_Operation_Key int DEFAULT 0;
+	DECLARE Tool_Key int DEFAULT 0;
 	DECLARE Primary_Tool_Key int DEFAULT 0;
 	DECLARE Alternate_Tool_Key int DEFAULT 0;
 	DECLARE Regrind_Tool_Key int DEFAULT 0;
 	DECLARE Assembly_Key int DEFAULT 0;
-	set @pCNC_Approved_Workcenter_Key = 2;
-	set @pTool_Var = 1;  -- Assembly_Key = 13
+	-- set @pCNC_Approved_Workcenter_Key = 2;
+	-- set @pTool_Var = 1;  -- Assembly_Key = 13
 	-- set @pTool_Var = 12; -- REWORK Primary_tool_key 8,Alternate_Tool_Key = 9
 	-- set @pTool_Var = 22; -- REWORK tool_key 15
 	-- set @pTool_Var = 15; -- alt in use  Alternate_Tool_Key=12,Primary_Tool_key 13
-	set @pCurrent_Value = 12;
-	set @pRunning_Total = 24;
-	set @pLast_Update = '2020-08-28 10:15:49';
-	set @pCNC_Approved_Workcenter_Key = 2;
+	-- set @pCurrent_Value = 12;
+	-- set @pRunning_Total = 24;
+	-- set @pLast_Update = '2020-08-28 10:15:49';
+	-- set @pCNC_Approved_Workcenter_Key = 2;
 	-- select * from Tool_Var_Map tv 
 	-- select * from Part_v_Tool_BOM
     -- select * from Tool_Inventory_In_Use_V2 
@@ -889,6 +888,12 @@ BEGIN
     -- and tv.Tool_Var = @pTool_Var;
 	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
     and tv.Tool_Var = pTool_Var;
+
+	SET Tool_Key = CASE
+    WHEN Alternate_Tool_Key IS NOT NULL THEN Alternate_Tool_Key
+    WHEN Regrind_Tool_Key IS NOT NULL THEN Regrind_Tool_Key
+    ELSE Primary_Tool_Key
+    END;	
    
 	-- select Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Operation_Key,Assembly_Key,Primary_Tool_Key,Alternate_Tool_Key,Regrind_Tool_Key;
     UPDATE 
@@ -902,8 +907,6 @@ BEGIN
 	on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
   	-- set cpl.Current_Value = @pCurrent_Value,
   	set cpl.Current_Value = pCurrent_Value,
-  	cpl.Alternate_Tool_Key = Alternate_Tool_Key,
-  	cpl.Regrind_Tool_Key = Regrind_Tool_Key,
   	-- cpl.Running_Total = @pRunning_Total,
   	-- cpl.Last_Update = @pLast_Update
   	cpl.Running_Total = pRunning_Total,
@@ -913,7 +916,7 @@ BEGIN
 	and cpl.CNC_Key = CNC_Key
 	and cpl.Part_Operation_Key =  Part_Operation_Key
 	and pl.Assembly_Key = Assembly_Key
-	and pl.Tool_Key = Primary_Tool_Key; 
+	and pl.Tool_Key = Tool_Key; 
 
 
     set pReturnValue = 0;
@@ -934,44 +937,22 @@ CREATE TABLE Part_v_Tool_Inventory
 	Tool_Serial_No	varchar (50) NOT NULL,
 	Tool_Key int NOT NULL,  -- 1 tool_key to many tool_serial_key
 	Regrind_Count int NOT NULL, -- NOT A PLEX COLUMN. How many times it has been reground. Might be able to use a column in Tool_Inventory_Attributes 
+	Recommended_Tool_Life int NOT NULL, -- NOT A PLEX COLUMN. Initially this is set to the Standard_Tool_Life, but then it is maintained by Ben Maynus.
   	PRIMARY KEY (Plexus_Customer_No,Tool_Serial_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of plex part_v_tool_inventory view';
-insert into Part_v_Tool_Inventory (Plexus_Customer_No,Tool_Serial_Key,Tool_Serial_No,Tool_Key,Regrind_Count)
+insert into Part_v_Tool_Inventory (Plexus_Customer_No,Tool_Serial_Key,Tool_Serial_No,Tool_Key,Regrind_Count,Recommended_Tool_Life )
 values
 -- Albion P558 Knuckles
 -- Part_v_Tool.Standard_Reworks
-(300758,1,'17100-001',2,0),  -- drill
-(300758,2,'010338-001',8,0),  -- Reamer 
-(300758,3,'008410-001',9,0),  -- Reamer. -- Alternate in P558 Knuckles LH 
-(300758,4,'14710-001',15,0),  -- drill
-(300758,5,'14855-001',20,0);  -- drill
+(300758,1,'17100-001',2,0,3000),  -- drill
+(300758,2,'010338-001',8,0,18000),  -- Reamer 
+(300758,3,'008410-001',9,0,18000),  -- Reamer. -- Alternate in P558 Knuckles LH 
+(300758,4,'14710-001',15,0,2500),  -- drill
+(300758,5,'14855-001',20,0,1800);  -- drill
 select * from Part_v_Tool_Inventory
 
 
 select * from Part_v_Tool_Op_Part_Life where Tool_Key = 20
-
--- drop table Regrind_Tool_Life
--- truncate table Regrind_Tool_Life
-CREATE TABLE Regrind_Tool_Life
-( 
-	Regrind_Tool_Life_Key int NOT NULL AUTO_INCREMENT,
-	Plexus_Customer_No int NOT NULL,
-	Tool_Serial_Key	int NOT NULL,
-	Regrind_Count int NOT NULL, -- NOT A PLEX COLUMN. How many times it has been reground. Might be able to use a column in Tool_Inventory_Attributes 
-	Tool_Life int NOT NULL, -- NOT A PLEX COLUMN. Initially this is set to the Standard_Tool_Life, but then it is maintained by Ben Maynus.
-  	PRIMARY KEY (Plexus_Customer_No,Tool_Serial_Key,Regrind_Count),
-  	KEY (Regrind_Tool_Life_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Tool Life for each regrind';
-insert into Regrind_Tool_Life (Plexus_Customer_No,Tool_Serial_Key,Regrind_Count,Tool_Life)
-values
--- Albion P558 Knuckles
--- Part_v_Tool.Standard_Reworks
-(300758,1,0,3000),  -- drill
-(300758,2,0,18000),  -- Reamer 
-(300758,3,0,18000),  -- Reamer. -- Alternate in P558 Knuckles LH 
-(300758,4,0,2500),  -- drill
-(300758,5,0,1800);  -- drill
-select * from Regrind_Tool_Life
 
 
 
@@ -999,7 +980,8 @@ values
 -- Albion
 -- P558 LH Knuckles, CNC120
 (300758,1,2,20,2,2),-- T04
-(300758,3,2,26,8,9),-- This is an alternate tool for T12,Tool_Assembly_Key = 26
+(300758,3,2,26,8,8),-- This is an alternate tool for T12,Tool_Assembly_Key = 26
+-- (300758,3,2,26,8,9),-- This is an alternate tool for T12,Tool_Assembly_Key = 26
 -- select * from Tool_BOM_Alternate
 -- select * from Part_v_Tool_BOM
 (300758,4,2,15,15,15), -- T22
