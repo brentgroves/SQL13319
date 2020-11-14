@@ -1,4 +1,160 @@
+CREATE DEFINER=`brent`@`%` PROCEDURE `Plex`.`UpdateAssemblyMachiningHistory`(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pSet_No INT,
+	IN pBlock_No INT,
+	IN pEnd_Time datetime,
+	OUT pReturnValue INT 
+)
+BEGIN
+	/*
 	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pSet_No = 1;
+	set @pBlock_No = 1;
+	set @pStart_Time = '2020-09-05 09:50:00';
+	set @pEnd_Time = '2020-09-05 10:00:00.0';
+	*/
+	set @Key_To_Update = (
+	select amh.Assembly_Machining_History_Key
+   	from CNC_Approved_Workcenter caw 
+	inner join Datagram_Set_Block bl 
+	on caw.Plexus_Customer_No = bl.Plexus_Customer_No 
+	and caw.Workcenter_Key = bl.Workcenter_Key 
+	and caw.CNC_Key = bl.CNC_Key
+	and caw.Part_Key = bl.Part_Key
+	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
+	inner join Assembly_Machining_History amh
+	on bl.Plexus_Customer_No = amh.Plexus_Customer_No
+	and bl.Workcenter_Key = amh.Workcenter_Key
+	and bl.CNC_Key = amh.CNC_Key
+	and bl.Part_Key = amh.Part_Key 
+	and bl.Part_Operation_Key = amh.Part_Operation_Key
+	and bl.Assembly_Key = amh.Assembly_Key
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No
+   	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No
+   	order by amh.Assembly_Machining_History_Key desc 
+	LIMIT 1 OFFSET 0
+	);
+	update Assembly_Machining_History amh
+	-- set Run_Time = TIMESTAMPDIFF(SECOND, amh.Start_Time, @pEnd_Time)
+	set Run_Time = TIMESTAMPDIFF(SECOND, amh.Start_Time, pEnd_Time)
+	where Assembly_Machining_History_Key = @Key_To_Update;
+
+	set pReturnValue = 0;
+	
+END;
+
+/*
+ * History of CNC cycle times times. With this information we can track the
+ * fastest or avg cycle time for a period of time.  We can also
+ * determine the number of cycles that were completed for a period of time. 
+ */
+-- drop table Cycle_Time_History 
+-- truncate table Cycle_Time_History
+CREATE TABLE Cycle_Time_History (
+	Cycle_Time_History_Key int NOT NULL AUTO_INCREMENT,
+	Plexus_Customer_No int,
+	Workcenter_Key	int NOT NULL,  
+	CNC_Key int NOT NULL,
+	Part_Key int NOT NULL,
+	Part_Operation_Key int NOT NULL,
+	Assembly_Key int NOT NULL, 
+  	Cycle_Time int NOT NULL, -- In seconds
+  	Run_Date datetime NOT NULL,
+  	PRIMARY KEY (Cycle_Time_History_Key)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of CNC cycle times';
+
+set @CNC_Approved_Workcenter_Key = 2;
+set @Set_No = 1;
+set @Block_No = 1;
+set @Run_Date = '2020-10-25 09:50:00';
+CALL InsCycleTimeHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Run_Date,@Cycle_Time_History_Key,@Return_Value);
+	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
+SELECT @Return_Value,@Cycle_Time_History_Key;
+select * from Cycle_Time_History;
+
+select 
+-- bl.Block_No,bl.Set_No,
+cpl.Last_Update,cpl.* 
+from CNC_Tool_Op_Part_Life cpl 
+inner join Part_v_Tool_Op_Part_Life pl 
+on cpl.Tool_Op_Part_Life_Key = pl.Tool_Op_Part_Life_Key 
+inner join Datagram_Set_Block bl 
+on pl.PCN = bl.Plexus_Customer_No 
+and cpl.Workcenter_Key = bl.Workcenter_Key 
+and cpl.CNC_Key = bl.CNC_Key
+and pl.Part_Key = bl.Part_Key
+and cpl.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
+and pl.Assembly_Key = bl.Assembly_Key 
+and pl.Tool_Key = bl.Tool_Key 
+where cpl.CNC_Key = 3
+and bl.Block_No = 1 
+and bl.Set_No = 1
+
+DROP PROCEDURE InsCycleTimeHistory;
+CREATE PROCEDURE InsCycleTimeHistory
+(
+	IN pCNC_Approved_Workcenter_Key INT,  
+	IN pSet_No INT,
+	IN pBlock_No INT,
+	IN pRun_Date datetime,
+	OUT pCycle_Time_History_Key INT,
+	OUT pReturnValue INT 
+)
+BEGIN
+
+	insert into Cycle_Time_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Cycle_Time,Run_Date)
+	/*
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pSet_No = 1;
+	set @pBlock_No = 1;
+	set @pRun_Date = '2020-09-05 09:50:00';
+	*/
+	select 
+	caw.Plexus_Customer_No,
+	caw.Workcenter_Key,
+	caw.CNC_Key,
+	caw.Part_Key,
+	caw.Part_Operation_Key,
+	bl.Assembly_Key,
+	-- TIMESTAMPDIFF(SECOND, cpl.Last_Update, @pRun_Date) Cycle_Time,
+	-- @pRun_Date
+	 TIMESTAMPDIFF(SECOND, cpl.Last_Update, pRun_Date) Cycle_Time,
+	 pRun_Date Run_Date
+   	from CNC_Approved_Workcenter caw 
+	inner join Datagram_Set_Block bl 
+	on caw.Plexus_Customer_No = bl.Plexus_Customer_No 
+	and caw.Workcenter_Key = bl.Workcenter_Key 
+	and caw.CNC_Key = bl.CNC_Key
+	and caw.Part_Key = bl.Part_Key
+	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
+    inner join Part_v_Tool_Op_Part_Life pl
+    -- SELECT * from Part_v_Tool_Op_Part_Life 
+	on bl.Plexus_Customer_No = pl.PCN 
+	and bl.Part_Key = pl.Part_Key 
+	and bl.Operation_Key = pl.Operation_Key 
+	and bl.Assembly_Key = pl.Assembly_Key 
+	and bl.Tool_Key = pl.Tool_Key -- 1 to 1
+	inner join CNC_Tool_Op_Part_Life cpl
+	on bl.CNC_Key = cpl.CNC_Key  -- This key is not in Part_v_Tool_Op_Part_Life 
+	and pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
+    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
+   
+	set pCycle_Time_History_Key = (select Cycle_Time_History_Key from Cycle_Time_History where Cycle_Time_History_Key =(SELECT LAST_INSERT_ID()));
+   	set pReturnValue = 0;
+
+ END;
+
+   select * from CNC_Tool_Op_Part_Life where CNC_Key = 3
+   select * from Part_v_Tool_Life
+
+
+
+set @pCNC_Approved_Workcenter_Key = 2;
 	-- set @pTool_Var = 1;  -- Assembly_Key = 13, tool_Key = 1
 	 set @pTool_Var = 12; -- REWORK Primary_tool_key 8,Alternate_Tool_Key = 9
 	-- set @pTool_Var = 22; -- REWORK tool_key 15

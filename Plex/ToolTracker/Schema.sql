@@ -1021,16 +1021,18 @@ select 	@pTool_Life_Key,@pReturnValue;
 -- truncate table Part_v_Tool_Life
 select * from Part_v_Tool_Life
 -- truncate table Assembly_Machining_History
-select Pallet_No,Assembly_Key,Start_Time,End_Time,Run_Time from Assembly_Machining_History amh 
+select Pallet_No,Assembly_Key,Start_Time,End_Time,Run_Time 
+from Assembly_Machining_History amh 
+order by Assembly_Machining_History_Key desc
 -- CREATE TABLE Part_v_Tool_Live_11_11 AS select * from Part_v_Tool_Life;
 -- select * from Part_v_Tool_Live_11_11
 
-select pl.Assembly_Key,pl.Tool_Key,cpl.Alternate_Tool_Key,cpl.Regrind_Tool_Key,cpl.Current_Value,cpl.Running_Total, cpl.*
+select pl.Assembly_Key,pl.Tool_Key,cpl.Current_Value,cpl.Running_Total, cpl.*
 from  Part_v_Tool_Op_Part_Life pl
 inner join CNC_Tool_Op_Part_Life cpl
 on pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
--- where pl.Tool_Key = 1  -- @pTool_Var = 1
- where pl.Tool_Key = 8  -- @pTool_Var = 12
+ where pl.Tool_Key = 1  -- @pTool_Var = 1
+-- where pl.Tool_Key = 8  -- @pTool_Var = 12
 -- where pl.Tool_Key = 15  -- @pTool_Var = 22
 -- where pl.Tool_Key = 13  -- @pTool_Var = 15
 
@@ -1152,113 +1154,6 @@ select * from Part_v_Tool_Op_Part_Life cpl
 
 
 */
-/*
- * History of CNC cycle times times. With this information we can track the
- * fastest or avg cycle time for a period of time.  We can also
- * determine the number of cycles that were completed for a period of time. 
- */
--- drop table Cycle_Time_History 
--- truncate table Cycle_Time_History
-CREATE TABLE Cycle_Time_History (
-	Cycle_Time_History_Key int NOT NULL AUTO_INCREMENT,
-	Plexus_Customer_No int,
-	Workcenter_Key	int NOT NULL,  
-	CNC_Key int NOT NULL,
-	Part_Key int NOT NULL,
-	Part_Operation_Key int NOT NULL,
-	Assembly_Key int NOT NULL, 
-  	Cycle_Time int NOT NULL, -- In seconds
-  	Run_Date datetime NOT NULL,
-  	PRIMARY KEY (Cycle_Time_History_Key)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of CNC cycle times';
-
-set @CNC_Approved_Workcenter_Key = 2;
-set @Set_No = 1;
-set @Block_No = 1;
-set @Run_Date = '2020-10-25 09:50:00';
-CALL InsCycleTimeHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@Run_Date,@Cycle_Time_History_Key,@Return_Value);
-	 -- UpdateCNCPartOperationAssemblyCurrentValue(?,?,?,?,?,@ReturnValue); select @ReturnValue as pReturnValue
-SELECT @Return_Value,@Cycle_Time_History_Key;
-select * from Cycle_Time_History;
-
-select 
--- bl.Block_No,bl.Set_No,
-cpl.Last_Update,cpl.* 
-from CNC_Tool_Op_Part_Life cpl 
-inner join Part_v_Tool_Op_Part_Life pl 
-on cpl.Tool_Op_Part_Life_Key = pl.Tool_Op_Part_Life_Key 
-inner join Datagram_Set_Block bl 
-on pl.PCN = bl.Plexus_Customer_No 
-and cpl.Workcenter_Key = bl.Workcenter_Key 
-and cpl.CNC_Key = bl.CNC_Key
-and pl.Part_Key = bl.Part_Key
-and cpl.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
-and pl.Assembly_Key = bl.Assembly_Key 
-and pl.Tool_Key = bl.Tool_Key 
-where cpl.CNC_Key = 3
-and bl.Block_No = 1 
-and bl.Set_No = 1
-
-DROP PROCEDURE InsCycleTimeHistory;
-CREATE PROCEDURE InsCycleTimeHistory
-(
-	IN pCNC_Approved_Workcenter_Key INT,  
-	IN pSet_No INT,
-	IN pBlock_No INT,
-	IN pRun_Date datetime,
-	OUT pCycle_Time_History_Key INT,
-	OUT pReturnValue INT 
-)
-BEGIN
-
-	insert into Cycle_Time_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key,Part_Operation_Key,Assembly_Key,Cycle_Time,Run_Date)
-	/*
-	set @pCNC_Approved_Workcenter_Key = 2;
-	set @pSet_No = 1;
-	set @pBlock_No = 1;
-	set @pRun_Date = '2020-09-05 09:50:00';
-	*/
-	select 
-	caw.Plexus_Customer_No,
-	caw.Workcenter_Key,
-	caw.CNC_Key,
-	caw.Part_Key,
-	caw.Part_Operation_Key,
-	bl.Assembly_Key,
-	-- TIMESTAMPDIFF(SECOND, cpl.Last_Update, @pRun_Date) Cycle_Time,
-	-- @pRun_Date
-	 TIMESTAMPDIFF(SECOND, cpl.Last_Update, pRun_Date) Cycle_Time,
-	 pRun_Date Run_Date
-   	from CNC_Approved_Workcenter caw 
-	inner join Datagram_Set_Block bl 
-	on caw.Plexus_Customer_No = bl.Plexus_Customer_No 
-	and caw.Workcenter_Key = bl.Workcenter_Key 
-	and caw.CNC_Key = bl.CNC_Key
-	and caw.Part_Key = bl.Part_Key
-	and caw.Part_Operation_Key = bl.Part_Operation_Key -- 1 to 1
-    inner join Part_v_Tool_Op_Part_Life pl
-    -- SELECT * from Part_v_Tool_Op_Part_Life 
-	on bl.Plexus_Customer_No = pl.PCN 
-	and bl.Part_Key = pl.Part_Key 
-	and bl.Operation_Key = pl.Operation_Key 
-	and bl.Assembly_Key = pl.Assembly_Key 
-	and bl.Tool_Key = pl.Tool_Key -- 1 to 1
-	inner join CNC_Tool_Op_Part_Life cpl
-	on bl.CNC_Key = cpl.CNC_Key  -- This key is not in Part_v_Tool_Op_Part_Life 
-	and pl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to 1
-	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-    -- and bl.Set_No = @pSet_No and bl.Block_No = @pBlock_No;
-	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
-    and bl.Set_No = pSet_No and bl.Block_No = pBlock_No;
-   
-	set pCycle_Time_History_Key = (select Cycle_Time_History_Key from Cycle_Time_History where Cycle_Time_History_Key =(SELECT LAST_INSERT_ID()));
-   	set pReturnValue = 0;
-
- END;
-
-   select * from CNC_Tool_Op_Part_Life where CNC_Key = 3
-   select * from Part_v_Tool_Life
-
 
    
 /*
@@ -1276,6 +1171,8 @@ CREATE TABLE Assembly_Machining_History (
 	Part_Key int NOT NULL,
 	Part_Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
+	Current_Value int NOT NULL,
+	Running_Total int NOT NULL,
   	Start_Time datetime NOT NULL,  
   	End_Time datetime NOT NULL,  
   	Run_Time int NOT NULL, -- In seconds. 
@@ -1286,9 +1183,11 @@ CREATE TABLE Assembly_Machining_History (
 set @CNC_Approved_Workcenter_Key = 2;
 set @Pallet_No = 1;
 set @Tool_Var = 1;
+SET @Current_Value = 10;
+set @Running_Total = 12;
 set @Start_Time = '2020-10-25 09:50:00';
 set @End_Time = '2020-10-25 09:50:50';
-CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
+CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
 select * from Assembly_Machining_History
 
@@ -1298,6 +1197,8 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 	IN pCNC_Approved_Workcenter_Key INT,  
 	IN pPallet_No INT,
 	IN pTool_Var INT,
+	IN pCurrent_Value INT,
+	IN pRunning_Total INT,
 	IN pStart_Time datetime,
 	IN pEnd_Time datetime,
 	OUT pAssembly_Machining_History_Key INT,
@@ -1305,7 +1206,7 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 )
 BEGIN
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Start_Time,End_Time,Run_Time)
+	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Current_Value,Running_Total,Start_Time,End_Time,Run_Time)
 	
 /*
 	set @pCNC_Approved_Workcenter_Key = 2;
@@ -1323,6 +1224,8 @@ BEGIN
 	caw.Part_Key,
 	caw.Part_Operation_Key,
 	tv.Assembly_Key,
+	pCurrent_Value Current_Value,  -- Just changed this 11/14 not tested
+	pRunning_Total Running_Total, -- Just changed this 11/14 not tested
 	pStart_Time Start_Time,
 	pEnd_Time End_Time,
 	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
@@ -1342,17 +1245,45 @@ BEGIN
    	set pReturnValue = 0;
 END;
 
-set @CNC_Approved_Workcenter_Key = 2;
-set @Set_No = 1;
-set @Block_No = 1;
-set @End_Time = '2020-09-05 10:01:00.0';
-CALL UpdateAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Set_No,@Block_No,@End_Time,@Return_Value);
-select @Return_Value;
-select * from Assembly_Machining_History
+select count(*) from Assembly_Machining_History  -- 984
+select 
+Assembly_Key,Current_Value,Running_Total,
+Start_Time,End_Time,Run_Time 
+from Assembly_Machining_History amh
+-- where Assembly_Key = 14
+ where Assembly_Key = 18
+order by Start_Time 
 
-
-	select * from Assembly_Machining_History amh
-set @CNC_Approved_Workcenter_Key = 2;
+/* Test MachingHistory */
+(300758,1,1,13,9,0),
+(300758,2,14,14,6,0),  
+Started 11/13 10:05 at 102
+End at 11:14 02:11 with 200
+Start: 11:14 02:24 with 2
+Continue: 11:14 08:27 with 42
+(300758,3,15,15,1,0),
+(300758,4,16,16,1,0),
+(300758,5,20,17,1,0),
+(300758,6,18,18,1,0), -- VC34
+(300758,7,19,18,9,0), -- VC33,CCMT 432MT TT7015 INSERT,INBOARD
+Start: 11/13 10:10, End: 11/13 12:34
+Start: 11/13 12:46,2 End: 11/14 08:18 124
+(300758,8,17,19,2,0),
+(300758,9,2,20,1,0),
+(300758,10,12,21,2,1), -- Alternate Tool for T15;
+(300758,11,13,21,2,0),
+(300758,12,6,22,7,0),
+(300758,13,3,23,2,0), -- VC6,009240,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE
+(300758,14,4,23,2,1), -- Alternate Tool for,008318, one of the T6 inserts.  
+(300758,15,5,23,2,0), -- VC66,008318,SHLT140516N-FS IN1030 INSERT,DATUM L ROUGH BORE & C'BORE
+(300758,16,7,24,1,0),
+(300758,17,7,25,1,0),
+(300758,18,8,26,1,0),
+(300758,19,9,26,1,1),  -- Alternate Tool for T12; 
+(300758,20,10,27,2,0),
+(300758,21,11,28,2,0)
+	
+	set @CNC_Approved_Workcenter_Key = 2;
 set @Tool_Var = 1;
 
 CALL GetCounterIncrement(@CNC_Approved_Workcenter_Key,@Tool_Var,@IncrementBy,@Return_Value);
