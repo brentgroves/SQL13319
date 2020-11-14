@@ -168,7 +168,7 @@ values
 -- Avilla
 (3,310507,2809196,7917723,61324,1)  -- RDX AVILLA
 select * from CNC_Approved_Workcenter
-
+-- truncate table Tool_Var_Map;
 CREATE TABLE Tool_Var_Map 
 (
 	Tool_Var_Map_Key int NOT NULL, -- unique but not the primary key
@@ -210,7 +210,7 @@ values
  (23,300758,2,23,16,16),  -- T23,0000951
  (24,300758,2,72,17,20),  -- T72,14855
  (25,300758,2,33,18,19),  -- VC33,15843,CCMT 432MT TT7015 INSERT
- (26,300758,2,34,8,18),  -- VC34,010559,CCMT 32.52 -M3 TK1501,different tool lifes. Not an alternate of VC33. tHIS IS VC34
+ (26,300758,2,34,18,18),  -- VC34,010559,CCMT 32.52 -M3 TK1501,different tool lifes. Not an alternate of VC33. tHIS IS VC34
  (27,300758,2,30,19,17),  -- T30,16547
  (28,300758,2,4,20,2),   -- T4,17100
 -- 100 bytes
@@ -225,7 +225,7 @@ values
  (36,300758,2,13,27,10),  -- T13,0003396
  (37,300758,2,14,28,11)  -- T14,008435
 -- 60/100 bytes
-select * from Tool_Var_Map
+select * from Tool_Var_Map order by Tool_Var_Map_Key 
 
 
 /*
@@ -427,9 +427,9 @@ values
 -- Albion
 (300758,1,'009196',30048,'ONMU 090520ANTN-M15 MK2050',1,0,14.380000),  -- insert
 (300758,2,'17100',30016,'CCC-34231',1,1,276.000000),  -- drill
-(300758,3,'009240',30048,'SHLT110408N-PH1 IN2005',1,0,8.780000), -- 
+(300758,3,'009240',30048,'SHLT110408N-PH1 IN2005',1,0,8.780000), -- VC6
 (300758,4,'15721',30048,'SHLT140516N-FS IN2005',1,0,12.570000), -- Shown as an alternate in the Tool List for 008318
-(300758,5,'008318',30048,'SHLT140516N-FS IN1030',1,0,10.950000), -- Shown as replacing 15721 in Plex 
+(300758,5,'008318',30048,'SHLT140516N-FS IN1030',1,0,10.950000), -- VC66 2nd tool for T06. Shown as replacing 15721 in Plex 
 (300758,6,'008485',30048,'CDE323L022 IN2530',1,0,9.820000),  -- insert 
 (300758,7,'007864',30048,'TCMT 21.51-F1 TP1501',1,0,5.950000),  -- insert 
 (300758,8,'010338',30800,'CCC-23575 REV A',1,1,456.00000),  -- Reamer 
