@@ -1,8 +1,21 @@
-select count(*) from Assembly_Machining_History  -- 984
+select count(*) from Assembly_Machining_History  -- 1235
+ SELECT * FROM Assembly_Machining_History amh;
+CREATE TABLE Assembly_Machining_History_11_14  SELECT * FROM Assembly_Machining_History amh;  -- 1263
 select 
-Assembly_Key,Current_Value,Running_Total,
+amh.Assembly_Key,amh.Tool_Key,pta.Assembly_No, pt.Tool_No, Current_Value,Running_Total,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
+inner join Part_v_Tool_Assembly pta 
+on amh.Assembly_Key = pta.Assembly_Key 
+inner join Part_v_Tool pt
+on amh.Tool_Key = pt.Tool_Key 
+order by End_Time desc
+select 
+amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Start_Time,End_Time,Run_Time 
+from Assembly_Machining_History amh
+inner join Part_v_Tool_Assembly pta 
+on amh.Assembly_Key = pta.Assembly_Key 
 -- where Assembly_Key = 14
 -- where Assembly_Key = 18 -- tool_life yes
 order by Current_Value 

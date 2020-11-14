@@ -1171,6 +1171,7 @@ CREATE TABLE Assembly_Machining_History (
 	Part_Key int NOT NULL,
 	Part_Operation_Key int NOT NULL,
 	Assembly_Key int NOT NULL, 
+	Tool_Key int NOT NULL,
 	Current_Value int NOT NULL,
 	Running_Total int NOT NULL,
   	Start_Time datetime NOT NULL,  
@@ -1206,7 +1207,7 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 )
 BEGIN
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Current_Value,Running_Total,Start_Time,End_Time,Run_Time)
+	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Current_Value,Running_Total,Start_Time,End_Time,Run_Time)
 	
 /*
 	set @pCNC_Approved_Workcenter_Key = 2;
@@ -1224,6 +1225,7 @@ BEGIN
 	caw.Part_Key,
 	caw.Part_Operation_Key,
 	tv.Assembly_Key,
+	tv.Tool_Key,
 	pCurrent_Value Current_Value,  -- Just changed this 11/14 not tested
 	pRunning_Total Running_Total, -- Just changed this 11/14 not tested
 	pStart_Time Start_Time,
