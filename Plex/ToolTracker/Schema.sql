@@ -218,7 +218,7 @@ values
  (30,300758,2,7,22,6),  -- T7,008485
  (31,300758,2,6,23,3),  -- VC6,009240,SHLT110408N-PH1 IN2005,DATUM L ROUGH BORE & C'BORE 
  (32,300758,2,66,23,5),  -- VC66,008318,SHLT140516N-FS IN1030 INSERT,Alternate=15721,DATUM L ROUGH BORE & C'BORE
- (33,300758,2,9,24,7),  -- T9,007864
+ (33,300758,2,9,24,7),  -- T9,007864  -- DON'T KNOW WHY TOOL 8 AND 9 BOTH USE THIS INSERT?
 -- 160 bytes now start over
  (34,300758,2,8,25,7),  -- T8,007864
  (35,300758,2,12,26,8),  -- T12,010338,'CCC-23575 REV A'
@@ -1190,8 +1190,7 @@ set @Start_Time = '2020-10-25 09:50:00';
 set @End_Time = '2020-10-25 09:50:50';
 CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
-select * from Assembly_Machining_History
-
+select * from Assembly_Machining_History where Assembly_Key = 25
 DROP PROCEDURE InsAssemblyMachiningHistory;
 CREATE PROCEDURE InsAssemblyMachiningHistory
 (
@@ -1332,7 +1331,7 @@ End_Time 11:13 21:44 Running_Total = 800
 (300758,21,11,28,2,0)
 	
 	set @CNC_Approved_Workcenter_Key = 2;
-set @Tool_Var = 1;
+set @Tool_Var = 9;
 
 CALL GetCounterIncrement(@CNC_Approved_Workcenter_Key,@Tool_Var,@IncrementBy,@Return_Value);
 
@@ -1354,11 +1353,13 @@ BEGIN
 	
 	
 	-- set @pCNC_Approved_Workcenter_Key = 2;
-	-- set @pTool_Var = 1;
+	-- set @pTool_Var = 9;  -- 7 DON'T KNOW WHY BUT BOTH TOOLS 8 AND 9 USE THE SAME INSERT
+	-- set @pTool_Var = 8;  -- 7
 		
 	select 
 	-- tv.Plexus_Customer_No,tv.CNC_Approved_Workcenter_Key,
-	tv.Tool_Key into @Tool_Key 
+	tv.Assembly_Key,tv.Tool_Key into @Assembly_Key,@Tool_Key 
+
 	from CNC_Approved_Workcenter caw 
 	inner join Tool_Var_Map tv
 	on caw.Plexus_Customer_No = tv.Plexus_Customer_No 
@@ -1369,8 +1370,9 @@ BEGIN
 	and tv.Tool_Var = pTool_Var; 
 
 	select 
+	-- pl.Assembly_Key,pl.Tool_Key,pl.Increment_By
 	-- pl.Increment_By into @pIncrementBy
-	 pl.Increment_By into pIncrementBy
+	pl.Increment_By into pIncrementBy
 	-- set @pCNC_Approved_Workcenter_Key = 2;
 	-- select count(*)
 	from CNC_Approved_Workcenter caw 
@@ -1382,11 +1384,13 @@ BEGIN
 		cpl.CNC_Key,
 		opl.Part_Key,
 		cpl.Part_Operation_Key, 
+		opl.Assembly_Key,
 		opl.Tool_Key, 
 		cpl.Increment_By 
 		from Part_v_Tool_Op_Part_Life opl
 		inner join CNC_Tool_Op_Part_Life cpl
 		on opl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to many
+		-- where Tool_Key in (8,9)
 		-- where cpl.CNC_Key = 3 -- 21
 	) pl
 	on caw.Plexus_Customer_No = pl.Plexus_Customer_No
@@ -1394,9 +1398,9 @@ BEGIN
 	and caw.CNC_Key = pl.CNC_Key
 	and caw.Part_Key = pl.Part_Key
 	and caw.Part_Operation_Key = pl.Part_Operation_Key  -- 1 to 1 -- 21
-	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-	-- and pl.Tool_Key = @Tool_Key;
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key
 	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
+	and pl.Assembly_Key = @Assembly_Key
 	and pl.Tool_Key = @Tool_Key;
 	-- select @pIncrementBy;
 	
