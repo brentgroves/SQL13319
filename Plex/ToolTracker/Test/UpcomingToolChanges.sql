@@ -7,37 +7,134 @@ select count(*) from Assembly_Machining_History  -- 1398
  * PartsToToolChange is < 0
  */
 -- How many Tool changes
-select Assembly_Key, Start_Time 
+select amh.Assembly_Key,amh.Tool_Key,amh.Two_Count,pta.Assembly_No,pta.Description,pt.Tool_No,pt.Description 
 from 
 (
--- Find start of most recent run of assemblies that ran the entire time
- SELECT Assembly_Key,max(Start_Time) Start_Time FROM Assembly_Machining_History amh where Current_Value = 2
- and Assembly_Key in (SELECT distinct Assembly_Key FROM Assembly_Machining_History amh where Current_Value = 2)
- group by Assembly_Key 
-)lr 
+	SELECT Plexus_Customer_No, Assembly_Key, Tool_Key, count(*) Two_Count 
+	FROM Assembly_Machining_History amh 
+	group by Plexus_Customer_No,Assembly_Key, Tool_Key, Current_Value 
+	having Current_Value = 2
+)amh 
+inner join Part_v_Tool_Assembly pta 
+on amh.Plexus_Customer_No = pta.Plexus_Customer_No 
+and amh.Assembly_Key = pta.Assembly_Key
+inner join Part_v_Tool pt
+on amh.Plexus_Customer_No = pt.Plexus_Customer_No 
+and amh.Tool_Key = pt.Tool_Key
+where amh.Two_Count > 1
 
--- Upcoming Tool changes
-select amh.Assembly_Key,ta.Assembly_No,amh.Tool_Key,pt.Tool_No, amh.Current_Value, amh.Running_Total, amh.Start_Time,amh.End_Time
--- pl.Standard_Tool_Life, pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange,
--- lr.Last_Run_Start_Time, 
--- ptc.PartsToToolChange
---  
-select ta.Assembly_No TN,ta.Description,ta.Assembly_Key AKey,pt.Tool_Key TKey,pt.Tool_No,ptc.PartsToToolChange ToGo, 
-amh.Start_Time,amh.End_Time,amh.Current_Value,amh.Running_Total,amh.Run_Time 
+-- 
+-- All Upcoming Tool Changes
+select 
+-- amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,
+amh.Assembly_Key,amh.Tool_Key,
+pta.Assembly_No,pta.Description,
+pt.Tool_No,tt.Tool_Type_Code,pt.Description, 
+pl.Standard_Tool_Life,amh.Current_Value,
+pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange
 -- select count(*)
-from Assembly_Machining_History amh
+from Assembly_Machining_History amh 
 inner join 
 (
- SELECT distinct Plexus_Customer_No,Workcenter_Key,CNC_Key,Part_Key, Part_Operation_Key,Assembly_Key,Tool_Key FROM Assembly_Machining_History amh where Current_Value = 2
-) cv2 -- filter running entire time
-on amh.Plexus_Customer_No = cv2.Plexus_Customer_No
-and amh.Workcenter_Key = cv2.Workcenter_Key 
-and amh.CNC_Key = cv2.CNC_Key
-and amh.Part_Key = cv2.Part_Key 
-and amh.Part_Operation_Key = cv2.Part_Operation_Key
-and amh.Assembly_Key = cv2.Assembly_Key
-and amh.Tool_Key = cv2.Tool_Key
-and amh.Assembly_Key = cv2.Assembly_Key  -- 1 to 1  -- 871
+	select amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,amh.Assembly_Key,amh.Tool_Key,max(amh.Start_Time) Last_Start_Time 
+	-- select count(*)
+	from Assembly_Machining_History amh 
+	group by amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,amh.Assembly_Key,amh.Tool_Key  -- 16
+)lst -- last assembly time recorded
+on amh.Plexus_Customer_No = lst.Plexus_Customer_No
+and amh.Workcenter_Key = lst.Workcenter_Key 
+and amh.CNC_Key = lst.CNC_Key 
+and amh.Part_Key = lst.Part_Key
+and amh.Part_Operation_Key = lst.Part_Operation_Key
+and amh.Assembly_Key = lst.Assembly_Key 
+and amh.Tool_Key = lst.Tool_Key  
+and amh.Start_Time = lst.Last_Start_Time -- 1 to 1  -- 16
+inner join Part_v_Part_Operation po 
+on amh.Plexus_Customer_No = po.Plexus_Customer_No 
+and amh.Part_Operation_Key = po.Part_Operation_Key -- 1 to 1
+inner join Part_v_Tool_Op_Part_Life pl 
+on amh.Plexus_Customer_No = pl.PCN 
+and amh.Part_Key = pl.Part_Key 
+and po.Operation_Key = pl.Operation_Key 
+and amh.Assembly_Key = pl.Assembly_Key 
+and amh.Tool_Key = pl.Tool_Key -- 1 to 1  -- 16
+inner join Part_v_Tool_Assembly pta 
+on amh.Plexus_Customer_No = pta.Plexus_Customer_No 
+and amh.Assembly_Key = pta.Assembly_Key
+inner join Part_v_Tool pt
+on amh.Plexus_Customer_No = pt.Plexus_Customer_No 
+and amh.Tool_Key = pt.Tool_Key
+inner join Part_v_Tool_Type tt 
+on pt.Tool_Type_Key = tt.Tool_Type_Key -- 1 to 1
+order by pl.Standard_Tool_Life - amh.Current_Value
+
+-- Upcoming Tool Changes that have been running the entire time
+select 
+-- amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,
+amh.Assembly_Key,amh.Tool_Key,
+pta.Assembly_No,pta.Description,
+pt.Tool_No,tt.Tool_Type_Code,pt.Description, 
+pl.Standard_Tool_Life,amh.Current_Value,
+pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange
+-- select count(*)
+from Assembly_Machining_History amh 
+inner join 
+(
+	select DISTINCT amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,amh.Assembly_Key,amh.Tool_Key
+	from Assembly_Machining_History amh
+	where Current_Value = 2
+)et 
+on amh.Plexus_Customer_No = et.Plexus_Customer_No
+and amh.Workcenter_Key = et.Workcenter_Key 
+and amh.CNC_Key = et.CNC_Key 
+and amh.Part_Key = et.Part_Key
+and amh.Part_Operation_Key = et.Part_Operation_Key
+and amh.Assembly_Key = et.Assembly_Key 
+and amh.Tool_Key = et.Tool_Key  -- 379
+inner join 
+(
+	select amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,amh.Assembly_Key,amh.Tool_Key,max(amh.Start_Time) Last_Start_Time 
+	-- select count(*)
+	from Assembly_Machining_History amh 
+	group by amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,amh.Assembly_Key,amh.Tool_Key  -- 16
+)lst -- last assembly time recorded
+on amh.Plexus_Customer_No = lst.Plexus_Customer_No
+and amh.Workcenter_Key = lst.Workcenter_Key 
+and amh.CNC_Key = lst.CNC_Key 
+and amh.Part_Key = lst.Part_Key
+and amh.Part_Operation_Key = lst.Part_Operation_Key
+and amh.Assembly_Key = lst.Assembly_Key 
+and amh.Tool_Key = lst.Tool_Key  
+and amh.Start_Time = lst.Last_Start_Time -- 1 to 1  -- 16
+inner join Part_v_Part_Operation po 
+on amh.Plexus_Customer_No = po.Plexus_Customer_No 
+and amh.Part_Operation_Key = po.Part_Operation_Key -- 1 to 1
+inner join Part_v_Tool_Op_Part_Life pl 
+on amh.Plexus_Customer_No = pl.PCN 
+and amh.Part_Key = pl.Part_Key 
+and po.Operation_Key = pl.Operation_Key 
+and amh.Assembly_Key = pl.Assembly_Key 
+and amh.Tool_Key = pl.Tool_Key -- 1 to 1  -- 16
+inner join Part_v_Tool_Assembly pta 
+on amh.Plexus_Customer_No = pta.Plexus_Customer_No 
+and amh.Assembly_Key = pta.Assembly_Key
+inner join Part_v_Tool pt
+on amh.Plexus_Customer_No = pt.Plexus_Customer_No 
+and amh.Tool_Key = pt.Tool_Key
+inner join Part_v_Tool_Type tt 
+on pt.Tool_Type_Key = tt.Tool_Type_Key -- 1 to 1
+order by pl.Standard_Tool_Life - amh.Current_Value
+
+
+/*
+ * All history records of most current runs of assemblies that have been running the entire time
+ */
+select ta.Assembly_Key AKey,pt.Tool_Key TKey, 
+ta.Assembly_No TN,ta.Description,pt.Tool_No,
+ptc.PartsToToolChange ToGo,amh.Current_Value,amh.Running_Total, 
+amh.Start_Time,amh.End_Time,amh.Run_Time 
+-- select count(*)
+from Assembly_Machining_History amh
 inner join 
 (
 	-- Find start of most recent run of assemblies that ran the entire time
@@ -65,7 +162,7 @@ and amh.CNC_Key = lr.CNC_Key
 and amh.Part_Key = lr.Part_Key 
 and amh.Part_Operation_Key = lr.Part_Operation_Key
 and amh.Assembly_Key = lr.Assembly_Key
-and amh.Tool_Key = lr.Tool_Key  -- 1 to 1  -- 871
+and amh.Tool_Key = lr.Tool_Key  -- 1 to 1  -- 373 
 inner join 
 (  -- Parts to Tool Change
 	select amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,amh.Assembly_Key,amh.Tool_Key,pl.Standard_Tool_Life,amh.Current_Value,
@@ -109,7 +206,7 @@ on amh.Plexus_Customer_No = ta.Plexus_Customer_No
 and amh.Assembly_Key = ta.Assembly_Key -- 1 to 1
 inner join Part_v_Tool pt 
 on amh.Plexus_Customer_No = pt.Plexus_Customer_No 
-and amh.Tool_Key = pt.Tool_Key 
+and amh.Tool_Key = pt.Tool_Key -- 374
 -- where amh.Assembly_Key = 23
 -- where amh.Assembly_Key = 23
 

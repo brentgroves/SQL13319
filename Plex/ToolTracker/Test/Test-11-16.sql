@@ -9,7 +9,7 @@
 
 select * from Part_v_Tool_Assembly where CNC_Tool_No = 8  
 
-select count(*) from Assembly_Machining_History amh  -- 2416
+select count(*) from Assembly_Machining_History amh  -- 2474 @ 10:30, 2789 @ 15:30
 -- where amh.Assembly_Key = 13  -- T1/ 93
 -- where amh.Assembly_Key = 14  -- T21/93
 -- where amh.Assembly_Key = 15  -- T22/94
@@ -27,7 +27,7 @@ select count(*) from Assembly_Machining_History amh  -- 2416
 -- and amh.Tool_Key = 3  -- T6/VC6/94
 -- where amh.Assembly_Key = 23
 -- and amh.Tool_Key = 5  -- T6/VC66/94
-where amh.Assembly_Key in (24,25)  -- T9/0 ************************* 
+where amh.Assembly_Key = 24  -- T9/0 ************************* 
 where amh.Assembly_Key = 25  -- T8/0 ***************************
 -- where amh.Assembly_Key = 26 -- T12/93
 --  where amh.Assembly_Key = 27  -- T13/94
@@ -57,6 +57,6 @@ Start_Time,End_Time,Run_Time
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
 on amh.Assembly_Key = pta.Assembly_Key 
-where amh.Assembly_Key = 25
+where amh.Assembly_Key = 24
 -- and Tool_Key = 18  
 order by Start_Time 
