@@ -22,7 +22,6 @@
 (T13=PLUNGE BACK SIDE HOLES)
 (T14=CHAMFER BACK SIDE OF HOLES)
 
-
 -- Counter Check
 select 
 -- amh.Plexus_Customer_No,amh.Workcenter_Key,amh.CNC_Key,amh.Part_Key,amh.Part_Operation_Key,
@@ -383,7 +382,7 @@ and tl.Tool_Key = tvm.Tool_Key
 where tvm.Tool_Var = 9
 (T8=FINISH J BORE)
 select 
-amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+amh.Assembly_Machining_History_Key,amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -393,7 +392,14 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 8
-order by Start_Time 
+order by Start_Time desc
+-- delete from Assembly_Machining_History amh where amh.Assembly_Machining_History_Key between 7198 and 7203
+/*
+ * Found a bug in UDP13319.ToolLifeUpdate(). When we did not receive the COM9 call after a tool change
+ * because of a tool setter single stepping through the code and stopping before the OCOM9 call the first
+ * UDP message we would receive would have a counter value of 2 * IncrementBy.  Changed the code
+ * to call Tool change code in this scenario.
+ */
 -- NO TOOL CHANGE TODAY
 select tl.* 
 from Part_v_Tool_Life tl

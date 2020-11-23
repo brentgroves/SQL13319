@@ -5,7 +5,8 @@ pta.Assembly_No,pta.Description,
 pt.Tool_No,tt.Tool_Type_Code,pt.Description, 
 pl.Standard_Tool_Life,amh.Current_Value amhCurrent_Value,cpl.Current_Value cplCurrent_Value,
 amh.Running_Total amhRunning_Total, cpl.Running_Total cplRunning_Total,
-pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange
+pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange,
+amh.Start_Time 
 -- select count(*)
 from Assembly_Machining_History amh 
 inner join 
