@@ -394,9 +394,7 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 8
 order by Start_Time 
--- 11-18 11:05:32 current value 8, running total 28, 
--- CAN'T CONFIRM THIS IS OK. I THINK I DELETED RECORDS PREVIOUS TO THIS DATETIME.
--- 11-19 21:34 CURRENT VALUE RECORDED AS 4. IT SKIPPED 2.
+-- NO TOOL CHANGE TODAY
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
