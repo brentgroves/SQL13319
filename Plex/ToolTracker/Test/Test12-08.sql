@@ -86,8 +86,13 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 1
+and Start_Time > '2020-12-01'
 order by Start_Time 
-
+-- run started at 2 on 2020-12-05 19:08:42
+-- and ended on 2020-12-07 20:59:42
+-- T01 went from 16 to 20 skipping 18 for unknown reason.
+-- FAILED
+-- did i delete some tool life records for tool var 1
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
@@ -109,7 +114,12 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 21
+and Start_Time > '2020-12-01' 
 order by Start_Time 
+-- PASSED ON 12/7
+-- BUT FAILED ON 12/08
+-- count jumped from 52 to 56 skipping 54 at 09:27 to 09:57 so did not run entire time.
+
 
 select tl.* 
 from Part_v_Tool_Life tl
@@ -132,6 +142,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 22
+and Start_Time > '2020-12-01' 
 order by Start_Time 
 -- NO TOOL CHANGE YET
 select tl.* 
@@ -176,6 +187,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 72
+and Start_Time > '2020-12-01' 
 order by Start_Time 
 -- NO TOOL CHANGE YET
 select tl.* 
@@ -199,7 +211,9 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 33
+and Start_Time > '2020-12-01' 
 order by Start_Time 
+-- PASSED
 
 select tl.* 
 from Part_v_Tool_Life tl
@@ -223,6 +237,8 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 34
+and Start_Time > '2020-12-01' 
+
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 
@@ -245,6 +261,8 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 30
+and Start_Time > '2020-12-01' 
+-- PASSED
 order by Start_Time 
 /*
  * Found a bug in UDP13319.ToolLifeUpdate(). When we did not receive the COM9 call after a tool change
@@ -281,6 +299,8 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 4
+and Start_Time > '2020-12-01' 
+
 order by Start_Time 
 /*
  * Found a bug in UDP13319.ToolLifeUpdate(). When we did not receive the COM9 call after a tool change
@@ -316,6 +336,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 15
+and Start_Time > '2020-12-01' 
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 
@@ -337,6 +358,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 7
+and Start_Time > '2020-12-01' 
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 
@@ -360,6 +382,8 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 6
+and Start_Time > '2020-12-01' 
+
 order by Start_Time 
 -- 2020-11-20 02:16:26
 select tl.* 
@@ -369,8 +393,10 @@ on tl.PCN = tvm.Plexus_Customer_No
 and tl.Assembly_Key = tvm.Assembly_Key 
 and tl.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 6
+
 (T66= SHLT140516N-FS IN1030 INSERT)
-(END T6=DATUM L ROUGH BORE & C'BORE)
+(END T6=DATUM L ROUGH BORE & CBORE)
+
 select 
 amh.Assembly_Key,amh.Tool_Key,pta.Assembly_No, Current_Value,Running_Total,
 Start_Time,End_Time,Run_Time 
@@ -382,8 +408,11 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 66
+-- and Start_Time > '2020-12-01' 
 order by Start_Time 
--- 2020-11-20 02:16:27
+
+-- PASSED
+
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
@@ -404,6 +433,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 9
+and Start_Time > '2020-12-01' 
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 
@@ -425,6 +455,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 8
+and amh.Start_Time > '2020-12-01'
 order by Start_Time
 -- delete from Assembly_Machining_History amh where amh.Assembly_Machining_History_Key between 7198 and 7203
 /*
@@ -454,6 +485,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 12
+and amh.Start_Time > '2020-12-01'
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 
@@ -476,6 +508,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 13
+and amh.Start_Time > '2020-12-01'
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 
@@ -498,6 +531,7 @@ on amh.Plexus_Customer_No = tvm.Plexus_Customer_No
 and amh.Assembly_Key = tvm.Assembly_Key 
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 14
+and amh.Start_Time > '2020-12-01'
 order by Start_Time 
 -- NO TOOL CHANGE TODAY
 select tl.* 

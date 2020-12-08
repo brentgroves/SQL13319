@@ -1162,7 +1162,7 @@ select * from Part_v_Tool_Op_Part_Life cpl
  */
 -- drop table Assembly_Machining_History 
 -- truncate table Assembly_Machining_History
-CREATE TABLE Assembly_Machining_History (
+CREATE TABLE Assembly_Machining_History_V2 (
 	Assembly_Machining_History_Key int NOT NULL AUTO_INCREMENT,
 	Plexus_Customer_No int,
 	Workcenter_Key	int NOT NULL,  
@@ -1174,6 +1174,8 @@ CREATE TABLE Assembly_Machining_History (
 	Tool_Key int NOT NULL,
 	Current_Value int NOT NULL,
 	Running_Total int NOT NULL,
+  	Running_Entire_Time int NOT NULL,
+  	Increment_By_Check int NOT NULL,	
   	Start_Time datetime NOT NULL,  
   	End_Time datetime NOT NULL,  
   	Run_Time int NOT NULL, -- In seconds. 
@@ -1186,19 +1188,23 @@ set @Pallet_No = 1;
 set @Tool_Var = 1;
 SET @Current_Value = 10;
 set @Running_Total = 12;
+set @Running_Entire_Time = 1;
+set @Increment_By_Check = 0;
 set @Start_Time = '2020-10-25 09:50:00';
 set @End_Time = '2020-10-25 09:50:50';
-CALL InsAssemblyMachiningHistory(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
+CALL InsAssemblyMachiningHistoryV2(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Running_Entire_Time,@Increment_By_Check,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
 select * from Assembly_Machining_History where Assembly_Key = 25
 DROP PROCEDURE InsAssemblyMachiningHistory;
-CREATE PROCEDURE InsAssemblyMachiningHistory
+CREATE PROCEDURE InsAssemblyMachiningHistoryV2
 (
 	IN pCNC_Approved_Workcenter_Key INT,  
 	IN pPallet_No INT,
 	IN pTool_Var INT,
 	IN pCurrent_Value INT,
 	IN pRunning_Total INT,
+  	IN pRunning_Entire_Time INT,
+  	IN pIncrement_By_Check INT,	
 	IN pStart_Time datetime,
 	IN pEnd_Time datetime,
 	OUT pAssembly_Machining_History_Key INT,
@@ -1206,7 +1212,7 @@ CREATE PROCEDURE InsAssemblyMachiningHistory
 )
 BEGIN
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Current_Value,Running_Total,Start_Time,End_Time,Run_Time)
+	insert into Assembly_Machining_History_V2 (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Current_Value,Running_Total,Running_Entire_Time,Increment_By_Check,Start_Time,End_Time,Run_Time)
 	
 /*
 	set @pCNC_Approved_Workcenter_Key = 2;
@@ -1227,6 +1233,8 @@ BEGIN
 	tv.Tool_Key,
 	pCurrent_Value Current_Value,  -- Just changed this 11/14 not tested
 	pRunning_Total Running_Total, -- Just changed this 11/14 not tested
+	pRunning_Entire_Time Running_Entire_Time, -- changed this on 12/08
+	pIncrement_By_Check Increment_By_Check, -- added this on 12/08
 	pStart_Time Start_Time,
 	pEnd_Time End_Time,
 	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
@@ -1242,11 +1250,11 @@ BEGIN
 	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
 	and  tv.Tool_Var = pTool_Var;
    
-	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
+	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History_V2 where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
    	set pReturnValue = 0;
 END;
 
-select count(*) from Assembly_Machining_History  -- 984
+select count(*) from Assembly_Machining_History_V2  -- 984
 select 
 Assembly_Key,Current_Value,Running_Total,
 Start_Time,End_Time,Run_Time 
