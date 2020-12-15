@@ -140,16 +140,27 @@ select * from Part_v_Approved_Workcenter
  * tool life table records.  
  * There can be many part_operation records for a single part,operation ie. rework part_operation,
  * and we need to know which part_operation is running on the CNC when inserting Tool_Life records
- * ApprovedWorkcenter and Tool_Life both contain both 
+ * ApprovedWorkcenter and Tool_Life both contain  
  * the Part_Key and a Part_Operation_Key.  It seems to me that you would not need the
  * Part_Key if you know the Part_Operation_Key but there may be some reason for having 
  * both readily available; maybe a SPROC that needed the Part_Key and did not link
  * to the Part_Operation table to find it.  Or maybe it is to maintain legacy code
  * that did not use a operation key.  I'm just going to add it to be safe.
  */
--- drop table CNC_Approved_Workcenter
+
+/*
+ * This is not a CNC part operation.  There can be multiple CNC part operations for 1 plex operation.
+ * So this seems to be the best choice for where to put the Fastest_Cycle_Time column. If we store the
+ * Fastest_Cycle_Time here we can compare all CNC Fastest_Cycle_Time values to determine which ones
+ * are lagging. Since we are calculating the Cycle_Time when inserting AMH records we can compare
+ * this value to all of those values. Since some CNC are used to get more parts by several operators
+ * and are not anyone's primary machine It would be a good idea to know which CNC these are when 
+ * sending out alerts. 
+ */
+
+-- drop table CNC_Approved_Workcenter_V2
 -- truncate table CNC_Approved_Workcenter
-CREATE TABLE CNC_Approved_Workcenter (
+CREATE TABLE CNC_Approved_Workcenter_V2 (
 -- This key is very important because it is contained in the OCOM0.SSB code so we can identify 
 -- the Workcenter,CNC,Part,Part_Operation that an incoming datagram pertains to without passing all of the keys individually.
 	CNC_Approved_Workcenter_Key int NOT NULL,  -- Must be unique but is not the primary key.
@@ -159,15 +170,17 @@ CREATE TABLE CNC_Approved_Workcenter (
   	Part_Operation_Key int NOT NULL,
   	Workcenter_Key int NOT NULL,
 	CNC_Key int NOT NULL,
+	Fastest_Cycle_Time int NOT NULL,
+	Primary_CNC BIT NOT NULL,  -- IS THIS THE OPERATORS MAIN CNC
   	PRIMARY KEY (Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key)  -- this must be unique
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Links CNC to a part operation';
-insert into CNC_Approved_Workcenter (CNC_Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key)
+insert into CNC_Approved_Workcenter_V2 (CNC_Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key,Fastest_Cycle_Time,Primary_CNC)
 values
 -- Albion
-(2,300758,2794706,7874404,61090,3), -- Kunckles 6K LH
+(2,300758,2794706,7874404,61090,3,0,1), -- Kunckles 6K LH
 -- Avilla
-(3,310507,2809196,7917723,61324,1)  -- RDX AVILLA
-select * from CNC_Approved_Workcenter
+(3,310507,2809196,7917723,61324,1,0,1)  -- RDX AVILLA
+select * from CNC_Approved_Workcenter_V2
 -- truncate table Tool_Var_Map;
 CREATE TABLE Tool_Var_Map 
 (
@@ -245,11 +258,15 @@ CREATE TABLE Part_v_Part (
 insert into Part_v_Part (Plexus_Customer_No,Part_Key,Part_No,Revision,Name,Part_Type)
 values
 -- Albion
-(300758,2794706,'10103355','A','P558 6K Knuckle Left Hand','Knuckle'),
+(300758,2794706,'J','A','P558 6K Knuckle Left Hand','Knuckle'),
 -- Avilla
 (310507,2809196,'51393TJB A040M1','40-M1-','RDX Right Hand','Bracket'); 
 -- select * from Part_v_Part where Part_Key = 2809196
 
+/*
+ * This is not a CNC part operation.  There can be multiple CNC part operations for 1 plex operation.
+ * So we can't put fastest cycle times here.
+ */
 -- drop table Part_v_Operation
 -- truncate table Part_v_Operation
 CREATE TABLE Part_v_Operation (
@@ -624,42 +641,49 @@ CREATE TABLE Part_v_Tool_Assembly_Part (
 	Part_Key int NOT NULL,
 	Part_Operation_Key int NOT NULL, -- NOT A Plex column.  This is part of the standard information we collect for all Times and Tool Lifes.
 	Operation_Key int NOT NULL,
-  	Machining_Time int NOT NULL, -- NOT A Plex Column. In seconds. How long to finish the the Assemply operation
+
+/*
+ * This is not a CNC part operation.  There can be multiple CNC part operations for 1 plex operation.
+ * So we can not put machining time here.
+ */
+	
+  	-- Machining_Time int NOT NULL, -- NOT A Plex Column. In seconds. How long to finish the the Assemply operation.
+  	
   	PRIMARY KEY (Plexus_Customer_No,Tool_Assembly_Part_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='A subset of fields from Plex part_v_Tool_Assembly_Part';
-insert into Part_v_Tool_Assembly_Part (Plexus_Customer_No,Tool_Assembly_Part_Key,Assembly_Key,Part_Key,Part_Operation_Key,Operation_Key,Machining_Time)
+insert into Part_v_Tool_Assembly_Part (Plexus_Customer_No,Tool_Assembly_Part_Key,Assembly_Key,Part_Key,Part_Operation_Key,Operation_Key)
 values
 -- Avilla
-(310507,1,1,2809196,7917723,56400,-1),
-(310507,2,2,2809196,7917723,56400,-1),
-(310507,3,3,2809196,7917723,56400,-1),
-(310507,4,4,2809196,7917723,56400,-1),
-(310507,5,5,2809196,7917723,56400,-1),
-(310507,6,6,2809196,7917723,56400,-1),
-(310507,7,7,2809196,7917723,56400,-1),
-(310507,8,8,2809196,7917723,56400,-1),
-(310507,9,9,2809196,7917723,56400,-1),
-(310507,10,10,2809196,7917723,56400,-1),
-(310507,11,11,2809196,7917723,56400,-1),
-(310507,12,12,2809196,7917723,56400,-1),
+(310507,1,1,2809196,7917723,56400),
+(310507,2,2,2809196,7917723,56400),
+(310507,3,3,2809196,7917723,56400),
+(310507,4,4,2809196,7917723,56400),
+(310507,5,5,2809196,7917723,56400),
+(310507,6,6,2809196,7917723,56400),
+(310507,7,7,2809196,7917723,56400),
+(310507,8,8,2809196,7917723,56400),
+(310507,9,9,2809196,7917723,56400),
+(310507,10,10,2809196,7917723,56400),
+(310507,11,11,2809196,7917723,56400),
+(310507,12,12,2809196,7917723,56400),
 -- select * from Part_v_Tool_Assembly_Part 
 -- Albion
-(300758,13,13,2794706,7874404,51168,-1),
-(300758,14,14,2794706,7874404,51168,-1),
-(300758,15,15,2794706,7874404,51168,-1),
-(300758,16,16,2794706,7874404,51168,-1),
-(300758,17,17,2794706,7874404,51168,-1),
-(300758,18,18,2794706,7874404,51168,-1),
-(300758,19,19,2794706,7874404,51168,-1),
-(300758,20,20,2794706,7874404,51168,-1),
-(300758,21,21,2794706,7874404,51168,-1),
-(300758,22,22,2794706,7874404,51168,-1),
-(300758,23,23,2794706,7874404,51168,-1),
-(300758,24,24,2794706,7874404,51168,-1),
-(300758,25,25,2794706,7874404,51168,-1),
-(300758,26,26,2794706,7874404,51168,-1),
-(300758,27,27,2794706,7874404,51168,-1),
-(300758,28,28,2794706,7874404,51168,-1)
+(300758,13,13,2794706,7874404,51168),
+(300758,14,14,2794706,7874404,51168),
+(300758,15,15,2794706,7874404,51168),
+(300758,16,16,2794706,7874404,51168),
+(300758,17,17,2794706,7874404,51168),
+(300758,18,18,2794706,7874404,51168),
+(300758,19,19,2794706,7874404,51168),
+(300758,20,20,2794706,7874404,51168),
+(300758,21,21,2794706,7874404,51168),
+(300758,22,22,2794706,7874404,51168),
+(300758,23,23,2794706,7874404,51168),
+(300758,24,24,2794706,7874404,51168),
+(300758,25,25,2794706,7874404,51168),
+(300758,26,26,2794706,7874404,51168),
+(300758,27,27,2794706,7874404,51168),
+(300758,28,28,2794706,7874404,51168)
 select * from Part_v_Tool_Assembly_Part
 
 
@@ -679,13 +703,19 @@ CREATE TABLE Part_v_Tool_Op_Part_Life
 	Tool_Key int NOT NULL,
 	Part_Key int NOT NULL,
 	Operation_Key int NOT NULL, -- Tool_Life uses Part_Operation_Key but Tool_Op_Part_Life uses only the Operation_Key in Plex.
+
+	/*
+	 * This is not a CNC part operation.  There can be multiple CNC part operations for 1 plex operation.
+	 * So I don't think we can use this Standard_Tool_Life column.
+	 */
+
 	Standard_Tool_Life	int NOT NULL,  -- Tool list value; Average tool_life for non-regrindable tools or regrind-able tools that are new.
 	-- Rework_Tool_Life int NOT NULL,  -- Plex table did not have this column.  This column is of no value since it does not contain a regrind count.
 	-- to capture the info we need there needs to be a separate table that contains Tool_Life and Regrind count columns.  The Tool_Life table
 	-- has these columns so we can write a sproc that has a key of CNC_Key,Part_Key,Operation_Key,Assembly_Key,Tool_Key,Regrind_Count and calculates
 	-- the Tool_Life for this key without an actual table.  Although for reporting purposes a sproc can be called periodically to insert this 
 	-- information into a table,CNC_Tool_Op_Part_Life
-	Assembly_Key int NOT NULL,
+	Assembly_Key int NOT NULL
   	PRIMARY KEY (PCN,Tool_Key,Part_Key,Operation_Key,Assembly_Key)  -- This combination must be unique
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Plex table';
 insert into Part_v_Tool_Op_Part_Life (Tool_Op_Part_Life_Key,PCN,Tool_Key,Part_Key,Operation_Key,Standard_Tool_Life,Assembly_Key)
@@ -1008,6 +1038,8 @@ CREATE TABLE Part_v_Tool_Life
   	PRIMARY KEY (Tool_Life_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Subset of plex part_v_tool_life table';
 select * from Part_v_Tool_Life 
+-- CREATE TABLE Part_v_Tool_Life_12_10 SELECT * FROM Part_v_Tool_Life; -- backup 
+
 -- Part_v_Tool_Life;
 	set @pCNC_Approved_Workcenter_Key = 2;
 	-- set @pTool_Var = 1;  -- Assembly_Key = 13, tool_Key = 1
@@ -1155,14 +1187,14 @@ select * from Part_v_Tool_Op_Part_Life cpl
 
 */
 
-   
+create  table Assembly_Machining_History_12_15 select * from Assembly_Machining_History;  -- 4869
 /*
  * History of assembly cutting times
  * This is meant to log individual assembly cutting times.
  */
 -- drop table Assembly_Machining_History 
 -- truncate table Assembly_Machining_History
-CREATE TABLE Assembly_Machining_History_V2 (
+CREATE TABLE Assembly_Machining_History_V2(
 	Assembly_Machining_History_Key int NOT NULL AUTO_INCREMENT,
 	Plexus_Customer_No int,
 	Workcenter_Key	int NOT NULL,  
@@ -1174,45 +1206,230 @@ CREATE TABLE Assembly_Machining_History_V2 (
 	Tool_Key int NOT NULL,
 	Current_Value int NOT NULL,
 	Running_Total int NOT NULL,
-  	Running_Entire_Time int NOT NULL,
-  	Increment_By_Check int NOT NULL,	
+  	Running_Entire_Time BIT NOT NULL,
+  	Increment_By_Check BIT NOT NULL,	
+  	Zero_Detect BIT NOT NULL,
   	Start_Time datetime NOT NULL,  
   	End_Time datetime NOT NULL,  
-  	Run_Time int NOT NULL, -- In seconds. 
+  	Run_Time int NOT NULL, -- In seconds.
+  	Cycle_Time int NOT NULL , -- In seconds. 
+  	Counter_Jump BIT NOT NULL,
   	PRIMARY KEY (Assembly_Machining_History_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of assembly Machining times';
 
--- select * from Assembly_Machining_History
+-- select * from Assembly_Machining_History_V2
 set @CNC_Approved_Workcenter_Key = 2;
-set @Pallet_No = 1;
-set @Tool_Var = 1;
-SET @Current_Value = 10;
-set @Running_Total = 12;
+set @Tool_Var = 33;
 set @Running_Entire_Time = 1;
 set @Increment_By_Check = 0;
-set @Start_Time = '2020-10-25 09:50:00';
-set @End_Time = '2020-10-25 09:50:50';
-CALL InsAssemblyMachiningHistoryV2(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Running_Entire_Time,@Increment_By_Check,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
+set @Zero_Detect = 0;
+
+/*
+set @Pallet_No = 1;
+SET @Current_Value = 14;
+set @Running_Total = 14;
+set @Start_Time = '2020-12-14 14:50:50';
+set @End_Time = '2020-12-14 14:51:50';
+*/
+set @Pallet_No = 2;
+SET @Current_Value = 16;
+set @Running_Total = 16;
+set @Start_Time = '2020-12-14 14:55:50';  -- 5 min
+set @End_Time = '2020-12-14 14:56:50';  
+/*
+set @Pallet_No = 1;
+SET @Current_Value = 18;
+set @Running_Total = 18;
+set @Start_Time = '2020-12-14 15:00:50';  -- 5 min
+set @End_Time = '2020-12-14 15:01:50';  
+set @Pallet_No = 2;
+SET @Current_Value = 20;
+set @Running_Total = 20;
+set @Start_Time = '2020-12-14 15:05:50'; -- 5 min
+set @End_Time = '2020-12-14 15:06:50'; 
+
+set @Pallet_No = 1;
+SET @Current_Value = 22;
+set @Running_Total = 22;
+set @Start_Time = '2020-12-14 15:10:50';  -- 5 min
+set @End_Time = '2020-12-14 15:11:50';  
+set @Pallet_No = 2;
+SET @Current_Value = 62;
+set @Running_Total = 62;
+set @Start_Time = '2020-12-14 15:15:50'; -- 5 min
+set @End_Time = '2020-12-14 15:16:50'; 
+*/
+
+CALL InsAssemblyMachiningHistory_V2(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Running_Entire_Time,
+@Increment_By_Check,@Zero_Detect,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
-select * from Assembly_Machining_History where Assembly_Key = 25
-DROP PROCEDURE InsAssemblyMachiningHistory;
-CREATE PROCEDURE InsAssemblyMachiningHistoryV2
+select * from Assembly_Machining_History_V2 -- where Assembly_Key = 25
+select * from CNC_Approved_Workcenter_V2
+-- update CNC_Approved_Workcenter_V2 set Fastest_Cycle_Time = 0 where CNC_Key=3;
+-- drop table CNC_Approved_Workcenter_V2
+-- truncate table Assembly_Machining_History_V2
+-- CREATE TABLE Assembly_Machining_History_12_09 SELECT * FROM Assembly_Machining_History; -- backup 
+-- CREATE TABLE CNC_Approved_Workcenter_V2 select * from CNC_Approved_Workcenter; -- backup
+-- select * from Assembly_Machining_History_12_09
+DROP PROCEDURE InsAssemblyMachiningHistory_V2;
+CREATE PROCEDURE InsAssemblyMachiningHistory_V2
 (
 	IN pCNC_Approved_Workcenter_Key INT,  
 	IN pPallet_No INT,
 	IN pTool_Var INT,
 	IN pCurrent_Value INT,
 	IN pRunning_Total INT,
-  	IN pRunning_Entire_Time INT,
-  	IN pIncrement_By_Check INT,	
+  	IN pRunning_Entire_Time BIT,
+  	IN pIncrement_By_Check BIT,	
+  	IN pZero_Detect BIT,
 	IN pStart_Time datetime,
 	IN pEnd_Time datetime,
 	OUT pAssembly_Machining_History_Key INT,
 	OUT pReturnValue INT 
 )
 BEGIN
+	
+/*
+ * Calc Cycle_Time
+ */
+	-- set @pCNC_Approved_Workcenter_Key = 2;
+	-- set @pTool_Var = 339;
+	-- set @pStart_Time = '2020-12-14 14:50:50';
+	set @Plexus_Customer_No=0,@Workcenter_Key=0,@CNC_Key=0,@Part_Key=0,@Part_Operation_Key=0,@Assembly_Key=0,@Tool_Key=0,@Fastest_Cycle_Time=0,
+	@Last_Value_Same_Pallet=0,@Estimated_Cycles=0,@Increment_By=0,@Estimated_Increase=0,@Counter_Jump=0,@Number_Pallets_Running_Tool=1,
+	@Record_Count_Same_Pallet = 0,@Record_Count_Any_Pallet = 0;
+    select
+    -- caw.CNC_Approved_Workcenter_Key
+   	caw.Plexus_Customer_No,
+	caw.Workcenter_Key,
+	caw.CNC_Key,
+	caw.Part_Key,
+	caw.Part_Operation_Key,
+	tv.Assembly_Key,
+	tv.Tool_Key,
+	caw.Fastest_Cycle_Time
+	into @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time
+   	from CNC_Approved_Workcenter_V2 caw 
+	inner join Tool_Var_Map tv 
+	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
+	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key  -- 1 to many
+	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key
+	-- and  tv.Tool_Var = @pTool_Var;
+	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key
+	and  tv.Tool_Var = pTool_Var;
+
+	-- select @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time;
+	select 
+	count(*) 
+	into @Record_Count_Same_Pallet
+	from Assembly_Machining_History_V2 
+	-- select count(*) into @Prev_Record_Exists from Assembly_Machining_History 
+	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = pPallet_No
+	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	
+	select @Record_Count_Same_Pallet;
+
+	select 
+	count(*) 
+	into @Record_Count_Any_Pallet
+	from Assembly_Machining_History_V2 
+	-- select count(*) into @Prev_Record_Exists from Assembly_Machining_History 
+	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key
+	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	
+	select @Record_Count_Any_Pallet;
+
+	if (0 != @Record_Count_Any_Pallet )  then
+		select 
+		case 
+			when Pallet_No = pPallet_No then 1
+			else 2 
+		end
+		into @Number_Pallets_Running_Tool
+		from Assembly_Machining_History_V2 
+		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	end if;
+	select @Number_Pallets_Running_Tool;
+
+	/*
+	 * Debug section
+	 */
+	-- select 
+	-- pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),pStart_Time) 
+	-- from Assembly_Machining_History_V2 
+	-- where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
+	-- and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	
+	select 
+	-- pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),pStart_Time),
+	-- @pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@pStart_Time),
+	case  
+		when @Record_Count_Same_Pallet = 0 then null 
+		else max(start_time)  -- This is the Last_Start_Time for this Tool and Pallet_No.
+	end, 	
+	case 
+		when @Record_Count_Same_Pallet = 0 then 0
+		else TIMESTAMPDIFF(SECOND,max(start_time),pStart_Time) -- This is the Last_Start_Time for this Tool and Pallet_No.
+		-- else TIMESTAMPDIFF(SECOND,max(start_time),@pStart_Time) 
+	end
+	into @Last_Start_Time,@Cycle_Time 
+	from Assembly_Machining_History_V2 
+	-- select @Start_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@Start_Time) from Assembly_Machining_History 
+	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = pPallet_No
+	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	-- select max(Start_Time) from Assembly_Machining_History group by CNC_Approved_Workcenter_Key having CNC_Approved_Workcenter_Key=3
+	-- select * from CNC_Approved_Workcenter -- 
+	-- select @Last_Start_Time,@Cycle_Time;
+
+	if (0 != @Record_Count_Same_Pallet )  then
+		select Current_Value  -- This is the value of the counter for this Tool and Pallet_No.
+		into @Last_Value_Same_Pallet
+		from Assembly_Machining_History_V2 
+		-- select @Start_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@Start_Time) from Assembly_Machining_History 
+		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = pPallet_No
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key 
+		and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key and Start_Time = @Last_Start_Time;
+	end if;
+	select @Last_Value_Same_Pallet;
+
+	select 
+	-- opl.PCN Plexus_Customer_No,cpl.Workcenter_Key,cpl.CNC_Key,opl.Part_Key,cpl.Part_Operation_Key,opl.Assembly_Key,opl.Tool_Key, 
+	cpl.Increment_By 
+	into @Increment_By
+	from Part_v_Tool_Op_Part_Life opl
+	inner join CNC_Tool_Op_Part_Life cpl
+	on opl.Tool_Op_Part_Life_Key = cpl.Tool_Op_Part_Life_Key -- 1 to many
+	where opl.PCN= @Plexus_Customer_No and cpl.Workcenter_Key = @Workcenter_Key  and cpl.CNC_Key = @CNC_Key 
+	and opl.Part_Key = @Part_Key and cpl.Part_Operation_Key = @Part_Operation_Key and opl.Assembly_Key = @Assembly_Key and opl.Tool_Key = @Tool_Key;
+		
+	select @Increment_By;
+	if(0 != @Cycle_Time ) and (0 != @Fastest_Cycle_Time ) THEN 
+		set @Estimated_Cycles = @Cycle_Time / @Fastest_Cycle_Time;
+		set @Estimated_Increase = @Estimated_Cycles * @Increment_By * @Number_Pallets_Running_Tool;
+	end if;
+	select  @Estimated_Cycles,@Estimated_Increase;
+	if  (0!=@Estimated_Increase) and 
+		((@Last_Value_Same_Pallet + (5*@Estimated_Increase)) < pCurrent_Value) and 
+		(@Cycle_Time < (1.5*@Fastest_Cycle_Time))
+		then
+		set @Counter_Jump = 1;
+	end if;
+
+	select @Counter_Jump;
+
+	if (0 != @Cycle_Time ) and ((0 = @Fastest_Cycle_Time ) or (@Cycle_Time<@Fastest_Cycle_Time)) then
+	--    SELECT 'Update Fastest_Cycle_Time';
+	   	update CNC_Approved_Workcenter_V2 caw 
+	   	set Fastest_Cycle_Time = @Cycle_Time
+		-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key
+		-- and  tv.Tool_Var = @pTool_Var;
+		where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key;
+	end if;
+
   	-- This will be inserted when the Tool Assembly time starts
-	insert into Assembly_Machining_History_V2 (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Current_Value,Running_Total,Running_Entire_Time,Increment_By_Check,Start_Time,End_Time,Run_Time)
+	insert into Assembly_Machining_History_V2 (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Current_Value,
+	Running_Total,Running_Entire_Time,Increment_By_Check,Zero_Detect,Start_Time,End_Time,Run_Time,Cycle_Time,Counter_Jump)
 	
 /*
 	set @pCNC_Approved_Workcenter_Key = 2;
@@ -1222,39 +1439,109 @@ BEGIN
 	set @pEnd_Time = '2020-09-05 09:50:10';
 */
 	select 
-	caw.Plexus_Customer_No,
-	caw.Workcenter_Key,
-	caw.CNC_Key,
+	@Plexus_Customer_No,
+	@Workcenter_Key,
+	@CNC_Key,
 	pPallet_No Pallet_No,
-	-- @pPallet_No,
-	caw.Part_Key,
-	caw.Part_Operation_Key,
-	tv.Assembly_Key,
-	tv.Tool_Key,
+	@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,
 	pCurrent_Value Current_Value,  -- Just changed this 11/14 not tested
 	pRunning_Total Running_Total, -- Just changed this 11/14 not tested
 	pRunning_Entire_Time Running_Entire_Time, -- changed this on 12/08
 	pIncrement_By_Check Increment_By_Check, -- added this on 12/08
+	pZero_Detect Zero_Detect, -- added this on 12/10
 	pStart_Time Start_Time,
 	pEnd_Time End_Time,
-	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time 
-	--  @pStart_Time Start_Time,
-	-- @pEnd_Time End_Time,
-	-- TIMESTAMPDIFF(SECOND, @pStart_Time, @pEnd_Time) Run_Time 
+	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time,
+	@Cycle_Time Cycle_Time,
+	@Counter_Jump Counter_Jump; 
+	
+	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History_V2 where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
+   	set pReturnValue = 0;
+END;
+/*
+ * Add Cycle_Time
+ */
+-- select * from Assembly_Machining_History_V2 
+	set @pCNC_Approved_Workcenter_Key = 2;
+	set @pTool_Var = 33;
+	-- set @pStart_Time = '2020-12-14 14:50:50';
+	-- set @pStart_Time = '2020-12-14 15:05:50';  -- 10 min
+	set @pStart_Time = '2020-12-14 15:16:50'; -- 11 min
+/*
+2020-12-14 14:50:50|2020-12-14 14:55:50
+2020-12-14 15:05:50|2020-12-14 15:06:50
+select * from CNC_Approved_Workcenter caw 
+ */
+	set @Plexus_Customer_No=0,@Workcenter_Key=0,@CNC_Key=0,@Part_Key=0,@Part_Operation_Key=0,@Assembly_Key=0,@Tool_Key=0,@Fastest_Cycle_Time=0;
+	set @Record_Count = 0;
+if true then
+    SELECT 'Update Fastest_Cycle_Time';
+else 
+    SELECT 'DO NOT Update Fastest_Cycle_Time';
+end if;
+    select
+    -- caw.CNC_Approved_Workcenter_Key
+   	caw.Plexus_Customer_No,
+	caw.Workcenter_Key,
+	caw.CNC_Key,
+	caw.Part_Key,
+	caw.Part_Operation_Key,
+	tv.Assembly_Key,
+	tv.Tool_Key,
+	caw.Fastest_Cycle_Time
+	into @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time
    	from CNC_Approved_Workcenter caw 
 	inner join Tool_Var_Map tv 
 	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
 	and caw.CNC_Approved_Workcenter_Key = tv.CNC_Approved_Workcenter_Key  -- 1 to many
-	-- where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key 
-	-- and  tv.Tool_Var = @pTool_Var
-	where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key 
-	and  tv.Tool_Var = pTool_Var;
-   
-	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History_V2 where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
-   	set pReturnValue = 0;
-END;
+	where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key
+	and  tv.Tool_Var = @pTool_Var;
+	-- where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key
+	-- and  tv.Tool_Var = pTool_Var;
 
-select count(*) from Assembly_Machining_History_V2  -- 984
+	select @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time;
+
+select 
+count(*) 
+into @Record_Count
+from Assembly_Machining_History_V2 
+-- select count(*) into @Prev_Record_Exists from Assembly_Machining_History 
+where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
+and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+
+select @Record_Count;
+-- select @Start_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@Start_Time) from Assembly_Machining_History 
+
+select 
+-- @pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@pStart_Time),
+case 
+	when @Record_Count = 0 then 0
+	else TIMESTAMPDIFF(SECOND,max(start_time),@pStart_Time) 
+end
+into @Cycle_Time 
+from Assembly_Machining_History_V2 
+-- select @Start_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@Start_Time) from Assembly_Machining_History 
+where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
+and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+-- select max(Start_Time) from Assembly_Machining_History group by CNC_Approved_Workcenter_Key having CNC_Approved_Workcenter_Key=3
+-- select * from CNC_Approved_Workcenter -- 
+select @Cycle_Time;
+
+-- if (0 != @Cycle_Time ) and ((0 = @Fastest_Cycle_Time ) or (@Cycle_Time<@Fastest_Cycle_Time)) then
+if (0 != @Cycle_Time ) then
+    SELECT 'Update Fastest_Cycle_Time';
+else 
+    SELECT 'DO NOT Update Fastest_Cycle_Time';
+end if;
+
+   	update CNC_Approved_Workcenter caw 
+	where caw.CNC_Approved_Workcenter_Key=@pCNC_Approved_Workcenter_Key
+	and  tv.Tool_Var = @pTool_Var;
+	-- where caw.CNC_Approved_Workcenter_Key=pCNC_Approved_Workcenter_Key
+	-- and  tv.Tool_Var = pTool_Var;
+
+
+select count(*) from Assembly_Machining_History
 select 
 Assembly_Key,Current_Value,Running_Total,
 Start_Time,End_Time,Run_Time 

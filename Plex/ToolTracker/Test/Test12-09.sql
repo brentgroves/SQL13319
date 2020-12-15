@@ -21,7 +21,8 @@
 (T12=TAPER DREAMER)
 (T13=PLUNGE BACK SIDE HOLES)
 (T14=CHAMFER BACK SIDE OF HOLES)
-select * from Assembly_Machining_History amh order by Start_Time desc limit 10
+select * from Assembly_Machining_History amh order by Start_Time asc limit 10
+-- select * from Assembly_Machining_History_12_08 where 
 /*
  * T04,T08,and T30 all had the same issue of not recieving the counter
  * until it was 4 after a tool change. The patch was applied for
@@ -34,7 +35,9 @@ amh.Assembly_Key,amh.Start_Time, amh.Tool_Key,
 pta.Assembly_No,pta.Description,
 pt.Tool_No,tt.Tool_Type_Code,pt.Description, 
 pl.Standard_Tool_Life,amh.Current_Value,
-pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange
+pl.Standard_Tool_Life - amh.Current_Value PartsToToolChange,
+amh.Running_Entire_Time,
+amh.Increment_By_Check
 -- select count(*)
 from Assembly_Machining_History amh 
 inner join 
@@ -77,6 +80,7 @@ order by amh.Assembly_Key
 (T1=3 FACE MILL)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -105,6 +109,7 @@ where tvm.Tool_Var = 1
 (T21=2" FACE MILL)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -133,6 +138,7 @@ where tvm.Tool_Var = 21
 (T22=M6 TAP DRILL-P558)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -144,7 +150,7 @@ and amh.Tool_Key = tvm.Tool_Key
 where tvm.Tool_Var = 22
 and Start_Time > '2020-12-01' 
 order by Start_Time 
--- NO TOOL CHANGE YET
+
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
@@ -156,6 +162,7 @@ where tvm.Tool_Var = 22
 (T23=M6 TAP-P558)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -166,7 +173,7 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 23
 order by Start_Time 
--- NO TOOL CHANGE YET
+
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
@@ -178,6 +185,7 @@ where tvm.Tool_Var = 23
 (T72=15.1MM DRILL & CHAMFER)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -189,7 +197,7 @@ and amh.Tool_Key = tvm.Tool_Key
 where tvm.Tool_Var = 72
 and Start_Time > '2020-12-01' 
 order by Start_Time 
--- NO TOOL CHANGE YET
+
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
@@ -202,6 +210,7 @@ where tvm.Tool_Var = 72
 (T33=CCMT 432MT TT7015 INSERT)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -228,6 +237,7 @@ where tvm.Tool_Var = 33
 (END T33=COMBO ROUGH BORE-P558)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -238,8 +248,8 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 34
 and Start_Time > '2020-12-01' 
-
 order by Start_Time 
+
 -- NO TOOL CHANGE TODAY
 select tl.* 
 from Part_v_Tool_Life tl
@@ -252,6 +262,7 @@ where tvm.Tool_Var = 34
 (T30=FINISH CENTER BORES-P558)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -262,7 +273,6 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 30
 and Start_Time > '2020-12-01' 
--- PASSED
 order by Start_Time 
 /*
  * Found a bug in UDP13319.ToolLifeUpdate(). When we did not receive the COM9 call after a tool change
@@ -290,6 +300,7 @@ where tvm.Tool_Var = 30
 (T4=16.95MM DRILL)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -300,7 +311,6 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 4
 and Start_Time > '2020-12-01' 
-
 order by Start_Time 
 /*
  * Found a bug in UDP13319.ToolLifeUpdate(). When we did not receive the COM9 call after a tool change
@@ -324,9 +334,11 @@ on tl.PCN = tvm.Plexus_Customer_No
 and tl.Assembly_Key = tvm.Assembly_Key 
 and tl.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 4
+
 (T15=1.937 ROUGH DRILL)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -338,7 +350,7 @@ and amh.Tool_Key = tvm.Tool_Key
 where tvm.Tool_Var = 15
 and Start_Time > '2020-12-01' 
 order by Start_Time 
--- NO TOOL CHANGE TODAY
+
 select tl.* 
 from Part_v_Tool_Life tl
 inner join Tool_Var_Map tvm 
@@ -349,6 +361,7 @@ where tvm.Tool_Var = 15
 (T7=DATUM J ROUGH BORE & BACK FACE)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -373,6 +386,7 @@ where tvm.Tool_Var = 7
 (T6= SHLT110408N-PH1 IN2005 INSERT)
 select 
 amh.Assembly_Key,amh.Tool_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -383,7 +397,6 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 6
 and Start_Time > '2020-12-01' 
-
 order by Start_Time 
 -- 2020-11-20 02:16:26
 select tl.* 
@@ -399,6 +412,7 @@ where tvm.Tool_Var = 6
 
 select 
 amh.Assembly_Key,amh.Tool_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -424,6 +438,7 @@ where tvm.Tool_Var = 66
 (T9=FINISH L BORE)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -443,9 +458,11 @@ on tl.PCN = tvm.Plexus_Customer_No
 and tl.Assembly_Key = tvm.Assembly_Key 
 and tl.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 9
+
 (T8=FINISH J BORE)
 select 
-amh.Assembly_Machining_History_Key,amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,Running_Entire_Time,Increment_By_Check,
+amh.Assembly_Machining_History_Key,amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,Zero_Detect,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -456,7 +473,7 @@ and amh.Assembly_Key = tvm.Assembly_Key
 and amh.Tool_Key = tvm.Tool_Key 
 where tvm.Tool_Var = 8
 and amh.Start_Time > '2020-12-01'
-order by Start_Time
+order by Start_Time 
 -- delete from Assembly_Machining_History amh where amh.Assembly_Machining_History_Key between 7198 and 7203
 /*
  * Found a bug in UDP13319.ToolLifeUpdate(). When we did not receive the COM9 call after a tool change
@@ -476,6 +493,7 @@ where tvm.Tool_Var = 8
 (T12=TAPER DREAMER)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -499,6 +517,7 @@ where tvm.Tool_Var = 12
 (T13=PLUNGE BACK SIDE HOLES)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
@@ -522,6 +541,7 @@ where tvm.Tool_Var = 13
 (T14=CHAMFER BACK SIDE OF HOLES)
 select 
 amh.Assembly_Key,pta.Assembly_No, Current_Value,Running_Total,
+Running_Entire_Time,Increment_By_Check,
 Start_Time,End_Time,Run_Time 
 from Assembly_Machining_History amh
 inner join Part_v_Tool_Assembly pta 
