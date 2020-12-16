@@ -170,16 +170,18 @@ CREATE TABLE CNC_Approved_Workcenter_V2 (
   	Part_Operation_Key int NOT NULL,
   	Workcenter_Key int NOT NULL,
 	CNC_Key int NOT NULL,
+	Pallets_Per_Tool int NOT NULL,
 	Fastest_Cycle_Time int NOT NULL,
 	Primary_CNC BIT NOT NULL,  -- IS THIS THE OPERATORS MAIN CNC
   	PRIMARY KEY (Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key)  -- this must be unique
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='Links CNC to a part operation';
-insert into CNC_Approved_Workcenter_V2 (CNC_Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key,Fastest_Cycle_Time,Primary_CNC)
+insert into CNC_Approved_Workcenter_V2 (CNC_Approved_Workcenter_Key,Plexus_Customer_No,Part_Key,
+Part_Operation_Key,Workcenter_Key,CNC_Key,Pallets_Per_Tool,Fastest_Cycle_Time,Primary_CNC)
 values
 -- Albion
-(2,300758,2794706,7874404,61090,3,0,1), -- Kunckles 6K LH
+(2,300758,2794706,7874404,61090,3,2,0,0), -- Kunckles 6K LH
 -- Avilla
-(3,310507,2809196,7917723,61324,1,0,1)  -- RDX AVILLA
+(3,310507,2809196,7917723,61324,1,2,0,1)  -- RDX AVILLA
 select * from CNC_Approved_Workcenter_V2
 -- truncate table Tool_Var_Map;
 CREATE TABLE Tool_Var_Map 
@@ -1188,12 +1190,61 @@ select * from Part_v_Tool_Op_Part_Life cpl
 */
 
 create  table Assembly_Machining_History_12_15 select * from Assembly_Machining_History;  -- 4869
+
+/*
+ * Link this to the Plex Issue Tracking System.
+ */
+drop table Issue;
+CREATE TABLE Issue
+(
+	Issue_Key int NOT NULL AUTO_INCREMENT,	
+	Plexus_Customer_No int NOT NULL,
+	Issue_Type int NOT NULL,
+	Workcenter_Key	int NOT NULL,  
+	CNC_Key int NOT NULL,
+	Pallet_No int NOT NULL,
+	Part_Key int NOT NULL,
+	Part_Operation_Key int NOT NULL,
+	Assembly_Key int NOT NULL, 
+	Tool_Key int NOT NULL,
+	Start_Time datetime NOT NULL,  -- AMH Start_Time  -- When issue was detected at InsAssemblyMachiningHistory SPROC.
+	Previous_Time datetime NULL,  -- AMH Start_Time  
+	Cycle_Time int NULL,
+	Fastest_Cycle_Time int NULL,
+	Current_Value int NULL,
+	Previous_Value int NULL,
+	Inactive_Pallet int NULL,
+	Description varchar(500) NULL,
+  	PRIMARY KEY (Issue_Key)
+)	
+
+drop table Issue_Type;
+CREATE TABLE Issue_Type
+(
+	Plexus_Customer_No int,
+	Issue_Type_Key int NOT NULL,
+	Name varchar(50),
+  	PRIMARY KEY (Plexus_Customer_No,Issue_Type_Key)  -- this must be unique
+)
+
+insert into Issue_Type (Plexus_Customer_No,Issue_Type_Key,Name)
+values
+-- Albion
+(300758,1,'Unexpected_Counter_Value'),
+(300758,2,'Counter_Jump'),
+(300758,3,'Pallet_Looped_Out'),
+-- Avilla
+(310507,1,'Unexpected_Counter_Value'),
+(310507,2,'Counter_Jump'),
+(310507,3,'Pallet_Looped_Out')
+
+select * from Issue_Type;
 /*
  * History of assembly cutting times
  * This is meant to log individual assembly cutting times.
  */
--- drop table Assembly_Machining_History 
--- truncate table Assembly_Machining_History
+-- drop table Assembly_Machining_History_V2 
+-- truncate table Assembly_Machining_History_V2
 CREATE TABLE Assembly_Machining_History_V2(
 	Assembly_Machining_History_Key int NOT NULL AUTO_INCREMENT,
 	Plexus_Customer_No int,
@@ -1212,8 +1263,10 @@ CREATE TABLE Assembly_Machining_History_V2(
   	Start_Time datetime NOT NULL,  
   	End_Time datetime NOT NULL,  
   	Run_Time int NOT NULL, -- In seconds.
-  	Cycle_Time int NOT NULL , -- In seconds. 
+  	Cycle_Time int NOT NULL, -- In seconds. 
+  	Unexpected_Counter_Value BIT NOT NULL,
   	Counter_Jump BIT NOT NULL,
+  	Pallet_Looped_Out BIT NOT NULL,
   	PRIMARY KEY (Assembly_Machining_History_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of assembly Machining times';
 
@@ -1230,18 +1283,19 @@ SET @Current_Value = 14;
 set @Running_Total = 14;
 set @Start_Time = '2020-12-14 14:50:50';
 set @End_Time = '2020-12-14 14:51:50';
-*/
+
 set @Pallet_No = 2;
 SET @Current_Value = 16;
 set @Running_Total = 16;
 set @Start_Time = '2020-12-14 14:55:50';  -- 5 min
 set @End_Time = '2020-12-14 14:56:50';  
-/*
+
 set @Pallet_No = 1;
 SET @Current_Value = 18;
 set @Running_Total = 18;
 set @Start_Time = '2020-12-14 15:00:50';  -- 5 min
 set @End_Time = '2020-12-14 15:01:50';  
+
 set @Pallet_No = 2;
 SET @Current_Value = 20;
 set @Running_Total = 20;
@@ -1253,16 +1307,56 @@ SET @Current_Value = 22;
 set @Running_Total = 22;
 set @Start_Time = '2020-12-14 15:10:50';  -- 5 min
 set @End_Time = '2020-12-14 15:11:50';  
+
+-- TEST Unexpected_Counter_Value,Counter_Jump
 set @Pallet_No = 2;
-SET @Current_Value = 62;
-set @Running_Total = 62;
+SET @Current_Value = 42;
+set @Running_Total = 42;
 set @Start_Time = '2020-12-14 15:15:50'; -- 5 min
 set @End_Time = '2020-12-14 15:16:50'; 
 */
 
+set @Pallet_No = 1;
+SET @Current_Value = 44;
+set @Running_Total = 44;
+set @Start_Time = '2020-12-14 15:20:50'; -- 5 min
+set @End_Time = '2020-12-14 15:21:50'; 
+/*
+-- TEST Unexpected_Counter_Value,Counter_Jump
+set @Pallet_No = 2;
+SET @Current_Value = 64;
+set @Running_Total = 64;
+set @Start_Time = '2020-12-14 15:25:50'; -- 5 min
+set @End_Time = '2020-12-14 15:26:50'; 
+
+set @Pallet_No = 1;
+SET @Current_Value = 66;
+set @Running_Total = 66;
+set @Start_Time = '2020-12-14 15:30:50'; -- 5 min
+set @End_Time = '2020-12-14 15:31:50'; 
+
+-- Test Unexpected_Counter_Value
+set @Pallet_No = 2;
+SET @Current_Value = 70;
+set @Running_Total = 70;
+set @Start_Time = '2020-12-14 15:35:50'; -- 5 min
+set @End_Time = '2020-12-14 15:36:50'; 
+
+-- Test Looped_Out
+set @Pallet_No = 2;
+SET @Current_Value = 68;
+set @Running_Total = 68;
+set @Start_Time = '2020-12-14 15:30:50'; -- 5 min
+set @End_Time = '2020-12-14 15:31:50'; 
+
+*/
+-- select * from Issue_Type;
+-- ADD STARVING,TOOL_CHANGE_TIME
+-- FIX BUG ONLY 1 ISSUE SHOULD BE ADDED WHEN THERE IS A COUNTER JUMP THERE IS NOW 1 FOR EACH PALLET.
 CALL InsAssemblyMachiningHistory_V2(@CNC_Approved_Workcenter_Key,@Pallet_No,@Tool_Var,@Current_Value,@Running_Total,@Running_Entire_Time,
 @Increment_By_Check,@Zero_Detect,@Start_Time,@End_Time,@Assembly_Machining_History_Key,@Return_Value);
 select @Assembly_Machining_History_Key,@Return_Value;
+select * from Issue;
 select * from Assembly_Machining_History_V2 -- where Assembly_Key = 25
 select * from CNC_Approved_Workcenter_V2
 -- update CNC_Approved_Workcenter_V2 set Fastest_Cycle_Time = 0 where CNC_Key=3;
@@ -1271,6 +1365,8 @@ select * from CNC_Approved_Workcenter_V2
 -- CREATE TABLE Assembly_Machining_History_12_09 SELECT * FROM Assembly_Machining_History; -- backup 
 -- CREATE TABLE CNC_Approved_Workcenter_V2 select * from CNC_Approved_Workcenter; -- backup
 -- select * from Assembly_Machining_History_12_09
+-- truncate table Issue;
+
 DROP PROCEDURE InsAssemblyMachiningHistory_V2;
 CREATE PROCEDURE InsAssemblyMachiningHistory_V2
 (
@@ -1296,19 +1392,25 @@ BEGIN
 	-- set @pTool_Var = 339;
 	-- set @pStart_Time = '2020-12-14 14:50:50';
 	set @Plexus_Customer_No=0,@Workcenter_Key=0,@CNC_Key=0,@Part_Key=0,@Part_Operation_Key=0,@Assembly_Key=0,@Tool_Key=0,@Fastest_Cycle_Time=0,
-	@Last_Value_Same_Pallet=0,@Estimated_Cycles=0,@Increment_By=0,@Estimated_Increase=0,@Counter_Jump=0,@Number_Pallets_Running_Tool=1,
-	@Record_Count_Same_Pallet = 0,@Record_Count_Any_Pallet = 0;
+	@Last_Value_Same_Pallet=0,@Estimated_Cycles=0,@Increment_By=0,@Estimated_Increase=0,@Number_Pallets_Running_Tool=1,
+	@Pallets_Per_Tool=0,@Record_Count_Same_Pallet = 0,@Record_Count_Any_Pallet = 0,@Unexpected_Counter_Value =0,@Counter_Jump=0,@Pallet_Looped_Out=0;
+
+	set @Shift_Start = Shift_Start(pStart_Time);
+	-- set @Shift_Start = Shift_Start(NOW());
+	-- select * from Assembly_Machining_History amh where Start_Time > @Shift_Start
+	
     select
     -- caw.CNC_Approved_Workcenter_Key
    	caw.Plexus_Customer_No,
 	caw.Workcenter_Key,
 	caw.CNC_Key,
+	caw.Pallets_Per_Tool,
 	caw.Part_Key,
 	caw.Part_Operation_Key,
 	tv.Assembly_Key,
 	tv.Tool_Key,
 	caw.Fastest_Cycle_Time
-	into @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time
+	into @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Pallets_Per_Tool,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time
    	from CNC_Approved_Workcenter_V2 caw 
 	inner join Tool_Var_Map tv 
 	on caw.Plexus_Customer_No = tv.Plexus_Customer_No
@@ -1348,19 +1450,30 @@ BEGIN
 		into @Number_Pallets_Running_Tool
 		from Assembly_Machining_History_V2 
 		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
-		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
+		order by Assembly_Machining_History_Key desc 
+		LIMIT 1 OFFSET 0;
 	end if;
 	select @Number_Pallets_Running_Tool;
 
-	/*
-	 * Debug section
-	 */
-	-- select 
-	-- pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),pStart_Time) 
-	-- from Assembly_Machining_History_V2 
-	-- where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
-	-- and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
-	
+	if ((0 != @Record_Count_Any_Pallet ) and (@Pallets_Per_Tool != @Number_Pallets_Running_Tool)) then
+		set @Pallet_Looped_Out = 1;
+		select count(*) into @Already_Added from Issue 
+		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = pPallet_No
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
+		and Start_Time > @Shift_Start;
+		if(0 = @Already_Added) THEN 
+			if (1 = pPallet_No) then
+				set @Inactive_Pallet = 2;
+			else
+				set @Inactive_Pallet = 1;
+			end if;
+			insert into Issue (Plexus_Customer_No,Issue_Type,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Start_Time,Inactive_Pallet)
+			values (@Plexus_Customer_No,3,@Workcenter_Key,@CNC_Key,pPallet_No,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,pStart_Time,@Inactive_Pallet);
+		end if;
+	end if;
+	select @Pallet_Looped_Out;
+
 	select 
 	-- pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),pStart_Time),
 	-- @pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@pStart_Time),
@@ -1404,19 +1517,41 @@ BEGIN
 	and opl.Part_Key = @Part_Key and cpl.Part_Operation_Key = @Part_Operation_Key and opl.Assembly_Key = @Assembly_Key and opl.Tool_Key = @Tool_Key;
 		
 	select @Increment_By;
-	if(0 != @Cycle_Time ) and (0 != @Fastest_Cycle_Time ) THEN 
+
+	-- Counter jump check
+	if((0 != @Cycle_Time ) and (0 != @Fastest_Cycle_Time )) THEN 
 		set @Estimated_Cycles = @Cycle_Time / @Fastest_Cycle_Time;
 		set @Estimated_Increase = @Estimated_Cycles * @Increment_By * @Number_Pallets_Running_Tool;
-	end if;
-	select  @Estimated_Cycles,@Estimated_Increase;
-	if  (0!=@Estimated_Increase) and 
-		((@Last_Value_Same_Pallet + (5*@Estimated_Increase)) < pCurrent_Value) and 
-		(@Cycle_Time < (1.5*@Fastest_Cycle_Time))
-		then
-		set @Counter_Jump = 1;
+		if(pCurrent_Value > (@Last_Value_Same_Pallet + (5*@Estimated_Increase))) and 
+		   (@Cycle_Time < (1.5*@Fastest_Cycle_Time)) then
+			set @Counter_Jump = 1;
+			-- select * from Issue_Type;
+			insert into Issue (Plexus_Customer_No,Issue_Type,Workcenter_Key,CNC_Key,Pallet_No,
+			Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Start_Time,Previous_Time,Cycle_Time,Fastest_Cycle_Time,Current_Value,Previous_Value)
+			values (@Plexus_Customer_No,2,@Workcenter_Key,@CNC_Key,pPallet_No,@Part_Key,@Part_Operation_Key,
+			@Assembly_Key,@Tool_Key,pStart_Time,@Last_Start_Time,@Cycle_Time,@Fastest_Cycle_Time,pCurrent_Value,@Last_Value_Same_Pallet);
+		end if;
 	end if;
 
-	select @Counter_Jump;
+	select  @Estimated_Cycles,@Estimated_Increase,@Counter_Jump;
+
+	if(0 != @Last_Value_Same_Pallet) then 
+		set @Unexpected_Counter_Value = case 
+			when pCurrent_Value != (@Last_Value_Same_Pallet + (@Increment_By * @Number_Pallets_Running_Tool)) then 1 
+			else 0
+		end;
+	end if;
+
+	-- Only insert this record if a Counter_Jump has not already been logged.
+	if (0 = @Counter_Jump) and (1=@Unexpected_Counter_Value) then
+		insert into Issue (Plexus_Customer_No,Issue_Type,Workcenter_Key,CNC_Key,Pallet_No,
+		Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Start_Time,Previous_Time,Cycle_Time,Fastest_Cycle_Time,Current_Value,Previous_Value)
+		values (@Plexus_Customer_No,1,@Workcenter_Key,@CNC_Key,pPallet_No,@Part_Key,@Part_Operation_Key,
+		@Assembly_Key,@Tool_Key,pStart_Time,@Last_Start_Time,@Cycle_Time,@Fastest_Cycle_Time,pCurrent_Value,@Last_Value_Same_Pallet);
+	
+	end if;
+
+	select @Unexpected_Counter_Value;
 
 	if (0 != @Cycle_Time ) and ((0 = @Fastest_Cycle_Time ) or (@Cycle_Time<@Fastest_Cycle_Time)) then
 	--    SELECT 'Update Fastest_Cycle_Time';
@@ -1429,7 +1564,8 @@ BEGIN
 
   	-- This will be inserted when the Tool Assembly time starts
 	insert into Assembly_Machining_History_V2 (Plexus_Customer_No,Workcenter_Key,CNC_Key,Pallet_No,Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Current_Value,
-	Running_Total,Running_Entire_Time,Increment_By_Check,Zero_Detect,Start_Time,End_Time,Run_Time,Cycle_Time,Counter_Jump)
+	Running_Total,Running_Entire_Time,Increment_By_Check,Zero_Detect,Start_Time,End_Time,Run_Time,Cycle_Time,
+	Unexpected_Counter_Value,Counter_Jump,Pallet_Looped_Out)
 	
 /*
 	set @pCNC_Approved_Workcenter_Key = 2;
@@ -1453,11 +1589,14 @@ BEGIN
 	pEnd_Time End_Time,
 	TIMESTAMPDIFF(SECOND, pStart_Time, pEnd_Time) Run_Time,
 	@Cycle_Time Cycle_Time,
-	@Counter_Jump Counter_Jump; 
+	@Unexpected_Counter_Value Unexpected_Counter_Value,
+	@Counter_Jump Counter_Jump,
+	@Pallet_Looped_Out Pallet_Looped_Out;
 	
 	set pAssembly_Machining_History_Key = (select Assembly_Machining_History_Key from Assembly_Machining_History_V2 where Assembly_Machining_History_Key =(SELECT LAST_INSERT_ID()));
    	set pReturnValue = 0;
 END;
+select * from Issue;
 /*
  * Add Cycle_Time
  */
