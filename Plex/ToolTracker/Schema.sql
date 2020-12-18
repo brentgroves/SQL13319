@@ -1284,26 +1284,25 @@ set @Running_Total = 14;
 set @Start_Time = '2020-12-14 14:50:50';
 set @End_Time = '2020-12-14 14:51:50';
 
+
 set @Pallet_No = 2;
 SET @Current_Value = 16;
 set @Running_Total = 16;
 set @Start_Time = '2020-12-14 14:55:50';  -- 5 min
 set @End_Time = '2020-12-14 14:56:50';  
 
-
+-- Fastest_Cycle_Time test
 set @Pallet_No = 1;
 SET @Current_Value = 18;
 set @Running_Total = 18;
 set @Start_Time = '2020-12-14 15:00:50';  -- 5 min
 set @End_Time = '2020-12-14 15:01:50';  
 
-
 set @Pallet_No = 2;
 SET @Current_Value = 20;
 set @Running_Total = 20;
 set @Start_Time = '2020-12-14 15:05:50'; -- 5 min
 set @End_Time = '2020-12-14 15:06:50'; 
-
 
 set @Pallet_No = 1;
 SET @Current_Value = 22;
@@ -1312,18 +1311,18 @@ set @Start_Time = '2020-12-14 15:10:50';  -- 5 min
 set @End_Time = '2020-12-14 15:11:50';  
 
 
--- TEST Unexpected_Counter_Value,Counter_Jump
+-- TEST Counter_Jump, @Number_Pallets_Running_Tool = 2
 set @Pallet_No = 2;
 SET @Current_Value = 42;
 set @Running_Total = 42;
 set @Start_Time = '2020-12-14 15:15:50'; -- 5 min
 set @End_Time = '2020-12-14 15:16:50'; 
 
--- FIX BUG Unexpected_Counter_Value Issue should not be inserted if the Previous record was a counter_jump. 
--- DO SOME TOOLING WORK ON FRIDAY
+
+-- Test Unexpected_Counter_Value 
 set @Pallet_No = 1;
-SET @Current_Value = 44;
-set @Running_Total = 44;
+SET @Current_Value = 46;
+set @Running_Total = 46;
 set @Start_Time = '2020-12-14 15:20:50'; -- 5 min
 set @End_Time = '2020-12-14 15:21:50'; 
 
@@ -1399,9 +1398,9 @@ BEGIN
 	-- set @pCNC_Approved_Workcenter_Key = 2;
 	-- set @pTool_Var = 339;
 	-- set @pStart_Time = '2020-12-14 14:50:50';
-	set @Plexus_Customer_No=0,@Workcenter_Key=0,@CNC_Key=0,@Part_Key=0,@Part_Operation_Key=0,@Assembly_Key=0,@Tool_Key=0,@Fastest_Cycle_Time=0,
-	@Last_Start_Time_Same_Pallet=0,@Last_Start_Time_Other_Pallet=0,@Last_Value_Same_Pallet=0,@Estimated_Cycles=0,@Increment_By=0,@Estimated_Increase=0,@Number_Pallets_Running_Tool=1,
-	@Pallets_Per_Tool=0,@Record_Count_Same_Pallet = 0,@Record_Count_Any_Pallet = 0,@Unexpected_Counter_Value =0,@Counter_Jump=0,@Pallet_Looped_Out=0;
+	-- set @Plexus_Customer_No=0,@Workcenter_Key=0,@CNC_Key=0,@Part_Key=0,@Part_Operation_Key=0,@Assembly_Key=0,@Tool_Key=0,@Fastest_Cycle_Time=0,
+	-- @Last_Start_Time_Same_Pallet=0,@Last_Start_Time_Other_Pallet=0,@Last_Value_Same_Pallet=0,@Estimated_Cycles=0,@Increment_By=0,@Estimated_Increase=0,@Number_Pallets_Running_Tool=1,
+	-- @Pallets_Per_Tool=0,@Record_Count_Same_Pallet = 0,@Record_Count_Any_Pallet = 0,@Unexpected_Counter_Value =0,@Counter_Jump=0,@Pallet_Looped_Out=0;
 
 	-- TESTING ONLY
 	set @Shift_Start = Shift_Start(STR_TO_DATE('2020-12-14 14:50:50','%Y-%m-%d %H:%i:%s'));
@@ -1550,15 +1549,22 @@ BEGIN
 	case  
 		when @Record_Count_Other_Pallet = 0 then null 
 		else max(start_time)  -- This is the Last_Start_Time_Other_Pallet for this Tool.
-	end 	
+	end
 	into @Last_Start_Time_Other_Pallet 
 	from Assembly_Machining_History_V2 
-	-- select @Start_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@Start_Time) from Assembly_Machining_History 
 	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
 	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
-	-- select max(Start_Time) from Assembly_Machining_History group by CNC_Approved_Workcenter_Key having CNC_Approved_Workcenter_Key=3
-	-- select * from CNC_Approved_Workcenter -- 
 	select @Last_Start_Time_Other_Pallet;
+
+	select 
+	Unexpected_Counter_Value,Counter_Jump
+	into @Unexpected_Counter_Value_Other_Pallet,@Counter_Jump_Other_Pallet 
+	from Assembly_Machining_History_V2 
+	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
+	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
+	and Start_Time = @Last_Start_Time_Other_Pallet;
+
+	select @Unexpected_Counter_Value_Other_Pallet,@Counter_Jump_Other_Pallet;
 
 	if (0 != @Record_Count_Same_Pallet )  then
 		select Current_Value  -- This is the value of the counter for this Tool and Pallet_No.
@@ -1583,8 +1589,11 @@ BEGIN
 		
 	select @Increment_By;
 
+	set @Counter_Jump = 0;
 	-- Counter jump check
-	if((0 != @Number_Pallets_Running_Tool) and (0 != @Cycle_Time ) and (0 != @Fastest_Cycle_Time )) THEN 
+	if((0 = @Counter_Jump_Other_Pallet ) and 
+	   (0 != @Number_Pallets_Running_Tool) and 
+	   (0 != @Cycle_Time ) and (0 != @Fastest_Cycle_Time )) THEN 
 		set @Estimated_Cycles = @Cycle_Time / @Fastest_Cycle_Time;
 		set @Estimated_Increase = @Estimated_Cycles * @Increment_By * @Number_Pallets_Running_Tool;
 		if(pCurrent_Value > (@Last_Value_Same_Pallet + (5*@Estimated_Increase))) and 
@@ -1603,23 +1612,26 @@ BEGIN
 			end if;
 		end if;
 	end if;
-
 	select  @Estimated_Cycles,@Estimated_Increase,@Counter_Jump;
 
-	if((0 != @Last_Value_Same_Pallet) and (0 != @Number_Pallets_Running_Tool)) then 
+	set @Unexpected_Counter_Value = 0;
+	if ((0 = @Counter_Jump) and (0 != @Last_Value_Other_Pallet)) then
+/*	
+	   (0 = @Unexpected_Counter_Value_Other_Pallet) and 
+	   (0 = @Counter_Jump_Other_Pallet ) and 
+	   (0 = @Counter_Jump) and
+	   (0 != @Last_Value_Same_Pallet) and (0 != @Number_Pallets_Running_Tool)) then 
+*/	   
 		set @Unexpected_Counter_Value = case 
-			when pCurrent_Value != (@Last_Value_Same_Pallet + (@Increment_By * @Number_Pallets_Running_Tool)) then 1 
+			when pCurrent_Value != (@Last_Value_Other_Pallet + @Increment_By) then 1 
 			else 0
 		end;
-	end if;
-
-	-- Only insert this record if a Counter_Jump has not already been logged.
-	if (0 = @Counter_Jump) and (1=@Unexpected_Counter_Value) then
-		insert into Issue (Plexus_Customer_No,Issue_Type_Key,Workcenter_Key,CNC_Key,Pallet_No,
-		Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Start_Time,Previous_Time,Cycle_Time,Fastest_Cycle_Time,Current_Value,Previous_Value)
-		values (@Plexus_Customer_No,1,@Workcenter_Key,@CNC_Key,pPallet_No,@Part_Key,@Part_Operation_Key,
-		@Assembly_Key,@Tool_Key,pStart_Time,@Last_Start_Time_Same_Pallet,@Cycle_Time,@Fastest_Cycle_Time,pCurrent_Value,@Last_Value_Same_Pallet);
-	
+		if(1 = @Unexpected_Counter_Value) then
+			insert into Issue (Plexus_Customer_No,Issue_Type_Key,Workcenter_Key,CNC_Key,Pallet_No,
+			Part_Key,Part_Operation_Key,Assembly_Key,Tool_Key,Start_Time,Previous_Time,Cycle_Time,Fastest_Cycle_Time,Current_Value,Previous_Value)
+			values (@Plexus_Customer_No,1,@Workcenter_Key,@CNC_Key,pPallet_No,@Part_Key,@Part_Operation_Key,
+			@Assembly_Key,@Tool_Key,pStart_Time,@Last_Start_Time_Same_Pallet,@Cycle_Time,@Fastest_Cycle_Time,pCurrent_Value,@Last_Value_Same_Pallet);
+		end if;
 	end if;
 
 	select @Unexpected_Counter_Value;
