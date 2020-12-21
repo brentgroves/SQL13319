@@ -170,7 +170,7 @@ CREATE TABLE CNC_Approved_Workcenter_V2 (
   	Part_Operation_Key int NOT NULL,
   	Workcenter_Key int NOT NULL,
 	CNC_Key int NOT NULL,
-	Pallets_Per_Tool int NOT NULL,
+	Pallets_Per_Tool int NOT NULL,  -- ARE MULTIPLE PALLETS RUNNING THE SAME TOOL.
 	Fastest_Cycle_Time int NOT NULL,
 	Primary_CNC BIT NOT NULL,  -- IS THIS THE OPERATORS MAIN CNC
   	PRIMARY KEY (Plexus_Customer_No,Part_Key,Part_Operation_Key,Workcenter_Key,CNC_Key)  -- this must be unique
@@ -1190,6 +1190,60 @@ select * from Part_v_Tool_Op_Part_Life cpl
 */
 
 create  table Assembly_Machining_History_12_15 select * from Assembly_Machining_History;  -- 4869
+-- Plex.Cycle_Time_History definition
+
+/*
+ * Calculating the cycle time is full of difficulties since you never know when the 
+ * operator is going to send the pallet in.  Because of this the only accurate info
+ * you can get is the fastest cycle time.
+ */
+CREATE TABLE Full_Cycle_History (
+  Cycle_Time_History_Key int NOT NULL AUTO_INCREMENT,
+  Plexus_Customer_No int DEFAULT NULL,
+  Workcenter_Key int NOT NULL,
+  CNC_Key int NOT NULL,
+  Part_Key int NOT NULL,
+  Part_Operation_Key int NOT NULL,
+  Assembly_Key int NOT NULL,
+  Cycle_Time int NOT NULL,
+  Run_Date datetime NOT NULL,
+  PRIMARY KEY (Cycle_Time_History_Key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='History of CNC cycle times';
+
+/*
+ * How long did it take for the pallet to complete.
+ * Time is calculated from the 1st tool to the last.
+ * Since the CNC is not normally interrupted during this length of time
+ * it's values should be more easily determined than a full cycle time
+ * because we are not worrying about when the operator actually gets
+ * around to sending the pallet in.
+ */
+CREATE TABLE Pallet_Cycle_History (
+  Pallet_Time_History_Key int NOT NULL AUTO_INCREMENT,
+  Plexus_Customer_No int DEFAULT NULL,
+  Workcenter_Key int NOT NULL,
+  CNC_Key int NOT NULL,
+  Part_Key int NOT NULL,
+  Part_Operation_Key int NOT NULL,
+  Assembly_Key int NOT NULL,
+  Pallet_Time int NOT NULL,
+  Run_Date datetime NOT NULL,
+  PRIMARY KEY (Cycle_Time_History_Key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='History of the time it takes to complete one pallet';
+
+CREATE TABLE Automatic_Tool_Changer_History (
+  Pallet_Time_History_Key int NOT NULL AUTO_INCREMENT,
+  Plexus_Customer_No int DEFAULT NULL,
+  Workcenter_Key int NOT NULL,
+  CNC_Key int NOT NULL,
+  Part_Key int NOT NULL,
+  Part_Operation_Key int NOT NULL,
+  Assembly_Key int NOT NULL,
+  Pallet_Time int NOT NULL,
+  Run_Date datetime NOT NULL,
+  PRIMARY KEY (Cycle_Time_History_Key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='History of the time it takes to complete one pallet';
+
 
 /*
  * Link this to the Plex Issue Tracking System.
@@ -1217,31 +1271,59 @@ CREATE TABLE Issue
 	Description varchar(500) NULL,
   	PRIMARY KEY (Issue_Key)
 )	
-
+select * from Issue;
 drop table Issue_Type;
 CREATE TABLE Issue_Type
 (
 	Plexus_Customer_No int,
 	Issue_Type_Key int NOT NULL,
-	Issue_Type varchar(50),
+	Severity_Key int NOT NULL,
+	Issue_Type varchar(50) NOT NULL,
   	PRIMARY KEY (Plexus_Customer_No,Issue_Type_Key)  -- this must be unique
 )
 
-insert into Issue_Type (Plexus_Customer_No,Issue_Type_Key,Issue_Type)
+truncate table Issue_Type 
+insert into Issue_Type (Plexus_Customer_No,Issue_Type_Key,Severity_Key,Issue_Type)
 values
 -- Albion
-(300758,1,'Unexpected_Counter_Value'),
-(300758,2,'Counter_Jump'),
-(300758,3,'Pallet_Looped_Out'),
+(300758,1,1,'Counter Rolled Back'),
+(300758,2,1,'Network Error'),
+(300758,3,1,'Shift Tool Change Avoidance'),
+(300758,4,1,'Pallet Looped Out'),
 -- Avilla
-(310507,1,'Unexpected_Counter_Value'),
-(310507,2,'Counter_Jump'),
-(310507,3,'Pallet_Looped_Out')
+(310507,101,1,'Counter Rolled Back'),
+(310507,102,1,'Network Error'),
+(310507,103,1,'Shift Tool Change Avoidance'),
+(310507,104,1,'Pallet Looped Out')
 
 select * from Issue_Type;
+
+CREATE TABLE Severity
+(
+	Plexus_Customer_No int,
+	Severity_Key int NOT NULL,
+	Severity varchar(50) NOT NULL,
+  	PRIMARY KEY (Plexus_Customer_No,Severity_Key)  
+)
+insert into Severity 
+values 
+-- Albion
+(300758,1,'low'),
+(300758,2,'medium'),
+(300758,3,'high'),
+-- Avilla
+(300758,10,'low'),
+(300758,11,'medium'),
+(300758,13,'high')
+select * from Severity. 
+  	
 /*
  * History of assembly cutting times
  * This is meant to log individual assembly cutting times.
+ * Do not put any information in this table except what
+ * is needed to determine issues to be inserted in the
+ * Issue table.  All information pertaining to an 
+ * issue should be stored only in the Issue table.
  */
 -- drop table Assembly_Machining_History_V2 
 -- truncate table Assembly_Machining_History_V2
@@ -1263,10 +1345,6 @@ CREATE TABLE Assembly_Machining_History_V2(
   	Start_Time datetime NOT NULL,  
   	End_Time datetime NOT NULL,  
   	Run_Time int NOT NULL, -- In seconds.
-  	Cycle_Time int NOT NULL, -- In seconds. 
-  	Unexpected_Counter_Value BIT NOT NULL,
-  	Counter_Jump BIT NOT NULL,
-  	Pallet_Looped_Out BIT NOT NULL,
   	PRIMARY KEY (Assembly_Machining_History_Key)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='History of assembly Machining times';
 
@@ -1408,7 +1486,9 @@ BEGIN
 	-- set @Shift_Start = Shift_Start(NOW());
 	select @Shift_Start;
 
-
+	/*
+	 * Retrieve info to be used elsewhere in the SPROC
+	 */
     select
     -- caw.CNC_Approved_Workcenter_Key
    	caw.Plexus_Customer_No,
@@ -1431,6 +1511,11 @@ BEGIN
 	and  tv.Tool_Var = pTool_Var;
 
 	-- select @Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Part_Key,@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Fastest_Cycle_Time;
+	
+	/*
+	 * Retrieve info needed to diagnose issues.  We could possibly add this section to a function.
+	 * ASMInfo()
+	 */
 	select 
 	count(*) 
 	into @Record_Count_Same_Pallet
@@ -1441,6 +1526,9 @@ BEGIN
 	
 	select @Record_Count_Same_Pallet;
 
+	/*
+	 * It is possible to have only 1 pallet running a tool in this case the count will be 0
+	 */
 	select 
 	count(*) 
 	into @Record_Count_Any_Pallet
@@ -1451,42 +1539,66 @@ BEGIN
 	
 	select @Record_Count_Any_Pallet;
 
+	/*
+	 * It is possible to have only 1 pallet running a tool in this case @Other_Pallet_No equals 0
+	 */
 	set @Other_Pallet_No = case 
-		when (1=pPallet_No) then 2
+		when (1 = @Pallets_Per_Tool) then 0
+		when (1 = pPallet_No) then 2
 		else 1
 	end;
-	
+
 	select pPallet_No,@Other_Pallet_No;
-	select 
-	count(*) 
-	into @Record_Count_Other_Pallet
-	from Assembly_Machining_History_V2 
-	-- select count(*) into @Prev_Record_Exists from Assembly_Machining_History 
-	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
-	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+
+	/*
+	 * It is possible to have only 1 pallet running a tool in this case the count will be 0
+	 */
+	set @Record_Count_Other_Pallet = 0;
+	if (@Pallet_Per_Tool > 1 ) then
+		select 
+		count(*) 
+		into @Record_Count_Other_Pallet
+		from Assembly_Machining_History_V2 
+		-- select count(*) into @Prev_Record_Exists from Assembly_Machining_History 
+		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	end if;
 	
 	select @Record_Count_Other_Pallet;
 
-
-	select count(*)
-	into @Record_Count_From_Shift_Start_Limit_5
-	from 
-	(
-		-- Had to do it this way.  Could not get an accurate count() when using limit clause
-		select Pallet_No
-		from Assembly_Machining_History_V2 
-		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
-		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
-		and Start_Time >= @Shift_Start
-		order by Assembly_Machining_History_Key desc 
-		LIMIT 5 OFFSET 0
-	)s1;
-
+	set @Record_Count_From_Shift_Start_Limit_5 = 0;
+	/* 
+	 * This variable is only used for determining if a pallet has been looped out
+	 * so only make this calculation if there is more than 1 Pallet_Per_Tool
+	 */
+	if (@Pallet_Per_Tool > 1) then 
+		select count(*)
+		into @Record_Count_From_Shift_Start_Limit_5
+		from 
+		(
+			-- Had to do it this way.  Could not get an accurate count() when using limit clause
+			select Pallet_No
+			from Assembly_Machining_History_V2 
+			where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key 
+			and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
+			and Start_Time >= @Shift_Start
+			order by Assembly_Machining_History_Key desc 
+			LIMIT 5 OFFSET 0
+		)s1;
+	end if;
 	select @Record_Count_From_Shift_Start_Limit_5;
 
 	set @Number_Pallets_Running_Tool = 0;
 
-	if (@Record_Count_From_Shift_Start_Limit_5 =5) then
+	/*
+	 * The idea is to only say a pallet is looped out if we have been running a while during a shift.
+	 * For example, maintenance may have fixed the pallet at the end of the last shift, but we are
+	 * at the start of the shift and both pallets are running.  So don't be too eager to say a 
+	 * pallet is down. Another use case is when both pallets are running and one pallet goes down.
+	 * In this case we will not know the pallet is down until the 1 pallet has run 5 times.
+	 * 
+	 */
+	if ((@Pallet_Per_Tool > 1) and (@Record_Count_From_Shift_Start_Limit_5 =5)) then
 		/*
 		 * Look at the 5 most recent records in the Assembly_Machining_History table 
 		 * from the shift start to make this determination
@@ -1511,7 +1623,8 @@ BEGIN
 	end if;
 	select @Number_Pallets_Running_Tool;
 
-	if ((0 != @Number_Pallets_Running_Tool ) and (@Pallets_Per_Tool != @Number_Pallets_Running_Tool)) then
+	set @Pallet_Looped_Out = 0;
+	if ((@Pallets_Per_Tool>1) and (0 != @Number_Pallets_Running_Tool ) and (@Pallets_Per_Tool != @Number_Pallets_Running_Tool)) then
 		set @Pallet_Looped_Out = 1;
 		select count(*) into @Already_Added from Issue 
 		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = pPallet_No
@@ -1524,6 +1637,7 @@ BEGIN
 	end if;
 	select @Pallet_Looped_Out;
 
+	set @Last_Start_Time_Same_Pallet=NULL,@Cycle_Time=0;
 	select 
 	-- pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),pStart_Time),
 	-- @pStart_Time,max(start_time),TIMESTAMPDIFF(SECOND,max(start_time),@pStart_Time),
@@ -1545,27 +1659,35 @@ BEGIN
 	-- select * from CNC_Approved_Workcenter -- 
 	select @Last_Start_Time_Same_Pallet,@Cycle_Time;
 	
-	select 
-	case  
-		when @Record_Count_Other_Pallet = 0 then null 
-		else max(start_time)  -- This is the Last_Start_Time_Other_Pallet for this Tool.
-	end
-	into @Last_Start_Time_Other_Pallet 
-	from Assembly_Machining_History_V2 
-	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
-	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	set @Last_Start_Time_Other_Pallet = NULL;
+
+	if(@Pallets_Per_Tool > 1) then 
+		select 
+		case  
+			when @Record_Count_Other_Pallet = 0 then null 
+			else max(start_time)  -- This is the Last_Start_Time_Other_Pallet for this Tool.
+		end
+		into @Last_Start_Time_Other_Pallet 
+		from Assembly_Machining_History_V2 
+		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key;
+	end if;
 	select @Last_Start_Time_Other_Pallet;
 
-	select 
-	Unexpected_Counter_Value,Counter_Jump
-	into @Unexpected_Counter_Value_Other_Pallet,@Counter_Jump_Other_Pallet 
-	from Assembly_Machining_History_V2 
-	where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
-	and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
-	and Start_Time = @Last_Start_Time_Other_Pallet;
+	set @Unexpected_Counter_Value_Other_Pallet=0,@Counter_Jump_Other_Pallet=0;
 
+	if(@Pallets_Per_Tool > 1) then 
+		select 
+		Unexpected_Counter_Value,Large_Counter_Jump
+		into @Unexpected_Counter_Value_Other_Pallet,@Counter_Jump_Other_Pallet 
+		from Assembly_Machining_History_V2 
+		where Plexus_Customer_No= @Plexus_Customer_No and Workcenter_Key = @Workcenter_Key  and CNC_Key = @CNC_Key and Pallet_No = @Other_Pallet_No
+		and Part_Key = @Part_Key and Part_Operation_Key = @Part_Operation_Key and Assembly_Key = @Assembly_Key and Tool_Key = @Tool_Key
+		and Start_Time = @Last_Start_Time_Other_Pallet;
+	end if;
 	select @Unexpected_Counter_Value_Other_Pallet,@Counter_Jump_Other_Pallet;
 
+	set @Last_Value_Same_Pallet = 0;
 	if (0 != @Record_Count_Same_Pallet )  then
 		select Current_Value  -- This is the value of the counter for this Tool and Pallet_No.
 		into @Last_Value_Same_Pallet
@@ -1577,6 +1699,7 @@ BEGIN
 	end if;
 	select @Last_Value_Same_Pallet;
 
+	set @Increment_By = 0;
 	select 
 	-- opl.PCN Plexus_Customer_No,cpl.Workcenter_Key,cpl.CNC_Key,opl.Part_Key,cpl.Part_Operation_Key,opl.Assembly_Key,opl.Tool_Key, 
 	cpl.Increment_By 
@@ -1589,10 +1712,17 @@ BEGIN
 		
 	select @Increment_By;
 
-	set @Counter_Jump = 0;
+	/*
+	 * This is meant to identify when there is a network or other failure preventing us from inserting Assembly Machining History records.
+	 * It will also detect when the CNC operator or Tool setter are setting counter values ahead possibly to avoid having to do a tool 
+	 * change on there shift.
+	 */
+	set @Network_Error = 0,@Counter_Jump=0;
 	-- Counter jump check
-	if((0 = @Counter_Jump_Other_Pallet ) and 
-	   (0 != @Number_Pallets_Running_Tool) and 
+	if((0 = @Counter_Jump_Other_Pallet ) and -- DON'T INSERT IF WE JUST INSERTED ONE ON THE PREVIOUS PALLET
+	   (0 != @Number_Pallets_Running_Tool) and -- WE NEED @Number_Pallets_Running_Tool IN ORDER TO CALCULATE THE ESTIMATED INCREASE
+	   -- BECAUSE WE ARE DOING THE MATH BASED UPON THE CYCLE TIME
+	   -- WE MAY NOT CATCH A COUNTER JUMP THAT IS DONE AT THE BEGINNING OF THE SHIFT.
 	   (0 != @Cycle_Time ) and (0 != @Fastest_Cycle_Time )) THEN 
 		set @Estimated_Cycles = @Cycle_Time / @Fastest_Cycle_Time;
 		set @Estimated_Increase = @Estimated_Cycles * @Increment_By * @Number_Pallets_Running_Tool;
@@ -1613,7 +1743,12 @@ BEGIN
 		end if;
 	end if;
 	select  @Estimated_Cycles,@Estimated_Increase,@Counter_Jump;
-
+-- START HERE
+	/*
+	 * Base @Unexpected_Counter_Value on this pallet only?  We are sure this pallet is running
+	 * but we are not sure the other pallet is running, and we are not sure the other pallet
+	 * is running this tool.
+	 */
 	set @Unexpected_Counter_Value = 0;
 	if ((0 = @Counter_Jump) and (0 != @Last_Value_Other_Pallet)) then
 /*	
