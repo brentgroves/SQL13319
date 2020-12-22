@@ -1,3 +1,5 @@
+select * from Issue_Type
+
 set @Plexus_Customer_No = 300758;
 set @Workcenter_Key = 61090;
 set @CNC_Key = 3;
@@ -129,7 +131,7 @@ begin
 	end if;
 
 	-- select pNumber_Pallets_Running_Tool;
-	select pRecord_Count_Same_Pallet,pStart_Time;
+	-- select pRecord_Count_Same_Pallet,pStart_Time;
 	select 
 	case  
 		when pRecord_Count_Same_Pallet = 0 then null 
@@ -155,6 +157,6 @@ begin
 		and Part_Key = pPart_Key and Part_Operation_Key = pPart_Operation_Key and Assembly_Key = pAssembly_Key and Tool_Key = pTool_Key
 	 	and Start_Time = pLast_Start_Time_Same_Pallet;
 	end if;
-	select pLast_Value_Same_Pallet;
+	-- select pLast_Value_Same_Pallet;
 
 end
