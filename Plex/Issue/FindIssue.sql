@@ -7,10 +7,10 @@ set @Part_Operation_Key = 7874404;
 set @Assembly_Key = 18;
 set @Tool_Key = 19;
 set @Start_Time = '2020-12-14 15:25:50'; -- 5 min
-
+set @Issue_Type_Key = 3;
 call FindIssue(@Plexus_Customer_No,@Workcenter_Key,@CNC_Key,@Pallet_No,@Part_Key,
-@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Start_Time,@Issue_Type_Key,@Found);
-select @Found;
+@Part_Operation_Key,@Assembly_Key,@Tool_Key,@Start_Time,@Issue_Type_Key,@FoundIt);
+select @FoundIt;
 
 -- select @Record_Count_Same_Pallet,@Record_Count_Any_Pallet;
 /*
